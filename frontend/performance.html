@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>pr1maly // CS2 Analytics</title>
+<link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
+<link rel="icon" type="image/png" href="img/logo-big.png"/>
+<link rel="stylesheet" href="theme.css"/>
+<script src="theme.js"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "secondary-container": "rgb(var(--c-secondary-container) / <alpha-value>)",
+                "on-secondary-fixed-variant": "rgb(var(--c-on-secondary-fixed-variant) / <alpha-value>)",
+                "tertiary-fixed-dim": "rgb(var(--c-tertiary-fixed-dim) / <alpha-value>)",
+                "surface-container-low": "rgb(var(--c-surface-container-low) / <alpha-value>)",
+                "primary-fixed": "rgb(var(--c-primary-fixed) / <alpha-value>)",
+                "on-tertiary-container": "rgb(var(--c-on-tertiary-container) / <alpha-value>)",
+                "error-dim": "rgb(var(--c-error-dim) / <alpha-value>)",
+                "secondary-fixed-dim": "rgb(var(--c-secondary-fixed-dim) / <alpha-value>)",
+                "on-error": "rgb(var(--c-on-error) / <alpha-value>)",
+                "inverse-primary": "rgb(var(--c-inverse-primary) / <alpha-value>)",
+                "surface-tint": "rgb(var(--c-surface-tint) / <alpha-value>)",
+                "surface-variant": "rgb(var(--c-surface-variant) / <alpha-value>)",
+                "tertiary-fixed": "rgb(var(--c-tertiary-fixed) / <alpha-value>)",
+                "tertiary-container": "rgb(var(--c-tertiary-container) / <alpha-value>)",
+                "primary-fixed-dim": "rgb(var(--c-primary-fixed-dim) / <alpha-value>)",
+                "on-primary": "rgb(var(--c-on-primary) / <alpha-value>)",
+                "error-container": "rgb(var(--c-error-container) / <alpha-value>)",
+                "on-tertiary-fixed": "rgb(var(--c-on-tertiary-fixed) / <alpha-value>)",
+                "surface-container-lowest": "rgb(var(--c-surface-container-lowest) / <alpha-value>)",
+                "on-primary-fixed": "rgb(var(--c-on-primary-fixed) / <alpha-value>)",
+                "on-primary-fixed-variant": "rgb(var(--c-on-primary-fixed-variant) / <alpha-value>)",
+                "on-secondary-container": "rgb(var(--c-on-secondary-container) / <alpha-value>)",
+                "surface-container-high": "rgb(var(--c-surface-container-high) / <alpha-value>)",
+                "surface-dim": "rgb(var(--c-surface-dim) / <alpha-value>)",
+                "primary": "rgb(var(--c-primary) / <alpha-value>)",
+                "on-tertiary-fixed-variant": "rgb(var(--c-on-tertiary-fixed-variant) / <alpha-value>)",
+                "background": "rgb(var(--c-background) / <alpha-value>)",
+                "outline-variant": "rgb(var(--c-outline-variant) / <alpha-value>)",
+                "on-secondary-fixed": "rgb(var(--c-on-secondary-fixed) / <alpha-value>)",
+                "secondary-fixed": "rgb(var(--c-secondary-fixed) / <alpha-value>)",
+                "primary-dim": "rgb(var(--c-primary-dim) / <alpha-value>)",
+                "surface-bright": "rgb(var(--c-surface-bright) / <alpha-value>)",
+                "surface-container": "rgb(var(--c-surface-container) / <alpha-value>)",
+                "primary-container": "rgb(var(--c-primary-container) / <alpha-value>)",
+                "on-error-container": "rgb(var(--c-on-error-container) / <alpha-value>)",
+                "secondary-dim": "rgb(var(--c-secondary-dim) / <alpha-value>)",
+                "on-tertiary": "rgb(var(--c-on-tertiary) / <alpha-value>)",
+                "on-surface-variant": "rgb(var(--c-on-surface-variant) / <alpha-value>)",
+                "tertiary-dim": "rgb(var(--c-tertiary-dim) / <alpha-value>)",
+                "error": "rgb(var(--c-error) / <alpha-value>)",
+                "surface": "rgb(var(--c-surface) / <alpha-value>)",
+                "tertiary": "rgb(var(--c-tertiary) / <alpha-value>)",
+                "on-secondary": "rgb(var(--c-on-secondary) / <alpha-value>)",
+                "on-background": "rgb(var(--c-on-background) / <alpha-value>)",
+                "on-surface": "rgb(var(--c-on-surface) / <alpha-value>)",
+                "on-primary-container": "rgb(var(--c-on-primary-container) / <alpha-value>)",
+                "inverse-surface": "rgb(var(--c-inverse-surface) / <alpha-value>)",
+                "secondary": "rgb(var(--c-secondary) / <alpha-value>)",
+                "outline": "rgb(var(--c-outline) / <alpha-value>)",
+                "surface-container-highest": "rgb(var(--c-surface-container-highest) / <alpha-value>)",
+                "inverse-on-surface": "rgb(var(--c-inverse-on-surface) / <alpha-value>)"
+              },
+              fontFamily: {
+                "headline": ["Space Grotesk", "sans-serif"],
+                "body": ["Manrope", "sans-serif"],
+                "label": ["Space Grotesk", "sans-serif"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .stat-glow-secondary { text-shadow: 0 0 15px var(--stat-glow-secondary); }
+        .stat-glow-tertiary { text-shadow: 0 0 15px var(--stat-glow-tertiary); }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(12px); }
+        /* Collapsible sidebar */
+        #sidebar { transition: width 0.25s cubic-bezier(.4,0,.2,1); overflow: hidden; }
+        #sidebar .sidebar-label { transition: opacity 0.2s; white-space: nowrap; }
+        #sidebar.collapsed { width: 4.5rem !important; }
+        #sidebar.collapsed .sidebar-label { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+        #sidebar.collapsed .sidebar-brand { display: none; }
+        #sidebar.collapsed .sidebar-actions { display: none; }
+        #sidebar.collapsed nav a { justify-content: center; padding-left: 0; padding-right: 0; }
+        #sidebar.collapsed .sidebar-logo { margin-left: auto; margin-right: auto; }
+        #sidebar.collapsed .sidebar-header { justify-content: center; padding-left: 0; padding-right: 0; }
+        #main-area { transition: padding-left 0.25s cubic-bezier(.4,0,.2,1); }
+        #sidebar-toggle { transition: transform 0.25s; }
+        #sidebar.collapsed #sidebar-toggle { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary selection:text-on-primary-container">
+<!-- SideNavBar -->
+<aside id="sidebar" class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container shadow-2xl shadow-purple-900/20 border-r border-white/5 pt-6 z-40">
+<div class="sidebar-header px-6 py-4 mb-8">
+<div class="flex items-center gap-3">
+<div class="sidebar-logo w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+<img src="img/logo-big.png" alt="pr1maly" class="w-full h-full object-cover"/>
+</div>
+<div class="sidebar-brand flex-1 min-w-0">
+<div class="font-headline text-sm font-bold uppercase tracking-widest text-on-surface">pr1maly</div>
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">CS2 Analytics</div>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="breakdown.html">
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="insights">insights</span>
+<span class="sidebar-label">Trend</span>
+            </a>
+<a class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="match-breakdown.html">
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="sports_esports">sports_esports</span>
+<span class="sidebar-label">Match Breakdown</span>
+            </a>
+</nav>
+<div class="sidebar-actions p-6 space-y-4">
+<button onclick="openUploadModal()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+                Upload Demo
+            </button>
+<button onclick="openBulkUploadModal()" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">upload_file</span> <span class="sidebar-label">Bulk Upload</span>
+</button>
+<div class="space-y-1">
+<button onclick="openSettingsModal()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
+<span class="material-symbols-outlined text-sm">settings</span> <span class="sidebar-label">Settings</span>
+</button>
+<button onclick="toggleTheme()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Toggle light/dark mode">
+<span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme</span>
+</button>
+</div>
+</div>
+<button id="sidebar-toggle" onclick="toggleSidebar()" class="mx-auto mb-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-highest border border-white/10 text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors" title="Collapse sidebar">
+<span class="material-symbols-outlined text-base">chevron_left</span>
+</button>
+</aside>
+<!-- Main Content Canvas -->
+<main id="main-area" class="lg:pl-[17.5rem] pt-6 pb-24 lg:pb-8 min-h-screen px-6">
+<!-- KPI Bar -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+<div class="bg-surface-container p-4 rounded-xl border-l-2 border-primary shadow-lg group hover:bg-surface-container-high transition-colors">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">K/D RATIO</div>
+<div class="text-3xl font-headline font-bold text-primary stat-glow-secondary">1.42</div>
+<div class="flex items-center gap-1 text-[10px] text-secondary mt-2">
+<span class="material-symbols-outlined text-xs" data-icon="trending_up">trending_up</span> +0.12 vs avg
+                </div>
+</div>
+<div class="bg-surface-container p-4 rounded-xl border-l-2 border-secondary shadow-lg hover:bg-surface-container-high transition-colors">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">KAST%</div>
+<div class="text-3xl font-headline font-bold text-secondary stat-glow-secondary">78.4%</div>
+<div class="flex items-center gap-1 text-[10px] text-secondary mt-2">
+<span class="material-symbols-outlined text-xs" data-icon="check_circle">check_circle</span> Top 5% region
+                </div>
+</div>
+<div class="bg-surface-container p-4 rounded-xl border-l-2 border-tertiary shadow-lg hover:bg-surface-container-high transition-colors">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">HLTV RATING</div>
+<div class="text-3xl font-headline font-bold text-tertiary stat-glow-tertiary">1.18</div>
+<div class="flex items-center gap-1 text-[10px] text-tertiary mt-2">
+<span class="material-symbols-outlined text-xs" data-icon="military_tech">military_tech</span> MVP Streak: 2
+                </div>
+</div>
+<div class="bg-surface-container p-4 rounded-xl border-l-2 border-on-secondary-fixed shadow-lg hover:bg-surface-container-high transition-colors">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">WIN RATE</div>
+<div class="text-3xl font-headline font-bold text-on-background">64.0%</div>
+<div class="w-full bg-surface-container-lowest h-1 mt-4 rounded-full overflow-hidden flex gap-0.5">
+<div class="h-full bg-secondary w-2/3"></div>
+<div class="h-full bg-surface-variant flex-1"></div>
+</div>
+</div>
+<div class="bg-surface-container p-4 rounded-xl border-l-2 border-primary-dim shadow-lg hover:bg-surface-container-high transition-colors col-span-2 md:col-span-1">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">AIM SCORE</div>
+<div class="text-3xl font-headline font-bold text-primary-dim">92</div>
+<div class="flex items-center gap-1 text-[10px] text-primary-dim mt-2">
+<span class="material-symbols-outlined text-xs" data-icon="target">target</span> Master Class
+                </div>
+</div>
+</div>
+<!-- Bento Grid Main Content -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Performance Over Time (Chart Simulation) -->
+<div class="lg:col-span-8 bg-surface-container rounded-2xl p-6 relative overflow-hidden">
+<div class="flex justify-between items-center mb-12">
+<div>
+<h2 class="font-headline text-lg font-bold uppercase tracking-widest">PERFORMANCE_TREND</h2>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase opacity-50">Trend data calculated over last 20 matches</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 rounded-full bg-secondary/10 text-secondary text-[10px] font-bold">HLTV</span>
+<span class="px-3 py-1 rounded-full bg-surface-variant text-on-surface-variant text-[10px] font-bold">ADR</span>
+</div>
+</div>
+<!-- Abstract Chart Visualization -->
+<div class="h-64 flex items-end justify-between gap-2 px-2 relative">
+<!-- Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-5">
+<div class="border-b border-on-surface w-full"></div>
+<div class="border-b border-on-surface w-full"></div>
+<div class="border-b border-on-surface w-full"></div>
+<div class="border-b border-on-surface w-full"></div>
+</div>
+<!-- Bars -->
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[40%] transition-all hover:bg-primary/40 relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">0.98</div>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[65%] transition-all hover:bg-primary/40 relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">1.12</div>
+</div>
+<div class="flex-1 bg-primary/20 border-t-2 border-primary rounded-t-sm h-[85%] transition-all hover:bg-primary/40 relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">1.45</div>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[50%] transition-all hover:bg-primary/40 relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">1.05</div>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[75%] transition-all hover:bg-primary/40 relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">1.28</div>
+</div>
+<div class="flex-1 bg-secondary/30 border-t-2 border-secondary rounded-t-sm h-[95%] transition-all hover:bg-secondary/50 relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-secondary text-on-secondary text-[10px] font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">1.62</div>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[60%] transition-all hover:bg-primary/40 relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">1.15</div>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[45%] transition-all hover:bg-primary/40 relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">1.02</div>
+</div>
+</div>
+<div class="mt-4 flex justify-between text-[8px] font-bold text-on-surface-variant uppercase tracking-widest px-2">
+<span>Match 01</span>
+<span>Match 04</span>
+<span>Match 08</span>
+<span>Match 12</span>
+<span>Match 16</span>
+<span>Latest</span>
+</div>
+</div>
+<!-- AI Feedback Section -->
+<div class="lg:col-span-4 space-y-4">
+<div class="bg-surface-container rounded-2xl p-6 border-t-4 border-secondary">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary" data-icon="psychology" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<h2 class="font-headline text-lg font-bold uppercase tracking-widest">TACTICAL_AI</h2>
+</div>
+<div class="space-y-6">
+<div class="relative pl-6 border-l border-secondary/30">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-secondary"></div>
+<div class="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">The Good</div>
+<p class="text-sm text-on-surface leading-relaxed">Your entry frag conversion on <span class="text-secondary">Mirage</span> is up by 22%. Your crosshair placement in A-Palace is near perfect.</p>
+</div>
+<div class="relative pl-6 border-l border-primary/30">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-primary"></div>
+<div class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">The Bad</div>
+<p class="text-sm text-on-surface leading-relaxed">Utility usage on CT side remains low. You're dying with 2+ grenades 40% of the time.</p>
+</div>
+<div class="relative pl-6 border-l border-error/30">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-error"></div>
+<div class="text-[10px] font-bold text-error uppercase tracking-widest mb-1">The Ugly</div>
+<p class="text-sm text-on-surface leading-relaxed">Post-plant positioning on B-site Inferno is erratic. You are over-peeking before the smoke clears.</p>
+</div>
+</div>
+</div>
+<div class="bg-gradient-to-br from-surface-variant to-surface-container p-6 rounded-2xl border border-white/5 group hover:border-primary/30 transition-all cursor-pointer">
+<div class="flex justify-between items-center">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Unlock Deep Insights</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<div class="mt-2 font-headline text-lg font-bold text-on-surface">COACH_MODE_ALPHA</div>
+</div>
+</div>
+<!-- Recent Matches -->
+<div class="lg:col-span-12">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-headline text-xl font-bold uppercase tracking-widest">RECENT_ENCOUNTERS</h2>
+<a href="match-breakdown.html" class="text-[10px] font-bold uppercase tracking-widest text-secondary hover:underline">View All Matches</a>
+</div>
+<div class="space-y-2">
+<!-- Match Row 1 -->
+<div class="grid grid-cols-4 md:grid-cols-12 items-center bg-surface-container hover:bg-surface-container-high transition-all p-4 rounded-xl border-l-4 border-secondary group cursor-pointer">
+<div class="md:col-span-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center font-bold text-xs text-on-surface-variant">MIR</div>
+<div class="font-bold text-xs uppercase tracking-widest">Mirage</div>
+</div>
+<div class="md:col-span-2 font-headline text-xl font-bold text-secondary">13 - 11</div>
+<div class="hidden md:block md:col-span-2">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">K / D / A</div>
+<div class="text-sm font-bold text-on-surface">24 / 12 / 4</div>
+</div>
+<div class="hidden md:block md:col-span-2">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">RATING</div>
+<div class="text-sm font-bold text-secondary">1.48</div>
+</div>
+<div class="md:col-span-2 text-right md:text-left">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">STATUS</div>
+<div class="text-xs font-bold text-secondary uppercase tracking-widest">VICTORY</div>
+</div>
+<div class="hidden md:flex md:col-span-2 justify-end">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="analytics">analytics</span>
+</div>
+</div>
+<!-- Match Row 2 -->
+<div class="grid grid-cols-4 md:grid-cols-12 items-center bg-surface-container hover:bg-surface-container-high transition-all p-4 rounded-xl border-l-4 border-error group cursor-pointer">
+<div class="md:col-span-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center font-bold text-xs text-on-surface-variant">INF</div>
+<div class="font-bold text-xs uppercase tracking-widest">Inferno</div>
+</div>
+<div class="md:col-span-2 font-headline text-xl font-bold text-error">09 - 13</div>
+<div class="hidden md:block md:col-span-2">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">K / D / A</div>
+<div class="text-sm font-bold text-on-surface">14 / 18 / 6</div>
+</div>
+<div class="hidden md:block md:col-span-2">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">RATING</div>
+<div class="text-sm font-bold text-on-surface">0.88</div>
+</div>
+<div class="md:col-span-2 text-right md:text-left">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">STATUS</div>
+<div class="text-xs font-bold text-error uppercase tracking-widest">DEFEAT</div>
+</div>
+<div class="hidden md:flex md:col-span-2 justify-end">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="analytics">analytics</span>
+</div>
+</div>
+<!-- Match Row 3 -->
+<div class="grid grid-cols-4 md:grid-cols-12 items-center bg-surface-container hover:bg-surface-container-high transition-all p-4 rounded-xl border-l-4 border-secondary group cursor-pointer">
+<div class="md:col-span-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center font-bold text-xs text-on-surface-variant">ANC</div>
+<div class="font-bold text-xs uppercase tracking-widest">Ancient</div>
+</div>
+<div class="md:col-span-2 font-headline text-xl font-bold text-secondary">13 - 04</div>
+<div class="hidden md:block md:col-span-2">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">K / D / A</div>
+<div class="text-sm font-bold text-on-surface">19 / 5 / 2</div>
+</div>
+<div class="hidden md:block md:col-span-2">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">RATING</div>
+<div class="text-sm font-bold text-secondary">1.72</div>
+</div>
+<div class="md:col-span-2 text-right md:text-left">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">STATUS</div>
+<div class="text-xs font-bold text-secondary uppercase tracking-widest">STOMP</div>
+</div>
+<div class="hidden md:flex md:col-span-2 justify-end">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="analytics">analytics</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed lg:hidden bottom-0 w-full z-50 flex justify-around items-center px-6 pb-6 pt-3 bg-background/90 backdrop-blur-lg border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] rounded-t-3xl">
+<a class="flex flex-col items-center justify-center text-slate-500 active:bg-purple-500/10 transition-transform scale-90 active:scale-100" href="breakdown.html">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-headline text-[10px] font-bold uppercase mt-1">Trend</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 active:bg-purple-500/10 transition-transform scale-90 active:scale-100" href="match-breakdown.html">
+<span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
+<span class="font-headline text-[10px] font-bold uppercase mt-1">Matches</span>
+</a>
+</nav>
+<!-- Upload Modal -->
+<div id="upload-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)]">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline text-xl font-bold uppercase tracking-widest">Upload Demo</h2>
+      <button onclick="closeUploadModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+    </div>
+    <form id="upload-form" class="space-y-4">
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Player</label>
+        <select id="upload-steam-id" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0 appearance-none">
+          <!-- populated dynamically from /api/accounts -->
+        </select>
+        <div id="player-detect-status" class="text-xs mt-1 hidden"></div>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Demo File (.dem)</label>
+        <input type="file" id="upload-file" accept=".dem" required class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Info File (.dem.info) <span class="normal-case font-normal text-on-surface-variant/50">— optional, auto-detects player &amp; match date</span></label>
+        <input type="file" id="upload-info-file" accept=".info" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-secondary/80 file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Notes (optional)</label>
+        <input type="text" id="upload-notes" placeholder="e.g. ranked game, warm-up" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Tags (comma separated, optional)</label>
+        <input type="text" id="upload-tags" placeholder="e.g. solo queue, good game" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Match Date (optional)</label>
+        <input type="date" id="upload-date" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+      </div>
+      <button type="submit" id="upload-btn" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+        Process Demo
+      </button>
+      <div id="upload-status" class="text-xs text-center hidden"></div>
+    </form>
+  </div>
+</div>
+<!-- Bulk Upload Modal -->
+<div id="bulk-upload-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-2xl mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline text-xl font-bold uppercase tracking-widest flex items-center gap-3">
+        <span class="material-symbols-outlined text-primary">upload_file</span>
+        Bulk Upload
+      </h2>
+      <button onclick="closeBulkUploadModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Fallback Player <span class="normal-case font-normal text-on-surface-variant/50">— used when .info file is missing or has no known account</span></label>
+        <select id="bulk-steam-id" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0 appearance-none">
+        </select>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Demo Files (.dem) <span class="normal-case font-normal text-on-surface-variant/50">— select multiple</span></label>
+        <input type="file" id="bulk-dem-files" accept=".dem" multiple class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Info Files (.dem.info) <span class="normal-case font-normal text-on-surface-variant/50">— optional, auto-detects player per demo</span></label>
+        <input type="file" id="bulk-info-files" accept=".info" multiple class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-secondary/80 file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+      </div>
+      <div id="bulk-file-preview" class="hidden">
+        <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Files Queued</p>
+        <div id="bulk-file-list" class="space-y-1 max-h-40 overflow-y-auto"></div>
+      </div>
+      <button type="button" id="bulk-upload-btn" onclick="startBulkUpload()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+        Process All Demos
+      </button>
+      <div id="bulk-progress" class="hidden">
+        <div class="flex justify-between items-center mb-2">
+          <span id="bulk-progress-text" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Processing...</span>
+          <span id="bulk-progress-count" class="text-[10px] font-bold text-primary">0 / 0</span>
+        </div>
+        <div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden mb-3">
+          <div id="bulk-progress-bar" class="h-full bg-primary rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div id="bulk-results" class="space-y-1.5 max-h-60 overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Settings Modal (Accounts + AI) -->
+<div id="settings-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline text-xl font-bold uppercase tracking-widest">Settings</h2>
+      <button onclick="closeSettingsModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+    </div>
+    <!-- Tabs -->
+    <div class="flex gap-2 mb-6">
+      <button id="settings-tab-accounts" onclick="switchSettingsTab('accounts')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Accounts</button>
+      <button id="settings-tab-friends" onclick="switchSettingsTab('friends')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Friends</button>
+      <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
+    </div>
+    <!-- Accounts Tab -->
+    <div id="settings-accounts-panel">
+      <div id="accounts-list" class="space-y-2 mb-6"></div>
+      <div class="border-t border-white/10 pt-4">
+        <h3 class="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Add Account</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="new-acct-name" type="text" placeholder="Name (e.g. pr1me)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <input id="new-acct-steamid" type="text" placeholder="Steam ID 64" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <input id="new-acct-display" type="text" placeholder="Display Name (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <input id="new-acct-rank" type="text" placeholder="Rank (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+        </div>
+        <button onclick="addAccount()" class="mt-3 w-full bg-gradient-to-r from-secondary/80 to-secondary/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
+          Add Account
+        </button>
+        <div id="acct-status" class="text-xs mt-2"></div>
+      </div>
+    </div>
+    <!-- Friends Tab -->
+    <div id="settings-friends-panel" class="hidden">
+      <div id="friends-list" class="space-y-2 mb-6"></div>
+      <div class="border-t border-white/10 pt-4">
+        <h3 class="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Add Friend</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="new-friend-steamid" type="text" placeholder="Steam ID 64" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <input id="new-friend-name" type="text" placeholder="Name (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+        </div>
+        <button onclick="addFriend()" class="mt-3 w-full bg-gradient-to-r from-cyan-500/80 to-cyan-500/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
+          Add Friend
+        </button>
+        <div id="friend-status" class="text-xs mt-2"></div>
+      </div>
+    </div>
+    <!-- AI Config Tab -->
+    <div id="settings-ai-panel" class="hidden">
+      <div id="ai-provider-tabs" class="flex gap-2 mb-6 flex-wrap"></div>
+      <div class="space-y-4 mb-6">
+        <div>
+          <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">API Key</label>
+          <input type="password" id="ai-key-input" placeholder="Enter API key..." class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <p id="ai-key-status" class="text-[9px] text-on-surface-variant mt-1"></p>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Default Model</label>
+          <select id="ai-settings-model" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"></select>
+        </div>
+      </div>
+      <div class="mb-6">
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Custom System Instructions (optional)</label>
+        <textarea id="ai-system-instructions" rows="3" placeholder="e.g. Always focus on positioning mistakes..." class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0 resize-none"></textarea>
+      </div>
+      <button onclick="saveAISettings()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+        Save AI Configuration
+      </button>
+      <div id="ai-settings-status" class="text-xs text-center mt-3 hidden"></div>
+    </div>
+  </div>
+</div>
+<!-- Background Decorative Elements -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-secondary/5 blur-[100px]"></div>
+</div>
+<script>
+const API = window.location.origin + '/api';
+
+// --- Utility ---
+function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// --- Account Management ---
+async function loadAccounts() {
+  try {
+    const res = await fetch(API + '/accounts');
+    const accounts = await res.json();
+    const sel = document.getElementById('upload-steam-id');
+    sel.innerHTML = '';
+    accounts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.steam_id;
+      opt.textContent = a.name;
+      sel.appendChild(opt);
+    });
+    renderAccountsList(accounts);
+  } catch (err) { console.error('Failed to load accounts:', err); }
+}
+
+// --- Settings Modal ---
+let _aiConfig = null;
+let _aiProviders = null;
+let _selectedProvider = null;
+
+function openSettingsModal(tab) {
+  document.getElementById('settings-modal').classList.remove('hidden');
+  document.getElementById('settings-modal').classList.add('flex');
+  switchSettingsTab(tab || 'accounts');
+  loadAccounts();
+  loadAIConfig();
+}
+function closeSettingsModal() {
+  document.getElementById('settings-modal').classList.add('hidden');
+  document.getElementById('settings-modal').classList.remove('flex');
+}
+document.getElementById('settings-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettingsModal(); });
+
+function switchSettingsTab(tab) {
+  const tabs = ['accounts', 'friends', 'ai'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('settings-tab-' + t);
+    const panel = document.getElementById('settings-' + t + '-panel');
+    if (t === tab) {
+      btn.className = btn.className.replace('bg-surface-container-highest text-on-surface-variant hover:bg-white/10', '').replace('bg-primary text-on-primary-fixed', '') + ' bg-primary text-on-primary-fixed';
+      panel.classList.remove('hidden');
+    } else {
+      btn.className = btn.className.replace('bg-primary text-on-primary-fixed', '').replace('bg-surface-container-highest text-on-surface-variant hover:bg-white/10', '') + ' bg-surface-container-highest text-on-surface-variant hover:bg-white/10';
+      panel.classList.add('hidden');
+    }
+  });
+  if (tab === 'friends') loadFriends();
+}
+
+function renderAccountsList(accounts) {
+  const list = document.getElementById('accounts-list');
+  if (!list) return;
+  if (!accounts.length) { list.innerHTML = '<p class="text-on-surface-variant text-xs">No accounts configured.</p>'; return; }
+  list.innerHTML = accounts.map(a => `
+    <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest border border-transparent group">
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm text-on-surface">${esc(a.name)}</div>
+        <div class="text-[10px] text-on-surface-variant">${esc(a.display_name || '')} &middot; ${esc(a.rank || 'Unranked')}</div>
+        <div class="text-[9px] text-on-surface-variant/50 font-mono">${esc(a.steam_id)}</div>
+      </div>
+      <div class="flex gap-1">
+        <button onclick="removeAccount('${esc(a.steam_id)}')" class="text-[10px] px-2 py-1 rounded bg-error/20 text-error hover:bg-error/30 transition-colors" title="Remove">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+async function addAccount() {
+  const name = document.getElementById('new-acct-name').value.trim();
+  const steamId = document.getElementById('new-acct-steamid').value.trim();
+  const displayName = document.getElementById('new-acct-display').value.trim();
+  const rank = document.getElementById('new-acct-rank').value.trim();
+  if (!name || !steamId) return;
+  const statusEl = document.getElementById('acct-status');
+  try {
+    const res = await fetch(API + '/accounts', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, steam_id: steamId, display_name: displayName, rank })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
+    statusEl.textContent = 'Account added!'; statusEl.className = 'text-xs text-secondary mt-2';
+    document.getElementById('new-acct-name').value = '';
+    document.getElementById('new-acct-steamid').value = '';
+    document.getElementById('new-acct-display').value = '';
+    document.getElementById('new-acct-rank').value = '';
+    loadAccounts();
+  } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-error mt-2'; }
+}
+
+async function removeAccount(steamId) {
+  if (!confirm('Remove this account?')) return;
+  await fetch(API + '/accounts/' + steamId, { method: 'DELETE' });
+  loadAccounts();
+}
+
+// --- Friends Management ---
+async function loadFriends() {
+  try {
+    const res = await fetch(API + '/friends');
+    const friends = await res.json();
+    renderFriendsList(friends);
+  } catch (err) { console.error('Failed to load friends:', err); }
+}
+
+function renderFriendsList(friends) {
+  const list = document.getElementById('friends-list');
+  if (!list) return;
+  if (!friends.length) { list.innerHTML = '<p class="text-on-surface-variant text-xs">No friends added yet.</p>'; return; }
+  list.innerHTML = friends.map(f => `
+    <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest border border-transparent group">
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm text-cyan-400">${esc(f.name || 'Unnamed')}</div>
+        <div class="text-[9px] text-on-surface-variant/50 font-mono">${esc(f.steam_id)}</div>
+      </div>
+      <div class="flex gap-1">
+        <button onclick="removeFriend('${esc(f.steam_id)}')" class="text-[10px] px-2 py-1 rounded bg-error/20 text-error hover:bg-error/30 transition-colors" title="Remove">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+async function addFriend() {
+  const steamId = document.getElementById('new-friend-steamid').value.trim();
+  const name = document.getElementById('new-friend-name').value.trim();
+  if (!steamId) return;
+  const statusEl = document.getElementById('friend-status');
+  try {
+    const res = await fetch(API + '/friends', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ steam_id: steamId, name })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
+    statusEl.textContent = 'Friend added!'; statusEl.className = 'text-xs text-cyan-400 mt-2';
+    document.getElementById('new-friend-steamid').value = '';
+    document.getElementById('new-friend-name').value = '';
+    loadFriends();
+  } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-error mt-2'; }
+}
+
+async function removeFriend(steamId) {
+  if (!confirm('Remove this friend?')) return;
+  await fetch(API + '/friends/' + steamId, { method: 'DELETE' });
+  loadFriends();
+}
+
+// --- AI Config ---
+async function loadAIConfig() {
+  try {
+    const [configRes, providersRes] = await Promise.all([
+      fetch(API + '/ai/config'),
+      fetch(API + '/ai/providers')
+    ]);
+    _aiConfig = await configRes.json();
+    _aiProviders = await providersRes.json();
+    _selectedProvider = _aiConfig.active_provider || Object.keys(_aiProviders)[0];
+    renderAISettings();
+  } catch (err) { console.error('Failed to load AI config:', err); }
+}
+
+function renderAISettings() {
+  if (!_aiProviders || !_aiConfig) return;
+  const tabsEl = document.getElementById('ai-provider-tabs');
+  tabsEl.innerHTML = Object.keys(_aiProviders).map(p => {
+    const isActive = p === _selectedProvider;
+    return `<button onclick="selectAIProvider('${p}')" class="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${isActive ? 'bg-primary text-on-primary-fixed' : 'bg-surface-container-highest text-on-surface-variant hover:bg-white/10'}">${p}</button>`;
+  }).join('');
+  const prov = _aiConfig.providers?.[_selectedProvider] || {};
+  document.getElementById('ai-key-input').value = prov.api_key || '';
+  document.getElementById('ai-key-status').textContent = prov.api_key ? 'Key configured' : 'No key set';
+  const modelSel = document.getElementById('ai-settings-model');
+  const models = _aiProviders[_selectedProvider] || [];
+  modelSel.innerHTML = models.map(m => `<option value="${m}" ${m === _aiConfig.active_model ? 'selected' : ''}>${m}</option>`).join('');
+  document.getElementById('ai-system-instructions').value = _aiConfig.system_instructions || '';
+}
+
+function selectAIProvider(provider) {
+  _selectedProvider = provider;
+  renderAISettings();
+}
+
+async function saveAISettings() {
+  const statusEl = document.getElementById('ai-settings-status');
+  try {
+    const cfg = { ..._aiConfig };
+    cfg.active_provider = _selectedProvider;
+    cfg.active_model = document.getElementById('ai-settings-model').value;
+    cfg.system_instructions = document.getElementById('ai-system-instructions').value;
+    if (!cfg.providers) cfg.providers = {};
+    if (!cfg.providers[_selectedProvider]) cfg.providers[_selectedProvider] = {};
+    cfg.providers[_selectedProvider].api_key = document.getElementById('ai-key-input').value;
+    const res = await fetch(API + '/ai/config', {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(cfg)
+    });
+    if (!res.ok) throw new Error('Failed to save');
+    _aiConfig = await res.json();
+    statusEl.textContent = 'Saved!'; statusEl.className = 'text-xs text-center mt-3 text-secondary';
+    statusEl.classList.remove('hidden');
+    setTimeout(() => statusEl.classList.add('hidden'), 2000);
+  } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-center mt-3 text-error'; statusEl.classList.remove('hidden'); }
+}
+
+// --- Upload Modal ---
+function openUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); document.getElementById('upload-modal').classList.add('flex'); }
+function closeUploadModal() { document.getElementById('upload-modal').classList.add('hidden'); document.getElementById('upload-modal').classList.remove('flex'); }
+document.getElementById('upload-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeUploadModal(); });
+
+// --- Auto-detect player from .info file ---
+document.getElementById('upload-info-file').addEventListener('change', async function() {
+  const detectStatus = document.getElementById('player-detect-status');
+  const sel = document.getElementById('upload-steam-id');
+  const dateInput = document.getElementById('upload-date');
+  detectStatus.classList.add('hidden');
+  if (!this.files.length) return;
+  const fd = new FormData();
+  fd.append('info_file', this.files[0]);
+  try {
+    const res = await fetch(API + '/matches/detect-player', { method: 'POST', body: fd });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Detection failed'); }
+    const data = await res.json();
+    // Auto-fill match date if found and not already set
+    if (data.match_date && !dateInput.value) dateInput.value = data.match_date;
+    if (data.matched && data.matched.length > 0) {
+      // Auto-select the first matched player
+      const matchedId = data.matched[0].steam_id;
+      if (sel.querySelector('option[value="' + matchedId + '"]')) {
+        sel.value = matchedId;
+      }
+      const names = data.matched.map(a => a.name).join(', ');
+      detectStatus.textContent = 'Detected player: ' + names;
+      detectStatus.className = 'text-xs mt-1 text-secondary';
+      detectStatus.classList.remove('hidden');
+    } else {
+      detectStatus.innerHTML = 'No configured account found in this match. <button type="button" onclick="openSettingsModal(\'accounts\')" class="underline text-primary hover:text-primary-dim">Add account</button>';
+      detectStatus.className = 'text-xs mt-1 text-error';
+      detectStatus.classList.remove('hidden');
+    }
+  } catch (err) {
+    detectStatus.textContent = err.message;
+    detectStatus.className = 'text-xs mt-1 text-error';
+    detectStatus.classList.remove('hidden');
+  }
+});
+
+document.getElementById('upload-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('upload-btn');
+  const status = document.getElementById('upload-status');
+  const fileInput = document.getElementById('upload-file');
+  if (!fileInput.files.length) return;
+  btn.disabled = true; btn.textContent = 'PROCESSING...';
+  status.classList.remove('hidden','text-error','text-secondary'); status.classList.add('text-on-surface-variant'); status.textContent = 'Uploading and parsing demo...';
+  const fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  const infoInput = document.getElementById('upload-info-file');
+  if (infoInput.files.length) fd.append('info_file', infoInput.files[0]);
+  fd.append('steam_id', document.getElementById('upload-steam-id').value);
+  fd.append('context_notes', document.getElementById('upload-notes').value);
+  fd.append('tags', document.getElementById('upload-tags').value);
+  const dateVal = document.getElementById('upload-date').value;
+  if (dateVal) fd.append('match_date', dateVal);
+  try {
+    const res = await fetch(API + '/matches/upload', { method: 'POST', body: fd });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Upload failed'); }
+    const data = await res.json();
+    status.classList.remove('text-on-surface-variant'); status.classList.add('text-secondary'); status.textContent = 'Demo processed! Refreshing...';
+    setTimeout(() => { closeUploadModal(); loadDashboard(); }, 800);
+  } catch (err) {
+    status.classList.remove('text-on-surface-variant'); status.classList.add('text-error'); status.textContent = err.message;
+  } finally { btn.disabled = false; btn.textContent = 'Process Demo'; }
+});
+
+// --- Bulk Upload Modal ---
+function openBulkUploadModal() {
+  const m = document.getElementById('bulk-upload-modal');
+  m.classList.remove('hidden'); m.classList.add('flex');
+  populateBulkAccountSelector();
+  document.getElementById('bulk-dem-files').value = '';
+  document.getElementById('bulk-info-files').value = '';
+  document.getElementById('bulk-file-preview').classList.add('hidden');
+  document.getElementById('bulk-progress').classList.add('hidden');
+  document.getElementById('bulk-upload-btn').disabled = false;
+  document.getElementById('bulk-upload-btn').textContent = 'Process All Demos';
+}
+function closeBulkUploadModal() { const m = document.getElementById('bulk-upload-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+document.getElementById('bulk-upload-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeBulkUploadModal(); });
+
+async function populateBulkAccountSelector() {
+  const sel = document.getElementById('bulk-steam-id');
+  try {
+    const res = await fetch(API + '/accounts');
+    const data = await res.json();
+    sel.innerHTML = '';
+    (data.accounts || []).forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.steam_id; opt.textContent = a.name + ' (' + a.steam_id + ')';
+      if (a.active) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch(e) { sel.innerHTML = '<option value="">No accounts</option>'; }
+}
+
+document.getElementById('bulk-dem-files').addEventListener('change', function() {
+  const preview = document.getElementById('bulk-file-preview');
+  const list = document.getElementById('bulk-file-list');
+  if (!this.files.length) { preview.classList.add('hidden'); return; }
+  preview.classList.remove('hidden');
+  list.innerHTML = '';
+  for (const f of this.files) {
+    const row = document.createElement('div');
+    row.className = 'text-xs text-on-surface-variant flex items-center gap-2';
+    row.innerHTML = '<span class="material-symbols-outlined text-[14px]">description</span>' + f.name + ' <span class="text-on-surface-variant/50">(' + (f.size / 1024 / 1024).toFixed(1) + ' MB)</span>';
+    list.appendChild(row);
+  }
+});
+
+async function startBulkUpload() {
+  const demInput = document.getElementById('bulk-dem-files');
+  const infoInput = document.getElementById('bulk-info-files');
+  if (!demInput.files.length) return;
+  const btn = document.getElementById('bulk-upload-btn');
+  const progressSection = document.getElementById('bulk-progress');
+  const progressText = document.getElementById('bulk-progress-text');
+  const progressCount = document.getElementById('bulk-progress-count');
+  const progressBar = document.getElementById('bulk-progress-bar');
+  const resultsDiv = document.getElementById('bulk-results');
+  btn.disabled = true; btn.textContent = 'PROCESSING...';
+  progressSection.classList.remove('hidden');
+  resultsDiv.innerHTML = '';
+  progressBar.style.width = '0%';
+  const total = demInput.files.length;
+  progressCount.textContent = '0 / ' + total;
+  progressText.textContent = 'Uploading ' + total + ' demo' + (total > 1 ? 's' : '') + '...';
+  const fd = new FormData();
+  for (const f of demInput.files) fd.append('files', f);
+  for (const f of infoInput.files) fd.append('info_files', f);
+  fd.append('steam_id', document.getElementById('bulk-steam-id').value);
+  try {
+    const res = await fetch(API + '/matches/upload-bulk', { method: 'POST', body: fd });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Bulk upload failed'); }
+    const data = await res.json();
+    progressBar.style.width = '100%';
+    progressCount.textContent = data.processed + ' / ' + data.total;
+    progressText.textContent = data.processed === data.total ? 'All demos processed!' : data.processed + ' of ' + data.total + ' succeeded';
+    progressText.className = 'text-[10px] font-bold uppercase tracking-widest ' + (data.processed === data.total ? 'text-secondary' : 'text-warning');
+    data.results.forEach(r => {
+      const row = document.createElement('div');
+      const ok = r.status === 'ok';
+      row.className = 'flex items-center gap-2 text-xs p-2 rounded-lg ' + (ok ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error');
+      const icon = ok ? 'check_circle' : 'error';
+      const detail = ok ? (r.map_name || '') + (r.player_name ? ' — ' + r.player_name : '') : (r.error || 'Failed');
+      row.innerHTML = '<span class="material-symbols-outlined text-[16px]">' + icon + '</span><span class="font-medium truncate flex-1">' + r.filename + '</span><span class="text-on-surface-variant/70 text-[10px]">' + detail + '</span>';
+      resultsDiv.appendChild(row);
+    });
+    if (data.processed > 0) setTimeout(() => loadDashboard(), 500);
+  } catch(err) {
+    progressText.textContent = err.message;
+    progressText.className = 'text-[10px] font-bold uppercase tracking-widest text-error';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Process All Demos';
+  }
+}
+
+// --- Data Loading ---
+async function loadDashboard() {
+  try {
+    const [trendsRes, matchesRes] = await Promise.all([
+      fetch(API + '/trends'), fetch(API + '/matches')
+    ]);
+    const trends = await trendsRes.json();
+    const matches = await matchesRes.json();
+    renderKPIs(trends, matches);
+    renderChart(trends);
+    renderRecentMatches(matches);
+  } catch (err) { console.error('Failed to load dashboard:', err); }
+}
+
+function renderKPIs(trends, matches) {
+  const avg = trends.averages || {};
+  const pts = trends.data_points || [];
+  const n = pts.length;
+  // K/D
+  const totalK = pts.reduce((s,d) => s + (d.kills||0), 0);
+  const totalD = pts.reduce((s,d) => s + (d.deaths||0), 0);
+  const kd = totalD ? (totalK / totalD).toFixed(2) : '0.00';
+  // Win rate
+  const wins = pts.filter(d => d.match_result === 'Victory').length;
+  const winRate = n ? ((wins / n) * 100).toFixed(1) : '0.0';
+  // KPIs
+  const kpiCards = document.querySelectorAll('.grid.grid-cols-2.md\\:grid-cols-5 > div');
+  if (kpiCards[0]) { kpiCards[0].querySelector('.text-3xl').textContent = kd; }
+  if (kpiCards[1]) { kpiCards[1].querySelector('.text-3xl').textContent = (avg.avg_kast || 0).toFixed(1) + '%'; }
+  if (kpiCards[2]) { kpiCards[2].querySelector('.text-3xl').textContent = (avg.avg_rating || 0).toFixed(2); }
+  if (kpiCards[3]) {
+    kpiCards[3].querySelector('.text-3xl').textContent = winRate + '%';
+    const bar = kpiCards[3].querySelector('.bg-secondary');
+    if (bar) bar.style.width = winRate + '%';
+  }
+  if (kpiCards[4]) { kpiCards[4].querySelector('.text-3xl').textContent = (avg.avg_adr || 0).toFixed(0); }
+  // Update labels for aim → ADR
+  const aimLabel = kpiCards[4]?.querySelector('.text-\\[10px\\].font-bold.text-on-surface-variant');
+  if (aimLabel) aimLabel.textContent = 'ADR';
+  const aimSubtext = kpiCards[4]?.querySelector('.text-\\[10px\\].text-primary-dim');
+  if (aimSubtext) aimSubtext.innerHTML = '<span class="material-symbols-outlined text-xs">show_chart</span> Avg Damage/Round';
+}
+
+function renderChart(trends) {
+  const pts = trends.data_points || [];
+  const container = document.querySelector('.h-64.flex.items-end');
+  if (!container || !pts.length) return;
+  const labels = document.querySelector('.mt-4.flex.justify-between');
+  // Find max for scaling
+  const values = pts.map(d => d.hltv_rating || 0);
+  const maxVal = Math.max(...values, 1.5);
+  // Build bars
+  let barsHtml = '';
+  for (const v of values) {
+    const pct = Math.round((v / maxVal) * 100);
+    const isHigh = v >= 1.3;
+    const barColor = isHigh
+      ? 'bg-secondary/30 border-t-2 border-secondary hover:bg-secondary/50'
+      : 'bg-surface-container-highest hover:bg-primary/40';
+    barsHtml += `<div class="flex-1 ${barColor} rounded-t-sm transition-all relative group" style="height:${pct}%">
+      <div class="absolute -top-8 left-1/2 -translate-x-1/2 ${isHigh ? 'bg-secondary text-on-secondary' : 'bg-primary text-on-primary'} text-[10px] font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">${v.toFixed(2)}</div>
+    </div>`;
+  }
+  // Keep grid lines
+  const gridLines = container.querySelector('.absolute.inset-0');
+  container.innerHTML = (gridLines ? gridLines.outerHTML : '') + barsHtml;
+  // Labels
+  if (labels && pts.length > 1) {
+    const step = Math.max(1, Math.floor(pts.length / 5));
+    let labelHtml = '';
+    for (let i = 0; i < pts.length; i += step) {
+      const mapName = (pts[i].map_name || '').replace('de_','').toUpperCase();
+      labelHtml += `<span>${mapName || 'Match ' + (i+1)}</span>`;
+    }
+    if (pts.length - 1 > (Math.floor((pts.length-1)/step) * step)) {
+      const last = pts[pts.length-1];
+      labelHtml += `<span>Latest</span>`;
+    }
+    labels.innerHTML = labelHtml;
+  }
+}
+
+function renderRecentMatches(matches) {
+  const container = document.querySelector('.space-y-2');
+  if (!container || !matches.length) return;
+  const mapAbbrev = name => {
+    const n = (name || '').replace('de_','').toLowerCase();
+    const map = { mirage:'MIR', inferno:'INF', dust2:'D2', ancient:'ANC', anubis:'ANB', nuke:'NUK', vertigo:'VRT', overpass:'OVP' };
+    return map[n] || n.substring(0,3).toUpperCase();
+  };
+  const mapFull = name => (name || '').replace('de_','').charAt(0).toUpperCase() + (name || '').replace('de_','').slice(1);
+  let html = '';
+  const recent = matches.slice(0, 10);
+  for (const m of recent) {
+    const isWin = m.match_result === 'Victory';
+    const borderColor = isWin ? 'border-secondary' : 'border-error';
+    const scoreColor = isWin ? 'text-secondary' : 'text-error';
+    const statusColor = isWin ? 'text-secondary' : 'text-error';
+    const score = `${m.team_score || 0} - ${m.enemy_score || 0}`;
+    const kda = `${m.kills || 0} / ${m.deaths || 0} / ${m.assists || 0}`;
+    const rating = (m.hltv_rating || 0).toFixed(2);
+    const ratingColor = (m.hltv_rating || 0) >= 1.0 ? 'text-secondary' : 'text-on-surface';
+    const result = m.match_result === 'Victory' ? 'VICTORY' : m.match_result === 'Defeat' ? 'DEFEAT' : (m.match_result || '').toUpperCase();
+    html += `<div class="grid grid-cols-4 md:grid-cols-12 items-center bg-surface-container hover:bg-surface-container-high transition-all p-4 rounded-xl border-l-4 ${borderColor} group cursor-pointer" onclick="window.location.href='match-breakdown.html?id=${m.match_id}'">
+      <div class="md:col-span-2 flex items-center gap-3">
+        <div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center font-bold text-xs text-on-surface-variant">${mapAbbrev(m.map_name)}</div>
+        <div class="font-bold text-xs uppercase tracking-widest">${mapFull(m.map_name)}</div>
+      </div>
+      <div class="md:col-span-2 font-headline text-xl font-bold ${scoreColor}">${score}</div>
+      <div class="hidden md:block md:col-span-2">
+        <div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">K / D / A</div>
+        <div class="text-sm font-bold text-on-surface">${kda}</div>
+      </div>
+      <div class="hidden md:block md:col-span-2">
+        <div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">RATING</div>
+        <div class="text-sm font-bold ${ratingColor}">${rating}</div>
+      </div>
+      <div class="md:col-span-2 text-right md:text-left">
+        <div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">STATUS</div>
+        <div class="text-xs font-bold ${statusColor} uppercase tracking-widest">${result}</div>
+      </div>
+      <div class="hidden md:flex md:col-span-2 justify-end">
+        <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">analytics</span>
+      </div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+// --- Sidebar collapse ---
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const main = document.getElementById('main-area');
+  sb.classList.toggle('collapsed');
+  const collapsed = sb.classList.contains('collapsed');
+  main.style.paddingLeft = collapsed ? '6rem' : '';
+  try { localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0'); } catch(e) {}
+}
+(function applySidebarState() {
+  try {
+    if (localStorage.getItem('sidebar-collapsed') === '1') {
+      const sb = document.getElementById('sidebar');
+      const main = document.getElementById('main-area');
+      if (sb) { sb.classList.add('collapsed'); }
+      if (main) { main.style.paddingLeft = '6rem'; }
+    }
+  } catch(e) {}
+})();
+
+// --- Init ---
+document.addEventListener('DOMContentLoaded', () => { loadAccounts(); loadDashboard(); });
+</script>
+</body></html>

@@ -1,0 +1,125 @@
+Third-Party Software Notices and Licenses
+==========================================
+
+pr1maly uses third-party libraries and assets subject to the following
+licenses. These components are not covered by the pr1maly license above and
+retain their original copyright and license terms.
+
+
+demoparser2
+-----------
+License: MIT
+Repository: https://github.com/LaihoE/demoparser
+Copyright (c) demoparser2 contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files, to deal in the Software
+without restriction, including without limitation the rights to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies of the
+Software, subject to the conditions of the MIT License.
+
+
+pandas
+------
+License: BSD 3-Clause
+Repository: https://github.com/pandas-dev/pandas
+Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc.
+and PyData Development Team. All rights reserved.
+Copyright (c) 2011-2026, Open source contributors.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+* Redistributions of source code must retain the above copyright notice.
+* Redistributions in binary form must reproduce the above copyright notice.
+* Neither the name of the copyright holders nor the names of contributors
+  may be used to endorse or promote products without specific prior written
+  permission.
+
+
+FastAPI
+-------
+License: MIT
+Repository: https://github.com/tiangolo/fastapi
+Copyright (c) 2018 Sebastian Ramirez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files, to deal in the Software
+without restriction, subject to the conditions of the MIT License.
+
+
+uvicorn
+-------
+License: BSD 3-Clause
+Repository: https://github.com/encode/uvicorn
+Copyright (c) 2017-present, Encode OSS Ltd. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the conditions of the BSD 3-Clause
+License are met.
+
+
+python-multipart
+----------------
+License: Apache License 2.0
+Repository: https://github.com/Kludex/python-multipart
+Copyright (c) python-multipart contributors
+
+Licensed under the Apache License, Version 2.0. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+
+httpx
+-----
+License: BSD 3-Clause
+Repository: https://github.com/encode/httpx
+Copyright (c) 2019-present, Encode OSS Ltd. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the conditions of the BSD 3-Clause
+License are met.
+
+
+Tailwind CSS
+------------
+License: MIT
+Repository: https://github.com/tailwindlabs/tailwindcss
+Copyright (c) Tailwind Labs, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files, to deal in the Software
+without restriction, subject to the conditions of the MIT License.
+
+
+Google Fonts — Space Grotesk
+-----------------------------
+License: SIL Open Font License, Version 1.1
+Repository: https://github.com/nicholasflorez/space-grotesk
+Copyright (c) 2018 Florian Karsten
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is available at https://opensource.org/licenses/OFL-1.1
+
+
+Material Symbols
+----------------
+License: Apache License 2.0
+Repository: https://github.com/google/material-design-icons
+Copyright (c) Google LLC
+
+Licensed under the Apache License, Version 2.0. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+
+SQLite
+------
+License: Public Domain
+Website: https://www.sqlite.org/copyright.html
+
+SQLite is in the public domain and does not require a license.
+
+
+Python
+------
+License: Python Software Foundation License (PSF)
+Website: https://docs.python.org/3/license.html
+Copyright (c) 2001-2026 Python Software Foundation. All rights reserved.

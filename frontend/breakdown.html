@@ -1,0 +1,1774 @@
+﻿<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>pr1maly // PERFORMANCE_ANALYTICS</title>
+<link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
+<link rel="icon" type="image/png" href="img/logo-big.png"/>
+<link rel="stylesheet" href="theme.css"/>
+<script src="theme.js"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-container": "rgb(var(--c-secondary-container) / <alpha-value>)",
+              "on-secondary-fixed-variant": "rgb(var(--c-on-secondary-fixed-variant) / <alpha-value>)",
+              "tertiary-fixed-dim": "rgb(var(--c-tertiary-fixed-dim) / <alpha-value>)",
+              "surface-container-low": "rgb(var(--c-surface-container-low) / <alpha-value>)",
+              "primary-fixed": "rgb(var(--c-primary-fixed) / <alpha-value>)",
+              "on-tertiary-container": "rgb(var(--c-on-tertiary-container) / <alpha-value>)",
+              "error-dim": "rgb(var(--c-error-dim) / <alpha-value>)",
+              "secondary-fixed-dim": "rgb(var(--c-secondary-fixed-dim) / <alpha-value>)",
+              "on-error": "rgb(var(--c-on-error) / <alpha-value>)",
+              "inverse-primary": "rgb(var(--c-inverse-primary) / <alpha-value>)",
+              "surface-tint": "rgb(var(--c-surface-tint) / <alpha-value>)",
+              "surface-variant": "rgb(var(--c-surface-variant) / <alpha-value>)",
+              "tertiary-fixed": "rgb(var(--c-tertiary-fixed) / <alpha-value>)",
+              "tertiary-container": "rgb(var(--c-tertiary-container) / <alpha-value>)",
+              "primary-fixed-dim": "rgb(var(--c-primary-fixed-dim) / <alpha-value>)",
+              "on-primary": "rgb(var(--c-on-primary) / <alpha-value>)",
+              "error-container": "rgb(var(--c-error-container) / <alpha-value>)",
+              "on-tertiary-fixed": "rgb(var(--c-on-tertiary-fixed) / <alpha-value>)",
+              "surface-container-lowest": "rgb(var(--c-surface-container-lowest) / <alpha-value>)",
+              "on-primary-fixed": "rgb(var(--c-on-primary-fixed) / <alpha-value>)",
+              "on-primary-fixed-variant": "rgb(var(--c-on-primary-fixed-variant) / <alpha-value>)",
+              "on-secondary-container": "rgb(var(--c-on-secondary-container) / <alpha-value>)",
+              "surface-container-high": "rgb(var(--c-surface-container-high) / <alpha-value>)",
+              "surface-dim": "rgb(var(--c-surface-dim) / <alpha-value>)",
+              "primary": "rgb(var(--c-primary) / <alpha-value>)",
+              "on-tertiary-fixed-variant": "rgb(var(--c-on-tertiary-fixed-variant) / <alpha-value>)",
+              "background": "rgb(var(--c-background) / <alpha-value>)",
+              "outline-variant": "rgb(var(--c-outline-variant) / <alpha-value>)",
+              "on-secondary-fixed": "rgb(var(--c-on-secondary-fixed) / <alpha-value>)",
+              "secondary-fixed": "rgb(var(--c-secondary-fixed) / <alpha-value>)",
+              "primary-dim": "rgb(var(--c-primary-dim) / <alpha-value>)",
+              "surface-bright": "rgb(var(--c-surface-bright) / <alpha-value>)",
+              "surface-container": "rgb(var(--c-surface-container) / <alpha-value>)",
+              "primary-container": "rgb(var(--c-primary-container) / <alpha-value>)",
+              "on-error-container": "rgb(var(--c-on-error-container) / <alpha-value>)",
+              "secondary-dim": "rgb(var(--c-secondary-dim) / <alpha-value>)",
+              "on-tertiary": "rgb(var(--c-on-tertiary) / <alpha-value>)",
+              "on-surface-variant": "rgb(var(--c-on-surface-variant) / <alpha-value>)",
+              "tertiary-dim": "rgb(var(--c-tertiary-dim) / <alpha-value>)",
+              "error": "rgb(var(--c-error) / <alpha-value>)",
+              "surface": "rgb(var(--c-surface) / <alpha-value>)",
+              "tertiary": "rgb(var(--c-tertiary) / <alpha-value>)",
+              "on-secondary": "rgb(var(--c-on-secondary) / <alpha-value>)",
+              "on-background": "rgb(var(--c-on-background) / <alpha-value>)",
+              "on-surface": "rgb(var(--c-on-surface) / <alpha-value>)",
+              "on-primary-container": "rgb(var(--c-on-primary-container) / <alpha-value>)",
+              "inverse-surface": "rgb(var(--c-inverse-surface) / <alpha-value>)",
+              "secondary": "rgb(var(--c-secondary) / <alpha-value>)",
+              "outline": "rgb(var(--c-outline) / <alpha-value>)",
+              "surface-container-highest": "rgb(var(--c-surface-container-highest) / <alpha-value>)",
+              "inverse-on-surface": "rgb(var(--c-inverse-on-surface) / <alpha-value>)"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk", "sans-serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .stat-glow-secondary { text-shadow: 0 0 15px var(--stat-glow-secondary); }
+        .stat-glow-tertiary { text-shadow: 0 0 15px var(--stat-glow-tertiary); }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(12px); }
+        .glow-primary { box-shadow: 0 0 15px var(--glow-primary); }
+        .glow-secondary { box-shadow: 0 0 15px var(--glow-secondary); }
+        .glow-tertiary { box-shadow: 0 0 15px var(--glow-tertiary); }
+        /* Collapsible sidebar */
+        #sidebar { transition: width 0.25s cubic-bezier(.4,0,.2,1); overflow: hidden; }
+        #sidebar .sidebar-label { transition: opacity 0.2s; white-space: nowrap; }
+        #sidebar.collapsed { width: 4.5rem !important; }
+        #sidebar.collapsed .sidebar-label { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+        #sidebar.collapsed .sidebar-brand { display: none; }
+        #sidebar.collapsed .sidebar-actions { display: none; }
+        #sidebar.collapsed nav a { justify-content: center; padding-left: 0; padding-right: 0; }
+        #sidebar.collapsed .sidebar-logo { margin-left: auto; margin-right: auto; }
+        #sidebar.collapsed .sidebar-header { justify-content: center; padding-left: 0; padding-right: 0; }
+        #main-area { transition: padding-left 0.25s cubic-bezier(.4,0,.2,1); }
+        #sidebar-toggle { transition: transform 0.25s; }
+        #sidebar.collapsed #sidebar-toggle { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary selection:text-on-primary-container">
+<!-- SideNavBar -->
+<aside id="sidebar" class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container shadow-2xl shadow-purple-900/20 border-r border-white/5 pt-6 z-40">
+<div class="sidebar-header px-6 py-4 mb-8">
+<div class="flex items-center gap-3">
+<div class="sidebar-logo w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+<img src="img/logo-big.png" alt="pr1maly" class="w-full h-full object-cover"/>
+</div>
+<div class="sidebar-brand flex-1 min-w-0">
+<div class="font-headline text-sm font-bold uppercase tracking-widest text-on-surface">pr1maly</div>
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">CS2 Analytics</div>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="bg-gradient-to-r from-purple-500/20 to-transparent border-l-4 border-cyan-400 text-cyan-400 py-4 px-6 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest group" href="breakdown.html">
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="insights">insights</span>
+<span class="sidebar-label">Trend</span>
+            </a>
+<a class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="match-breakdown.html">
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="sports_esports">sports_esports</span>
+<span class="sidebar-label">Match Breakdown</span>
+            </a>
+</nav>
+<div class="sidebar-actions p-6 space-y-4">
+<button onclick="openUploadModal()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+                Upload Demo
+            </button>
+<button onclick="openBulkUploadModal()" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">upload_file</span> <span class="sidebar-label">Bulk Upload</span>
+</button>
+<button onclick="openSyncModal()" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-secondary/30 hover:text-secondary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">sync</span> <span class="sidebar-label">Sync Folder</span>
+</button>
+<div class="space-y-1">
+<button onclick="openSettingsModal()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
+<span class="material-symbols-outlined text-sm">settings</span> <span class="sidebar-label">Settings</span>
+</button>
+<button onclick="toggleTheme()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Toggle light/dark mode">
+<span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme</span>
+</button>
+</div>
+</div>
+<button id="sidebar-toggle" onclick="toggleSidebar()" class="mx-auto mb-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-highest border border-white/10 text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors" title="Collapse sidebar">
+<span class="material-symbols-outlined text-base">chevron_left</span>
+</button>
+</aside>
+<!-- Main Content Canvas -->
+<main id="main-area" class="lg:pl-[17.5rem] pt-6 pb-24 lg:pb-8 min-h-screen px-6">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- OVERALL PERFORMANCE (above map selector, all maps aggregated) -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="overall-perf-section" class="mb-6 hidden">
+  <div class="bg-surface-container rounded-xl overflow-hidden">
+    <div class="p-6 border-b border-white/5 flex items-center justify-between">
+      <div>
+        <h2 class="font-headline font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-lg">monitoring</span>
+          Overall Performance
+        </h2>
+        <p class="text-[10px] text-on-surface-variant mt-1">Aggregated across all maps — <span id="overall-match-count" class="text-primary font-bold">0</span> matches</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 divide-x divide-white/5">
+      <!-- Rating -->
+      <div class="p-4 flex flex-col">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">HLTV Rating</p>
+        <p id="overall-rating" class="text-2xl font-headline font-bold text-primary">—</p>
+        <p id="overall-rating-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="overall-rating-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- ADR -->
+      <div class="p-4 flex flex-col">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">ADR</p>
+        <p id="overall-adr" class="text-2xl font-headline font-bold text-secondary">—</p>
+        <p id="overall-adr-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="overall-adr-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- K/D -->
+      <div class="p-4 flex flex-col">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">K/D Ratio</p>
+        <p id="overall-kd" class="text-2xl font-headline font-bold text-on-surface">—</p>
+        <p id="overall-kd-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="overall-kd-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- KAST -->
+      <div class="p-4 flex flex-col">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">KAST%</p>
+        <p id="overall-kast" class="text-2xl font-headline font-bold text-secondary">—</p>
+        <p id="overall-kast-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="overall-kast-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- HS% -->
+      <div class="p-4 flex flex-col border-t border-white/5">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">HS%</p>
+        <p id="overall-hs" class="text-2xl font-headline font-bold text-tertiary">—</p>
+        <p id="overall-hs-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="overall-hs-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- Win Rate -->
+      <div class="p-4 flex flex-col border-t border-white/5">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">Win Rate</p>
+        <p id="overall-winrate" class="text-2xl font-headline font-bold text-on-surface">—</p>
+        <p id="overall-winrate-detail" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden mt-2">
+          <div id="overall-winrate-bar" class="h-full bg-secondary rounded-full transition-all duration-700" style="width:0%"></div>
+        </div>
+      </div>
+      <!-- AIM Rating -->
+      <div class="p-4 flex flex-col border-t border-white/5">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">AIM Rating</p>
+        <p id="overall-aim" class="text-2xl font-headline font-bold text-amber-400">—</p>
+        <p id="overall-aim-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="overall-aim-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- Utility Rating -->
+      <div class="p-4 flex flex-col border-t border-white/5">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">Utility Rating</p>
+        <p id="overall-util" class="text-2xl font-headline font-bold text-emerald-400">—</p>
+        <p id="overall-util-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="overall-util-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MAP SELECTOR (top-left, col-span-8) -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="md:col-span-8 bg-surface-container rounded-xl overflow-hidden">
+<div class="p-6 flex items-center justify-between border-b border-white/5">
+  <h2 class="font-headline font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+    <span class="material-symbols-outlined text-primary text-lg">map</span>
+    Map Selection
+  </h2>
+  <button id="map-clear-btn" class="hidden text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-error transition-colors px-3 py-1" onclick="clearMapSelection()">
+    <span class="material-symbols-outlined text-xs align-middle mr-1">close</span>Clear
+  </button>
+</div>
+<div id="map-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-6">
+  <!-- populated by renderMapGrid() -->
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MECHANICS (top-right, col-span-4) -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="md:col-span-4 bg-surface-container rounded-xl p-6 relative overflow-hidden flex flex-col">
+<h2 class="font-headline font-bold uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-lg">target</span>
+                    Mechanics
+                </h2>
+<div class="flex-1 flex flex-col justify-center items-center py-4">
+<div class="relative w-40 h-40 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="8"></circle>
+<circle id="hs-ring" class="text-primary glow-primary" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="440" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span id="stat-hs-pct" class="text-4xl font-bold">—</span>
+<span class="text-[10px] font-bold text-outline">HS%</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mt-auto">
+<div class="bg-surface-container-highest p-3 rounded-lg border-l-2 border-secondary">
+<p class="text-[9px] font-bold text-outline uppercase tracking-tighter">OPEN DUEL</p>
+<p id="stat-open-duel" class="text-lg font-bold">—</p>
+</div>
+<div class="bg-surface-container-highest p-3 rounded-lg border-l-2 border-tertiary">
+<p class="text-[9px] font-bold text-outline uppercase tracking-tighter">TOP WEAPON</p>
+<p id="stat-top-weapon" class="text-lg font-bold">—</p>
+</div>
+</div>
+<!-- Overall stats summary -->
+<div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-3 gap-2 text-center">
+<div>
+  <p class="text-[9px] font-bold text-outline uppercase">Rounds</p>
+  <p id="stat-total-rounds" class="text-lg font-bold">—</p>
+</div>
+<div>
+  <p class="text-[9px] font-bold text-outline uppercase">Rating</p>
+  <p id="stat-hltv-rating" class="text-lg font-bold text-primary">—</p>
+</div>
+<div>
+  <p class="text-[9px] font-bold text-outline uppercase">Matches</p>
+  <p id="stat-total-matches" class="text-lg font-bold">—</p>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MAP-SPECIFIC PERFORMANCE (col-span-12, only when map selected) -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="map-perf-section" class="md:col-span-12 hidden">
+  <div class="bg-surface-container rounded-xl overflow-hidden">
+    <div class="p-6 border-b border-white/5 flex items-center justify-between">
+      <div>
+        <h2 class="font-headline font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-lg">query_stats</span>
+          <span id="map-perf-title">Map Performance</span>
+        </h2>
+        <p class="text-[10px] text-on-surface-variant mt-1">Filtered — <span id="map-perf-match-count" class="text-secondary font-bold">0</span> matches</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 divide-x divide-white/5">
+      <!-- Rating -->
+      <div class="p-4 flex flex-col">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">HLTV Rating</p>
+        <p id="map-perf-rating" class="text-2xl font-headline font-bold text-primary">—</p>
+        <p id="map-perf-rating-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="map-perf-rating-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- ADR -->
+      <div class="p-4 flex flex-col">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">ADR</p>
+        <p id="map-perf-adr" class="text-2xl font-headline font-bold text-secondary">—</p>
+        <p id="map-perf-adr-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="map-perf-adr-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- K/D -->
+      <div class="p-4 flex flex-col">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">K/D Ratio</p>
+        <p id="map-perf-kd" class="text-2xl font-headline font-bold text-on-surface">—</p>
+        <p id="map-perf-kd-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="map-perf-kd-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- KAST -->
+      <div class="p-4 flex flex-col">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">KAST%</p>
+        <p id="map-perf-kast" class="text-2xl font-headline font-bold text-secondary">—</p>
+        <p id="map-perf-kast-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="map-perf-kast-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- HS% -->
+      <div class="p-4 flex flex-col border-t border-white/5">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">HS%</p>
+        <p id="map-perf-hs" class="text-2xl font-headline font-bold text-tertiary">—</p>
+        <p id="map-perf-hs-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="map-perf-hs-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- Win Rate -->
+      <div class="p-4 flex flex-col border-t border-white/5">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">Win Rate</p>
+        <p id="map-perf-winrate" class="text-2xl font-headline font-bold text-on-surface">—</p>
+        <p id="map-perf-winrate-detail" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden mt-2">
+          <div id="map-perf-winrate-bar" class="h-full bg-secondary rounded-full transition-all duration-700" style="width:0%"></div>
+        </div>
+      </div>
+      <!-- AIM Rating -->
+      <div class="p-4 flex flex-col border-t border-white/5">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">AIM Rating</p>
+        <p id="map-perf-aim" class="text-2xl font-headline font-bold text-amber-400">—</p>
+        <p id="map-perf-aim-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="map-perf-aim-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+      <!-- Utility Rating -->
+      <div class="p-4 flex flex-col border-t border-white/5">
+        <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">Utility Rating</p>
+        <p id="map-perf-util" class="text-2xl font-headline font-bold text-emerald-400">—</p>
+        <p id="map-perf-util-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
+        <canvas id="map-perf-util-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- CT/T EFFECTIVENESS (bottom-left, col-span-6) — only when map selected -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="side-stats-section" class="md:col-span-6 bg-surface-container rounded-xl p-6 hidden">
+<h2 class="font-headline font-bold uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
+  <span class="material-symbols-outlined text-secondary text-lg">balance</span>
+  <span id="side-stats-title">Side Effectiveness</span>
+</h2>
+<div class="space-y-6">
+  <!-- CT Side -->
+  <div class="p-5 bg-surface-container-highest rounded-xl border border-secondary/20">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="material-symbols-outlined text-3xl text-secondary" style="font-variation-settings: 'FILL' 1;">shield</span>
+      <div>
+        <p class="font-bold text-sm uppercase tracking-widest text-secondary">CT Side</p>
+        <p class="text-[10px] text-on-surface-variant">Counter-Terrorist</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-4 mb-4">
+      <div>
+        <p class="text-[9px] font-bold text-outline uppercase">Win Rate</p>
+        <p id="side-ct-winrate" class="text-2xl font-bold text-secondary">—</p>
+      </div>
+      <div>
+        <p class="text-[9px] font-bold text-outline uppercase">ADR</p>
+        <p id="side-ct-adr" class="text-2xl font-bold">—</p>
+      </div>
+      <div>
+        <p class="text-[9px] font-bold text-outline uppercase">Survival</p>
+        <p id="side-ct-survival" class="text-2xl font-bold">—</p>
+      </div>
+    </div>
+    <div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+      <div id="side-ct-bar" class="h-full bg-secondary rounded-full transition-all duration-700" style="width: 0%"></div>
+    </div>
+    <div class="flex justify-between mt-2 text-[9px] text-on-surface-variant">
+      <span id="side-ct-rounds">0 rounds</span>
+      <span id="side-ct-kd">0K / 0D</span>
+    </div>
+  </div>
+  <!-- T Side -->
+  <div class="p-5 bg-surface-container-highest rounded-xl border border-tertiary/20">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="material-symbols-outlined text-3xl text-tertiary" style="font-variation-settings: 'FILL' 1;">swords</span>
+      <div>
+        <p class="font-bold text-sm uppercase tracking-widest text-tertiary">T Side</p>
+        <p class="text-[10px] text-on-surface-variant">Terrorist</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-4 mb-4">
+      <div>
+        <p class="text-[9px] font-bold text-outline uppercase">Win Rate</p>
+        <p id="side-t-winrate" class="text-2xl font-bold text-tertiary">—</p>
+      </div>
+      <div>
+        <p class="text-[9px] font-bold text-outline uppercase">ADR</p>
+        <p id="side-t-adr" class="text-2xl font-bold">—</p>
+      </div>
+      <div>
+        <p class="text-[9px] font-bold text-outline uppercase">Survival</p>
+        <p id="side-t-survival" class="text-2xl font-bold">—</p>
+      </div>
+    </div>
+    <div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+      <div id="side-t-bar" class="h-full bg-tertiary rounded-full transition-all duration-700" style="width: 0%"></div>
+    </div>
+    <div class="flex justify-between mt-2 text-[9px] text-on-surface-variant">
+      <span id="side-t-rounds">0 rounds</span>
+      <span id="side-t-kd">0K / 0D</span>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- CT/T ROLES (bottom-right, col-span-6) — only when map selected -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="side-roles-section" class="md:col-span-6 bg-surface-container rounded-xl p-6 hidden">
+<div class="flex items-center justify-between mb-6">
+  <h2 class="font-headline font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+    <span class="material-symbols-outlined text-primary text-lg">person_celebrate</span>
+    <span id="side-roles-title">Side Roles</span>
+  </h2>
+  <button id="ai-role-btn" onclick="analyzeRolesWithAI()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all text-primary text-[10px] font-bold uppercase tracking-widest group" title="Let AI analyze your roles based on positioning data">
+    <span class="material-symbols-outlined text-sm group-hover:animate-pulse">smart_toy</span>
+    <span id="ai-role-btn-text">AI Analyze</span>
+  </button>
+  <span id="ai-role-badge" class="hidden text-[9px] font-bold text-secondary/70 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-xs">smart_toy</span>AI</span>
+</div>
+<div class="space-y-6">
+  <!-- CT Role -->
+  <div class="p-5 bg-surface-container-highest rounded-xl border border-secondary/20">
+    <div class="flex items-center gap-4 mb-3">
+      <div class="h-12 w-12 rounded-lg bg-surface-container flex items-center justify-center border border-secondary/30">
+        <span id="ct-role-icon" class="material-symbols-outlined text-secondary text-2xl">help</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">shield</span>
+          <span class="text-[9px] font-bold text-secondary uppercase tracking-widest">CT Role</span>
+        </div>
+        <p id="ct-role-name" class="text-lg font-bold truncate">—</p>
+      </div>
+    </div>
+    <p id="ct-role-desc" class="text-xs text-on-surface-variant leading-relaxed mb-3">No data available.</p>
+    <div class="grid grid-cols-2 gap-2">
+      <div class="bg-surface-container p-2 rounded-lg text-center">
+        <p class="text-[8px] font-bold text-outline uppercase">First Kills</p>
+        <p id="ct-role-fk" class="text-sm font-bold text-secondary">—</p>
+      </div>
+      <div class="bg-surface-container p-2 rounded-lg text-center">
+        <p class="text-[8px] font-bold text-outline uppercase">First Deaths</p>
+        <p id="ct-role-fd" class="text-sm font-bold text-on-surface-variant">—</p>
+      </div>
+    </div>
+    <div class="flex justify-center mt-4">
+      <canvas id="ct-role-radar" width="220" height="220" style="width:220px;height:220px"></canvas>
+    </div>
+  </div>
+  <!-- T Role -->
+  <div class="p-5 bg-surface-container-highest rounded-xl border border-tertiary/20">
+    <div class="flex items-center gap-4 mb-3">
+      <div class="h-12 w-12 rounded-lg bg-surface-container flex items-center justify-center border border-tertiary/30">
+        <span id="t-role-icon" class="material-symbols-outlined text-tertiary text-2xl">help</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-tertiary text-sm" style="font-variation-settings: 'FILL' 1;">swords</span>
+          <span class="text-[9px] font-bold text-tertiary uppercase tracking-widest">T Role</span>
+        </div>
+        <p id="t-role-name" class="text-lg font-bold truncate">—</p>
+      </div>
+    </div>
+    <p id="t-role-desc" class="text-xs text-on-surface-variant leading-relaxed mb-3">No data available.</p>
+    <div class="grid grid-cols-2 gap-2">
+      <div class="bg-surface-container p-2 rounded-lg text-center">
+        <p class="text-[8px] font-bold text-outline uppercase">First Kills</p>
+        <p id="t-role-fk" class="text-sm font-bold text-tertiary">—</p>
+      </div>
+      <div class="bg-surface-container p-2 rounded-lg text-center">
+        <p class="text-[8px] font-bold text-outline uppercase">First Deaths</p>
+        <p id="t-role-fd" class="text-sm font-bold text-on-surface-variant">—</p>
+      </div>
+    </div>
+    <div class="flex justify-center mt-4">
+      <canvas id="t-role-radar" width="220" height="220" style="width:220px;height:220px"></canvas>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="fixed lg:hidden bottom-0 w-full z-50 flex justify-around items-center px-6 pb-6 pt-3 bg-background/90 backdrop-blur-lg border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] rounded-t-3xl">
+<a class="flex flex-col items-center justify-center text-cyan-400 bg-cyan-400/10 rounded-xl px-4 py-1 tap-highlight-transparent scale-100 transition-transform" href="breakdown.html">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-headline text-[10px] font-bold uppercase mt-1">Trend</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 active:bg-purple-500/10 transition-transform scale-90 active:scale-100" href="match-breakdown.html">
+<span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
+<span class="font-headline text-[10px] font-bold uppercase mt-1">Matches</span>
+</a>
+</nav>
+<!-- Upload Modal -->
+<div id="upload-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)]">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline text-xl font-bold uppercase tracking-widest">Upload Demo</h2>
+      <button onclick="closeUploadModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+    </div>
+    <form id="upload-form" class="space-y-4">
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Player</label>
+        <select id="upload-steam-id" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0 appearance-none">
+          <!-- populated dynamically from /api/accounts -->
+        </select>
+        <div id="player-detect-status" class="text-xs mt-1 hidden"></div>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Demo File (.dem)</label>
+        <input type="file" id="upload-file" accept=".dem" required class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Info File (.dem.info) <span class="normal-case font-normal text-on-surface-variant/50">— optional, auto-detects player &amp; match date</span></label>
+        <input type="file" id="upload-info-file" accept=".info" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-secondary/80 file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Notes (optional)</label>
+        <input type="text" id="upload-notes" placeholder="e.g. ranked game, warm-up" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Tags (comma separated, optional)</label>
+        <input type="text" id="upload-tags" placeholder="e.g. solo queue, good game" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Match Date (optional)</label>
+        <input type="date" id="upload-date" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+      </div>
+      <button type="submit" id="upload-btn" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+        Process Demo
+      </button>
+      <div id="upload-status" class="text-xs text-center hidden"></div>
+    </form>
+  </div>
+</div>
+<!-- Bulk Upload Modal -->
+<div id="bulk-upload-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-2xl mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline text-xl font-bold uppercase tracking-widest flex items-center gap-3">
+        <span class="material-symbols-outlined text-primary">upload_file</span>
+        Bulk Upload
+      </h2>
+      <button onclick="closeBulkUploadModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Fallback Player <span class="normal-case font-normal text-on-surface-variant/50">— used when .info file is missing or has no known account</span></label>
+        <select id="bulk-steam-id" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0 appearance-none">
+        </select>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Demo Files (.dem) <span class="normal-case font-normal text-on-surface-variant/50">— select multiple</span></label>
+        <input type="file" id="bulk-dem-files" accept=".dem" multiple class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Info Files (.dem.info) <span class="normal-case font-normal text-on-surface-variant/50">— optional, auto-detects player per demo</span></label>
+        <input type="file" id="bulk-info-files" accept=".info" multiple class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-secondary/80 file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+      </div>
+      <div id="bulk-file-preview" class="hidden">
+        <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Files Queued</p>
+        <div id="bulk-file-list" class="space-y-1 max-h-40 overflow-y-auto"></div>
+      </div>
+      <button type="button" id="bulk-upload-btn" onclick="startBulkUpload()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+        Process All Demos
+      </button>
+      <div id="bulk-progress" class="hidden">
+        <div class="flex justify-between items-center mb-2">
+          <span id="bulk-progress-text" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Processing...</span>
+          <span id="bulk-progress-count" class="text-[10px] font-bold text-primary">0 / 0</span>
+        </div>
+        <div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden mb-3">
+          <div id="bulk-progress-bar" class="h-full bg-primary rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div id="bulk-results" class="space-y-1.5 max-h-60 overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Settings Modal (Accounts + AI) -->
+<div id="settings-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline text-xl font-bold uppercase tracking-widest">Settings</h2>
+      <button onclick="closeSettingsModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+    </div>
+    <!-- Tabs -->
+    <div class="flex gap-2 mb-6">
+      <button id="settings-tab-accounts" onclick="switchSettingsTab('accounts')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Accounts</button>
+      <button id="settings-tab-friends" onclick="switchSettingsTab('friends')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Friends</button>
+      <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
+    </div>
+    <!-- Accounts Tab -->
+    <div id="settings-accounts-panel">
+      <div id="accounts-list" class="space-y-2 mb-6"></div>
+      <div class="border-t border-white/10 pt-4">
+        <h3 class="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Add Account</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="new-acct-name" type="text" placeholder="Name (e.g. pr1me)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <input id="new-acct-steamid" type="text" placeholder="Steam ID 64" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <input id="new-acct-display" type="text" placeholder="Display Name (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <input id="new-acct-rank" type="text" placeholder="Rank (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+        </div>
+        <button onclick="addAccount()" class="mt-3 w-full bg-gradient-to-r from-secondary/80 to-secondary/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
+          Add Account
+        </button>
+        <div id="acct-status" class="text-xs mt-2"></div>
+      </div>
+    </div>
+    <!-- Friends Tab -->
+    <div id="settings-friends-panel" class="hidden">
+      <div id="friends-list" class="space-y-2 mb-6"></div>
+      <div class="border-t border-white/10 pt-4">
+        <h3 class="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Add Friend</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="new-friend-steamid" type="text" placeholder="Steam ID 64" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <input id="new-friend-name" type="text" placeholder="Name (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+        </div>
+        <button onclick="addFriend()" class="mt-3 w-full bg-gradient-to-r from-cyan-500/80 to-cyan-500/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
+          Add Friend
+        </button>
+        <div id="friend-status" class="text-xs mt-2"></div>
+      </div>
+    </div>
+    <!-- AI Config Tab -->
+    <div id="settings-ai-panel" class="hidden">
+      <div id="ai-provider-tabs" class="flex gap-2 mb-6 flex-wrap"></div>
+      <div class="space-y-4 mb-6">
+        <div>
+          <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">API Key</label>
+          <input type="password" id="ai-key-input" placeholder="Enter API key..." class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <p id="ai-key-status" class="text-[9px] text-on-surface-variant mt-1"></p>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Default Model</label>
+          <select id="ai-settings-model" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"></select>
+        </div>
+      </div>
+      <div class="mb-6">
+        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Custom System Instructions (optional)</label>
+        <textarea id="ai-system-instructions" rows="3" placeholder="e.g. Always focus on positioning mistakes..." class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0 resize-none"></textarea>
+      </div>
+      <button onclick="saveAISettings()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+        Save AI Configuration
+      </button>
+      <div id="ai-settings-status" class="text-xs text-center mt-3 hidden"></div>
+    </div>
+  </div>
+</div>
+<!-- Sync Folder Modal -->
+<div id="sync-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline text-xl font-bold uppercase tracking-widest flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">sync</span> Sync Folder
+      </h2>
+      <button onclick="closeSyncModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+    </div>
+    <!-- Folder config -->
+    <div class="mb-6">
+      <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Demo Folder Path</label>
+      <div class="flex gap-2">
+        <input id="sync-folder-input" type="text" placeholder="/path/to/demos (inside container)" class="flex-1 bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+        <button onclick="saveSyncFolder()" class="px-4 py-2 rounded-lg bg-secondary/20 text-secondary text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/30 transition-colors">Save</button>
+      </div>
+      <p id="sync-folder-status" class="text-[9px] text-on-surface-variant mt-1"></p>
+    </div>
+    <!-- Account selector -->
+    <div class="mb-6">
+      <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Player Account</label>
+      <select id="sync-steam-id" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"></select>
+    </div>
+    <!-- Scan button -->
+    <button id="sync-scan-btn" onclick="syncScan()" class="w-full bg-gradient-to-r from-secondary/80 to-secondary/60 py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform mb-4">
+      Scan for New Demos
+    </button>
+    <!-- Scan results -->
+    <div id="sync-results" class="hidden">
+      <div class="flex justify-between items-center mb-3">
+        <p id="sync-found-text" class="text-xs text-on-surface-variant"></p>
+        <div class="flex gap-2">
+          <button onclick="syncSelectAll(true)" class="text-[9px] text-secondary hover:underline">Select All</button>
+          <button onclick="syncSelectAll(false)" class="text-[9px] text-on-surface-variant hover:underline">Deselect All</button>
+        </div>
+      </div>
+      <div id="sync-file-list" class="space-y-1.5 max-h-60 overflow-y-auto mb-4"></div>
+      <button id="sync-process-btn" onclick="syncProcess()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+        Process Selected
+      </button>
+    </div>
+    <!-- Progress -->
+    <div id="sync-progress" class="hidden mt-4">
+      <div class="flex justify-between items-center mb-2">
+        <p id="sync-progress-text" class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Processing...</p>
+        <span id="sync-progress-count" class="text-[10px] text-primary font-mono font-bold">0 / 0</span>
+      </div>
+      <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+        <div id="sync-progress-bar" class="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-300" style="width:0%"></div>
+      </div>
+      <div id="sync-process-results" class="space-y-1.5 max-h-60 overflow-y-auto mt-3"></div>
+    </div>
+  </div>
+</div>
+<script>
+const API = window.location.origin + '/api';
+
+// --- Utility ---
+function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// --- Account Management ---
+async function loadAccounts() {
+  try {
+    const res = await fetch(API + '/accounts');
+    const accounts = await res.json();
+    const sel = document.getElementById('upload-steam-id');
+    sel.innerHTML = '';
+    accounts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.steam_id;
+      opt.textContent = a.name;
+      sel.appendChild(opt);
+    });
+    renderAccountsList(accounts);
+  } catch (err) { console.error('Failed to load accounts:', err); }
+}
+
+// --- Settings Modal ---
+let _aiConfig = null;
+let _aiProviders = null;
+let _selectedProvider = null;
+
+function openSettingsModal(tab) {
+  document.getElementById('settings-modal').classList.remove('hidden');
+  document.getElementById('settings-modal').classList.add('flex');
+  switchSettingsTab(tab || 'accounts');
+  loadAccounts();
+  loadAIConfig();
+}
+function closeSettingsModal() {
+  document.getElementById('settings-modal').classList.add('hidden');
+  document.getElementById('settings-modal').classList.remove('flex');
+}
+document.getElementById('settings-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettingsModal(); });
+
+function switchSettingsTab(tab) {
+  const tabs = ['accounts', 'friends', 'ai'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('settings-tab-' + t);
+    const panel = document.getElementById('settings-' + t + '-panel');
+    if (t === tab) {
+      btn.className = btn.className.replace('bg-surface-container-highest text-on-surface-variant hover:bg-white/10', '').replace('bg-primary text-on-primary-fixed', '') + ' bg-primary text-on-primary-fixed';
+      panel.classList.remove('hidden');
+    } else {
+      btn.className = btn.className.replace('bg-primary text-on-primary-fixed', '').replace('bg-surface-container-highest text-on-surface-variant hover:bg-white/10', '') + ' bg-surface-container-highest text-on-surface-variant hover:bg-white/10';
+      panel.classList.add('hidden');
+    }
+  });
+  if (tab === 'friends') loadFriends();
+}
+
+function renderAccountsList(accounts) {
+  const list = document.getElementById('accounts-list');
+  if (!list) return;
+  if (!accounts.length) { list.innerHTML = '<p class="text-on-surface-variant text-xs">No accounts configured.</p>'; return; }
+  list.innerHTML = accounts.map(a => `
+    <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest border border-transparent group">
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm text-on-surface">${esc(a.name)}</div>
+        <div class="text-[10px] text-on-surface-variant">${esc(a.display_name || '')} &middot; ${esc(a.rank || 'Unranked')}</div>
+        <div class="text-[9px] text-on-surface-variant/50 font-mono">${esc(a.steam_id)}</div>
+      </div>
+      <div class="flex gap-1">
+        <button onclick="removeAccount('${esc(a.steam_id)}')" class="text-[10px] px-2 py-1 rounded bg-error/20 text-error hover:bg-error/30 transition-colors" title="Remove">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+async function addAccount() {
+  const name = document.getElementById('new-acct-name').value.trim();
+  const steamId = document.getElementById('new-acct-steamid').value.trim();
+  const displayName = document.getElementById('new-acct-display').value.trim();
+  const rank = document.getElementById('new-acct-rank').value.trim();
+  if (!name || !steamId) return;
+  const statusEl = document.getElementById('acct-status');
+  try {
+    const res = await fetch(API + '/accounts', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, steam_id: steamId, display_name: displayName, rank })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
+    statusEl.textContent = 'Account added!'; statusEl.className = 'text-xs text-secondary mt-2';
+    document.getElementById('new-acct-name').value = '';
+    document.getElementById('new-acct-steamid').value = '';
+    document.getElementById('new-acct-display').value = '';
+    document.getElementById('new-acct-rank').value = '';
+    loadAccounts();
+  } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-error mt-2'; }
+}
+
+async function removeAccount(steamId) {
+  if (!confirm('Remove this account?')) return;
+  await fetch(API + '/accounts/' + steamId, { method: 'DELETE' });
+  loadAccounts();
+}
+
+// --- Friends Management ---
+async function loadFriends() {
+  try {
+    const res = await fetch(API + '/friends');
+    const friends = await res.json();
+    renderFriendsList(friends);
+  } catch (err) { console.error('Failed to load friends:', err); }
+}
+
+function renderFriendsList(friends) {
+  const list = document.getElementById('friends-list');
+  if (!list) return;
+  if (!friends.length) { list.innerHTML = '<p class="text-on-surface-variant text-xs">No friends added yet.</p>'; return; }
+  list.innerHTML = friends.map(f => `
+    <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest border border-transparent group">
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm text-cyan-400">${esc(f.name || 'Unnamed')}</div>
+        <div class="text-[9px] text-on-surface-variant/50 font-mono">${esc(f.steam_id)}</div>
+      </div>
+      <div class="flex gap-1">
+        <button onclick="removeFriend('${esc(f.steam_id)}')" class="text-[10px] px-2 py-1 rounded bg-error/20 text-error hover:bg-error/30 transition-colors" title="Remove">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+async function addFriend() {
+  const steamId = document.getElementById('new-friend-steamid').value.trim();
+  const name = document.getElementById('new-friend-name').value.trim();
+  if (!steamId) return;
+  const statusEl = document.getElementById('friend-status');
+  try {
+    const res = await fetch(API + '/friends', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ steam_id: steamId, name })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
+    statusEl.textContent = 'Friend added!'; statusEl.className = 'text-xs text-cyan-400 mt-2';
+    document.getElementById('new-friend-steamid').value = '';
+    document.getElementById('new-friend-name').value = '';
+    loadFriends();
+  } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-error mt-2'; }
+}
+
+async function removeFriend(steamId) {
+  if (!confirm('Remove this friend?')) return;
+  await fetch(API + '/friends/' + steamId, { method: 'DELETE' });
+  loadFriends();
+}
+
+// --- AI Config ---
+async function loadAIConfig() {
+  try {
+    const [configRes, providersRes] = await Promise.all([
+      fetch(API + '/ai/config'),
+      fetch(API + '/ai/providers')
+    ]);
+    _aiConfig = await configRes.json();
+    _aiProviders = await providersRes.json();
+    _selectedProvider = _aiConfig.active_provider || Object.keys(_aiProviders)[0];
+    renderAISettings();
+  } catch (err) { console.error('Failed to load AI config:', err); }
+}
+
+function renderAISettings() {
+  if (!_aiProviders || !_aiConfig) return;
+  const tabsEl = document.getElementById('ai-provider-tabs');
+  tabsEl.innerHTML = Object.keys(_aiProviders).map(p => {
+    const isActive = p === _selectedProvider;
+    return `<button onclick="selectAIProvider('${p}')" class="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${isActive ? 'bg-primary text-on-primary-fixed' : 'bg-surface-container-highest text-on-surface-variant hover:bg-white/10'}">${p}</button>`;
+  }).join('');
+  const prov = _aiConfig.providers?.[_selectedProvider] || {};
+  document.getElementById('ai-key-input').value = prov.api_key || '';
+  document.getElementById('ai-key-status').textContent = prov.api_key ? 'Key configured' : 'No key set';
+  const modelSel = document.getElementById('ai-settings-model');
+  const models = _aiProviders[_selectedProvider] || [];
+  modelSel.innerHTML = models.map(m => `<option value="${m}" ${m === _aiConfig.active_model ? 'selected' : ''}>${m}</option>`).join('');
+  document.getElementById('ai-system-instructions').value = _aiConfig.system_instructions || '';
+}
+
+function selectAIProvider(provider) {
+  _selectedProvider = provider;
+  renderAISettings();
+}
+
+async function saveAISettings() {
+  const statusEl = document.getElementById('ai-settings-status');
+  try {
+    const cfg = { ..._aiConfig };
+    cfg.active_provider = _selectedProvider;
+    cfg.active_model = document.getElementById('ai-settings-model').value;
+    cfg.system_instructions = document.getElementById('ai-system-instructions').value;
+    if (!cfg.providers) cfg.providers = {};
+    if (!cfg.providers[_selectedProvider]) cfg.providers[_selectedProvider] = {};
+    cfg.providers[_selectedProvider].api_key = document.getElementById('ai-key-input').value;
+    const res = await fetch(API + '/ai/config', {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(cfg)
+    });
+    if (!res.ok) throw new Error('Failed to save');
+    _aiConfig = await res.json();
+    statusEl.textContent = 'Saved!'; statusEl.className = 'text-xs text-center mt-3 text-secondary';
+    statusEl.classList.remove('hidden');
+    setTimeout(() => statusEl.classList.add('hidden'), 2000);
+  } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-center mt-3 text-error'; statusEl.classList.remove('hidden'); }
+}
+
+// --- Upload Modal ---
+function openUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); document.getElementById('upload-modal').classList.add('flex'); }
+function closeUploadModal() { document.getElementById('upload-modal').classList.add('hidden'); document.getElementById('upload-modal').classList.remove('flex'); }
+document.getElementById('upload-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeUploadModal(); });
+
+// --- Auto-detect player from .info file ---
+document.getElementById('upload-info-file').addEventListener('change', async function() {
+  const detectStatus = document.getElementById('player-detect-status');
+  const sel = document.getElementById('upload-steam-id');
+  const dateInput = document.getElementById('upload-date');
+  detectStatus.classList.add('hidden');
+  if (!this.files.length) return;
+  const fd = new FormData();
+  fd.append('info_file', this.files[0]);
+  try {
+    const res = await fetch(API + '/matches/detect-player', { method: 'POST', body: fd });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Detection failed'); }
+    const data = await res.json();
+    if (data.match_date && !dateInput.value) dateInput.value = data.match_date;
+    if (data.matched && data.matched.length > 0) {
+      const matchedId = data.matched[0].steam_id;
+      if (sel.querySelector('option[value="' + matchedId + '"]')) {
+        sel.value = matchedId;
+      }
+      const names = data.matched.map(a => a.name).join(', ');
+      detectStatus.textContent = 'Detected player: ' + names;
+      detectStatus.className = 'text-xs mt-1 text-secondary';
+      detectStatus.classList.remove('hidden');
+    } else {
+      detectStatus.innerHTML = 'No configured account found in this match. <button type="button" onclick="openSettingsModal(\'accounts\')" class="underline text-primary hover:text-primary-dim">Add account</button>';
+      detectStatus.className = 'text-xs mt-1 text-error';
+      detectStatus.classList.remove('hidden');
+    }
+  } catch (err) {
+    detectStatus.textContent = err.message;
+    detectStatus.className = 'text-xs mt-1 text-error';
+    detectStatus.classList.remove('hidden');
+  }
+});
+
+document.getElementById('upload-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('upload-btn');
+  const status = document.getElementById('upload-status');
+  const fileInput = document.getElementById('upload-file');
+  if (!fileInput.files.length) return;
+  btn.disabled = true; btn.textContent = 'PROCESSING...';
+  status.classList.remove('hidden','text-error','text-secondary'); status.classList.add('text-on-surface-variant'); status.textContent = 'Uploading and parsing demo...';
+  const fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  const infoInput = document.getElementById('upload-info-file');
+  if (infoInput.files.length) fd.append('info_file', infoInput.files[0]);
+  fd.append('steam_id', document.getElementById('upload-steam-id').value);
+  fd.append('context_notes', document.getElementById('upload-notes').value);
+  fd.append('tags', document.getElementById('upload-tags').value);
+  const dateVal = document.getElementById('upload-date').value;
+  if (dateVal) fd.append('match_date', dateVal);
+  try {
+    const res = await fetch(API + '/matches/upload', { method: 'POST', body: fd });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Upload failed'); }
+    status.classList.remove('text-on-surface-variant'); status.classList.add('text-secondary'); status.textContent = 'Demo processed! Refreshing...';
+    setTimeout(() => { closeUploadModal(); _overallTrends = null; _overallPerf = null; loadPerformance(); }, 800);
+  } catch (err) {
+    status.classList.remove('text-on-surface-variant'); status.classList.add('text-error'); status.textContent = err.message;
+  } finally { btn.disabled = false; btn.textContent = 'Process Demo'; }
+});
+
+// --- Bulk Upload Modal ---
+function openBulkUploadModal() {
+  const m = document.getElementById('bulk-upload-modal');
+  m.classList.remove('hidden'); m.classList.add('flex');
+  populateBulkAccountSelector();
+  document.getElementById('bulk-dem-files').value = '';
+  document.getElementById('bulk-info-files').value = '';
+  document.getElementById('bulk-file-preview').classList.add('hidden');
+  document.getElementById('bulk-progress').classList.add('hidden');
+  document.getElementById('bulk-upload-btn').disabled = false;
+  document.getElementById('bulk-upload-btn').textContent = 'Process All Demos';
+}
+function closeBulkUploadModal() { const m = document.getElementById('bulk-upload-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+document.getElementById('bulk-upload-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeBulkUploadModal(); });
+
+async function populateBulkAccountSelector() {
+  const sel = document.getElementById('bulk-steam-id');
+  try {
+    const res = await fetch(API + '/accounts');
+    const data = await res.json();
+    sel.innerHTML = '';
+    const accounts = Array.isArray(data) ? data : (data.accounts || []);
+    accounts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.steam_id; opt.textContent = a.name + ' (' + a.steam_id + ')';
+      if (a.active) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch(e) { sel.innerHTML = '<option value="">No accounts</option>'; }
+}
+
+document.getElementById('bulk-dem-files').addEventListener('change', function() {
+  const preview = document.getElementById('bulk-file-preview');
+  const list = document.getElementById('bulk-file-list');
+  if (!this.files.length) { preview.classList.add('hidden'); return; }
+  preview.classList.remove('hidden');
+  list.innerHTML = '';
+  for (const f of this.files) {
+    const row = document.createElement('div');
+    row.className = 'text-xs text-on-surface-variant flex items-center gap-2';
+    row.innerHTML = '<span class="material-symbols-outlined text-[14px]">description</span>' + f.name + ' <span class="text-on-surface-variant/50">(' + (f.size / 1024 / 1024).toFixed(1) + ' MB)</span>';
+    list.appendChild(row);
+  }
+});
+
+async function startBulkUpload() {
+  const demInput = document.getElementById('bulk-dem-files');
+  const infoInput = document.getElementById('bulk-info-files');
+  if (!demInput.files.length) return;
+
+  const btn = document.getElementById('bulk-upload-btn');
+  const progressSection = document.getElementById('bulk-progress');
+  const progressText = document.getElementById('bulk-progress-text');
+  const progressCount = document.getElementById('bulk-progress-count');
+  const progressBar = document.getElementById('bulk-progress-bar');
+  const resultsDiv = document.getElementById('bulk-results');
+
+  btn.disabled = true; btn.textContent = 'PROCESSING...';
+  progressSection.classList.remove('hidden');
+  resultsDiv.innerHTML = '';
+  progressBar.style.width = '0%';
+  const total = demInput.files.length;
+  progressCount.textContent = '0 / ' + total;
+  progressText.textContent = 'Uploading ' + total + ' demo' + (total > 1 ? 's' : '') + '...';
+
+  const fd = new FormData();
+  for (const f of demInput.files) fd.append('files', f);
+  for (const f of infoInput.files) fd.append('info_files', f);
+  fd.append('steam_id', document.getElementById('bulk-steam-id').value);
+
+  try {
+    const res = await fetch(API + '/matches/upload-bulk', { method: 'POST', body: fd });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Bulk upload failed'); }
+    const data = await res.json();
+    progressBar.style.width = '100%';
+    progressCount.textContent = data.processed + ' / ' + data.total;
+    progressText.textContent = data.processed === data.total ? 'All demos processed!' : data.processed + ' of ' + data.total + ' succeeded';
+    progressText.className = 'text-[10px] font-bold uppercase tracking-widest ' + (data.processed === data.total ? 'text-secondary' : 'text-warning');
+
+    data.results.forEach(r => {
+      const row = document.createElement('div');
+      const ok = r.status === 'ok';
+      row.className = 'flex items-center gap-2 text-xs p-2 rounded-lg ' + (ok ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error');
+      const icon = ok ? 'check_circle' : 'error';
+      const detail = ok ? (r.map_name || '') + (r.player_name ? ' — ' + r.player_name : '') : (r.error || 'Failed');
+      row.innerHTML = '<span class="material-symbols-outlined text-[16px]">' + icon + '</span><span class="font-medium truncate flex-1">' + r.filename + '</span><span class="text-on-surface-variant/70 text-[10px]">' + detail + '</span>';
+      resultsDiv.appendChild(row);
+    });
+
+    if (data.processed > 0) setTimeout(() => { _overallTrends = null; _overallPerf = null; loadPerformance(); }, 500);
+  } catch(err) {
+    progressText.textContent = err.message;
+    progressText.className = 'text-[10px] font-bold uppercase tracking-widest text-error';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Process All Demos';
+  }
+}
+
+// --- Sync Folder ---
+let _syncDemos = [];
+
+function openSyncModal() {
+  const m = document.getElementById('sync-modal');
+  m.classList.remove('hidden'); m.classList.add('flex');
+  document.getElementById('sync-results').classList.add('hidden');
+  document.getElementById('sync-progress').classList.add('hidden');
+  document.getElementById('sync-scan-btn').disabled = false;
+  document.getElementById('sync-scan-btn').textContent = 'Scan for New Demos';
+  _syncDemos = [];
+  loadSyncConfig();
+  populateSyncAccountSelector();
+}
+function closeSyncModal() { const m = document.getElementById('sync-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+document.getElementById('sync-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSyncModal(); });
+
+async function loadSyncConfig() {
+  try {
+    const res = await fetch(API + '/sync/config');
+    const cfg = await res.json();
+    document.getElementById('sync-folder-input').value = cfg.folder || '';
+    document.getElementById('sync-folder-status').textContent = cfg.folder ? 'Folder configured' : '';
+  } catch(e) {}
+}
+
+async function saveSyncFolder() {
+  const folder = document.getElementById('sync-folder-input').value.trim();
+  const st = document.getElementById('sync-folder-status');
+  if (!folder) { st.textContent = 'Enter a folder path'; st.className = 'text-[9px] text-error mt-1'; return; }
+  try {
+    const res = await fetch(API + '/sync/config', {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ folder })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
+    st.textContent = 'Folder saved!'; st.className = 'text-[9px] text-secondary mt-1';
+  } catch(err) { st.textContent = err.message; st.className = 'text-[9px] text-error mt-1'; }
+}
+
+async function populateSyncAccountSelector() {
+  const sel = document.getElementById('sync-steam-id');
+  try {
+    const res = await fetch(API + '/accounts');
+    const data = await res.json();
+    sel.innerHTML = '';
+    const accounts = Array.isArray(data) ? data : (data.accounts || []);
+    accounts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.steam_id; opt.textContent = a.name + ' (' + a.steam_id + ')';
+      if (a.active) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch(e) { sel.innerHTML = '<option value="">No accounts</option>'; }
+}
+
+async function syncScan() {
+  const btn = document.getElementById('sync-scan-btn');
+  btn.disabled = true; btn.textContent = 'SCANNING...';
+  document.getElementById('sync-results').classList.add('hidden');
+  document.getElementById('sync-progress').classList.add('hidden');
+  try {
+    const sid = document.getElementById('sync-steam-id').value;
+    const res = await fetch(API + '/sync/scan' + (sid ? '?steam_id=' + encodeURIComponent(sid) : ''));
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
+    const data = await res.json();
+    _syncDemos = data.new;
+    const resultsDiv = document.getElementById('sync-results');
+    const foundText = document.getElementById('sync-found-text');
+    const fileList = document.getElementById('sync-file-list');
+
+    if (!_syncDemos.length) {
+      foundText.textContent = 'No new demos found (' + data.total_found + ' total in folder, all already imported).';
+      fileList.innerHTML = '';
+      resultsDiv.classList.remove('hidden');
+      document.getElementById('sync-process-btn').classList.add('hidden');
+      return;
+    }
+
+    foundText.textContent = _syncDemos.length + ' new demo' + (_syncDemos.length > 1 ? 's' : '') + ' found (' + data.total_found + ' total in folder)';
+    document.getElementById('sync-process-btn').classList.remove('hidden');
+    fileList.innerHTML = _syncDemos.map((d, i) => `
+      <label class="flex items-center gap-3 p-2.5 rounded-lg bg-surface-container-highest hover:bg-white/5 cursor-pointer transition-colors">
+        <input type="checkbox" class="sync-file-cb accent-secondary" data-idx="${i}" checked />
+        <span class="material-symbols-outlined text-[14px] text-secondary">${d.has_info ? 'verified' : 'description'}</span>
+        <span class="text-xs text-on-surface font-medium truncate flex-1">${esc(d.filename)}</span>
+        <span class="text-[10px] text-on-surface-variant/50">${d.size_mb} MB</span>
+      </label>`).join('');
+    resultsDiv.classList.remove('hidden');
+  } catch(err) {
+    document.getElementById('sync-found-text').textContent = err.message;
+    document.getElementById('sync-found-text').className = 'text-xs text-error';
+    document.getElementById('sync-results').classList.remove('hidden');
+    document.getElementById('sync-file-list').innerHTML = '';
+    document.getElementById('sync-process-btn').classList.add('hidden');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Scan for New Demos';
+  }
+}
+
+function syncSelectAll(checked) {
+  document.querySelectorAll('.sync-file-cb').forEach(cb => cb.checked = checked);
+}
+
+async function syncProcess() {
+  const selected = [];
+  document.querySelectorAll('.sync-file-cb:checked').forEach(cb => {
+    const idx = parseInt(cb.dataset.idx);
+    if (_syncDemos[idx]) selected.push(_syncDemos[idx].filename);
+  });
+  if (!selected.length) return;
+
+  const btn = document.getElementById('sync-process-btn');
+  const progressSection = document.getElementById('sync-progress');
+  const progressText = document.getElementById('sync-progress-text');
+  const progressCount = document.getElementById('sync-progress-count');
+  const progressBar = document.getElementById('sync-progress-bar');
+  const resultsDiv = document.getElementById('sync-process-results');
+
+  btn.disabled = true; btn.textContent = 'PROCESSING...';
+  progressSection.classList.remove('hidden');
+  resultsDiv.innerHTML = '';
+  progressBar.style.width = '0%';
+  progressCount.textContent = '0 / ' + selected.length;
+  progressText.textContent = 'Processing ' + selected.length + ' demo' + (selected.length > 1 ? 's' : '') + '...';
+
+  try {
+    const res = await fetch(API + '/sync/process', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ filenames: selected, steam_id: document.getElementById('sync-steam-id').value })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Sync failed'); }
+    const data = await res.json();
+    progressBar.style.width = '100%';
+    progressCount.textContent = data.processed + ' / ' + data.total;
+    progressText.textContent = data.processed === data.total ? 'All demos processed!' : data.processed + ' of ' + data.total + ' succeeded';
+    progressText.className = 'text-[10px] font-bold uppercase tracking-widest ' + (data.processed === data.total ? 'text-secondary' : 'text-warning');
+
+    data.results.forEach(r => {
+      const row = document.createElement('div');
+      const ok = r.status === 'ok';
+      row.className = 'flex items-center gap-2 text-xs p-2 rounded-lg ' + (ok ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error');
+      const icon = ok ? 'check_circle' : 'error';
+      const detail = ok ? (r.map_name || '') + (r.player_name ? ' — ' + r.player_name : '') : (r.detail || 'Failed');
+      row.innerHTML = '<span class="material-symbols-outlined text-[16px]">' + icon + '</span><span class="font-medium truncate flex-1">' + esc(r.filename) + '</span><span class="text-on-surface-variant/70 text-[10px]">' + detail + '</span>';
+      resultsDiv.appendChild(row);
+    });
+
+    if (data.processed > 0) setTimeout(() => { _overallTrends = null; _overallPerf = null; loadPerformance(); }, 500);
+  } catch(err) {
+    progressText.textContent = err.message;
+    progressText.className = 'text-[10px] font-bold uppercase tracking-widest text-error';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Process Selected';
+  }
+}
+
+// --- Map filter state ---
+let activeMap = null;
+let _overallTrends = null;
+let _overallPerf = null;
+
+const ACTIVE_DUTY_MAPS = [
+  { id: 'de_dust2',   name: 'Dust II',   icon: 'wb_sunny' },
+  { id: 'de_inferno', name: 'Inferno',   icon: 'local_fire_department' },
+  { id: 'de_mirage',  name: 'Mirage',    icon: 'landscape' },
+  { id: 'de_ancient', name: 'Ancient',   icon: 'temple_hindu' },
+  { id: 'de_anubis',  name: 'Anubis',    icon: 'pyramid' },
+  { id: 'de_overpass',name: 'Overpass',   icon: 'bridge' },
+  { id: 'de_nuke',    name: 'Nuke',      icon: 'nuclear' },
+];
+
+function renderMapGrid(availableMaps) {
+  const grid = document.getElementById('map-grid');
+  grid.innerHTML = '';
+  const clearBtn = document.getElementById('map-clear-btn');
+  clearBtn.classList.toggle('hidden', !activeMap);
+
+  for (const m of ACTIVE_DUTY_MAPS) {
+    const hasData = availableMaps.includes(m.id);
+    const isActive = activeMap === m.id;
+    const card = document.createElement('button');
+    card.className = isActive
+      ? 'relative flex flex-col items-center justify-center p-5 rounded-xl border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(204,151,255,0.2)] transition-all duration-300 group'
+      : hasData
+        ? 'relative flex flex-col items-center justify-center p-5 rounded-xl border border-white/10 bg-surface-container-highest hover:border-secondary/40 hover:bg-surface-container-high transition-all duration-300 cursor-pointer group'
+        : 'relative flex flex-col items-center justify-center p-5 rounded-xl border border-white/5 bg-surface-container-highest/50 opacity-40 cursor-not-allowed group';
+    card.innerHTML = `
+      <span class="material-symbols-outlined text-3xl mb-2 ${isActive ? 'text-primary' : hasData ? 'text-on-surface-variant group-hover:text-secondary' : 'text-on-surface-variant/30'} transition-colors">${m.icon}</span>
+      <span class="font-headline text-xs font-bold uppercase tracking-widest ${isActive ? 'text-primary' : 'text-on-surface'}">${esc(m.name)}</span>
+      <span class="text-[9px] text-on-surface-variant/60 uppercase mt-0.5">${esc(m.id)}</span>
+      ${hasData && !isActive ? '<span class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-secondary"></span>' : ''}
+      ${isActive ? '<span class="absolute top-2 right-2 material-symbols-outlined text-primary text-sm">check_circle</span>' : ''}
+    `;
+    if (hasData) {
+      card.addEventListener('click', () => {
+        if (isActive) { clearMapSelection(); }
+        else { activeMap = m.id; loadPerformance(m.id); }
+      });
+    }
+    grid.appendChild(card);
+  }
+}
+
+function clearMapSelection() {
+  activeMap = null;
+  loadPerformance();
+}
+
+// --- Distribution strip chart ---
+function drawDistStrip(canvasId, values, avg, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !values.length) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  canvas.width = w * 2; canvas.height = h * 2;
+  ctx.scale(2, 2);
+  ctx.clearRect(0, 0, w, h);
+
+  const minV = Math.min(...values);
+  const maxV = Math.max(...values);
+  const pad = 4;
+  const usable = w - pad * 2;
+  const range = maxV - minV || 1;
+
+  // Background track
+  ctx.fillStyle = TC.track || 'rgba(255,255,255,0.04)';
+  ctx.beginPath();
+  ctx.roundRect(0, h / 2 - 2, w, 4, 2);
+  ctx.fill();
+
+  // Dots for each match value
+  const r = Math.min(4, Math.max(2.5, 60 / values.length));
+  for (const v of values) {
+    const x = pad + ((v - minV) / range) * usable;
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, h / 2, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Average marker
+  const avgX = pad + ((avg - minV) / range) * usable;
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(avgX, h / 2, r + 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = TC.avgStroke || '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+// --- Render performance panel (shared logic for overall & map-specific) ---
+function _renderPerfPanel(prefix, trends, perf) {
+  const el = id => document.getElementById(id);
+  const pts = trends.data_points || [];
+  const n = pts.length;
+  if (!n) return;
+
+  // Rating
+  const ratings = pts.map(d => d.hltv_rating || 0);
+  const avgRating = trends.averages?.avg_rating || 0;
+  el(prefix + '-rating').textContent = avgRating.toFixed(2);
+  el(prefix + '-rating-range').textContent = Math.min(...ratings).toFixed(2) + ' — ' + Math.max(...ratings).toFixed(2);
+  drawDistStrip(prefix + '-rating-strip', ratings, avgRating, TC.purple || '#cc97ff');
+
+  // ADR
+  const adrs = pts.map(d => d.adr || 0);
+  const avgAdr = trends.averages?.avg_adr || 0;
+  el(prefix + '-adr').textContent = avgAdr.toFixed(0);
+  el(prefix + '-adr-range').textContent = Math.min(...adrs).toFixed(0) + ' — ' + Math.max(...adrs).toFixed(0);
+  drawDistStrip(prefix + '-adr-strip', adrs, avgAdr, TC.cyan || '#53ddfc');
+
+  // K/D
+  const kds = pts.map(d => (d.deaths || 1) > 0 ? (d.kills || 0) / (d.deaths || 1) : (d.kills || 0));
+  const totalK = pts.reduce((s, d) => s + (d.kills || 0), 0);
+  const totalD = pts.reduce((s, d) => s + (d.deaths || 0), 0);
+  const avgKD = totalD ? totalK / totalD : 0;
+  el(prefix + '-kd').textContent = avgKD.toFixed(2);
+  el(prefix + '-kd-range').textContent = Math.min(...kds).toFixed(2) + ' — ' + Math.max(...kds).toFixed(2);
+  drawDistStrip(prefix + '-kd-strip', kds, avgKD, TC.onText || '#dee5ff');
+
+  // KAST
+  const kasts = pts.map(d => d.kast || 0);
+  const avgKast = trends.averages?.avg_kast || 0;
+  el(prefix + '-kast').textContent = avgKast.toFixed(1) + '%';
+  el(prefix + '-kast-range').textContent = Math.min(...kasts).toFixed(0) + '% — ' + Math.max(...kasts).toFixed(0) + '%';
+  drawDistStrip(prefix + '-kast-strip', kasts, avgKast, TC.cyan || '#53ddfc');
+
+  // HS% (aggregate only, no per-match strip)
+  const hs = perf.hs_pct || 0;
+  el(prefix + '-hs').textContent = hs.toFixed(1) + '%';
+  el(prefix + '-hs-range').textContent = (perf.total_rounds || 0).toLocaleString() + ' rounds';
+  // No strip for HS — draw empty
+  const hsCanvas = document.getElementById(prefix + '-hs-strip');
+  if (hsCanvas) {
+    const ctx = hsCanvas.getContext('2d');
+    const w = hsCanvas.clientWidth; const h = hsCanvas.clientHeight;
+    hsCanvas.width = w * 2; hsCanvas.height = h * 2;
+    ctx.scale(2, 2); ctx.clearRect(0, 0, w, h);
+    // Draw single bar for HS%
+    ctx.fillStyle = TC.track || 'rgba(255,255,255,0.04)';
+    ctx.beginPath(); ctx.roundRect(0, h / 2 - 2, w, 4, 2); ctx.fill();
+    ctx.fillStyle = TC.pink || '#ff86c3';
+    ctx.beginPath(); ctx.roundRect(0, h / 2 - 2, w * hs / 100, 4, 2); ctx.fill();
+  }
+
+  // Win Rate
+  const wins = pts.filter(d => (d.match_result || '').toLowerCase() === 'win').length;
+  const wr = n ? (wins / n * 100) : 0;
+  el(prefix + '-winrate').textContent = wr.toFixed(0) + '%';
+  el(prefix + '-winrate-detail').textContent = wins + 'W / ' + (n - wins) + 'L';
+  const wrBar = el(prefix + '-winrate-bar');
+  if (wrBar) wrBar.style.width = wr.toFixed(1) + '%';
+
+  // AIM Rating (per-match from aim_stats.aim_rating)
+  const aimVals = pts.map(d => d.aim_rating).filter(v => v != null);
+  if (aimVals.length) {
+    const avgAim = trends.averages?.avg_aim_rating || (aimVals.reduce((s,v) => s+v, 0) / aimVals.length);
+    el(prefix + '-aim').textContent = avgAim.toFixed(1);
+    el(prefix + '-aim-range').textContent = Math.min(...aimVals).toFixed(1) + ' — ' + Math.max(...aimVals).toFixed(1);
+    drawDistStrip(prefix + '-aim-strip', aimVals, avgAim, TC.amber || '#fbbf24');
+  } else {
+    el(prefix + '-aim').textContent = '—';
+    el(prefix + '-aim-range').textContent = 'No data';
+  }
+
+  // Utility Rating (per-match from utility_data.utility_rating)
+  const utilVals = pts.map(d => d.utility_rating).filter(v => v != null);
+  if (utilVals.length) {
+    const avgUtil = trends.averages?.avg_utility_rating || (utilVals.reduce((s,v) => s+v, 0) / utilVals.length);
+    el(prefix + '-util').textContent = avgUtil.toFixed(1);
+    el(prefix + '-util-range').textContent = Math.min(...utilVals).toFixed(1) + ' — ' + Math.max(...utilVals).toFixed(1);
+    drawDistStrip(prefix + '-util-strip', utilVals, avgUtil, TC.success || '#34d399');
+  } else {
+    el(prefix + '-util').textContent = '—';
+    el(prefix + '-util-range').textContent = 'No data';
+  }
+}
+
+function renderOverallPerformance(trends, perf) {
+  const section = document.getElementById('overall-perf-section');
+  const pts = trends.data_points || [];
+  if (!pts.length) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  document.getElementById('overall-match-count').textContent = pts.length;
+  _renderPerfPanel('overall', trends, perf);
+}
+
+function renderMapPerformance(trends, perf, mapFilter) {
+  const section = document.getElementById('map-perf-section');
+  if (!mapFilter) { section.classList.add('hidden'); return; }
+  const pts = trends.data_points || [];
+  if (!pts.length) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  const mapName = mapFilter.replace('de_', '').charAt(0).toUpperCase() + mapFilter.replace('de_', '').slice(1);
+  document.getElementById('map-perf-title').textContent = mapName + ' — Performance';
+  document.getElementById('map-perf-match-count').textContent = pts.length;
+  _renderPerfPanel('map-perf', trends, perf);
+}
+
+async function loadPerformance(mapFilter) {
+  try {
+    // Always fetch overall data (unfiltered) for the overall section
+    if (!_overallTrends || !_overallPerf) {
+      const [oTrendsRes, oPerfRes] = await Promise.all([
+        fetch(API + '/trends'),
+        fetch(API + '/performance'),
+      ]);
+      _overallTrends = await oTrendsRes.json();
+      _overallPerf = await oPerfRes.json();
+    }
+    renderOverallPerformance(_overallTrends, _overallPerf);
+
+    // Fetch filtered data or reuse overall if no filter
+    let trends, perf;
+    if (mapFilter) {
+      const mapParam = '?maps=' + encodeURIComponent(mapFilter);
+      const [trendsRes, perfRes] = await Promise.all([
+        fetch(API + '/trends' + mapParam),
+        fetch(API + '/performance' + mapParam),
+      ]);
+      trends = await trendsRes.json();
+      perf = await perfRes.json();
+    } else {
+      trends = _overallTrends;
+      perf = _overallPerf;
+    }
+    renderMapGrid(trends.available_maps || _overallTrends.available_maps || []);
+    renderMechanics(perf, trends);
+    renderMapPerformance(trends, perf, mapFilter);
+    renderSideStats(perf, mapFilter);
+    renderSideRoles(perf, mapFilter);
+  } catch (err) { console.error('Failed to load performance:', err); }
+}
+
+function renderMechanics(perf, trends) {
+  const el = id => document.getElementById(id);
+  const hs = perf.hs_pct || 0;
+  el('stat-hs-pct').textContent = hs.toFixed(1);
+  el('hs-ring').setAttribute('stroke-dashoffset', (440 * (1 - hs / 100)).toFixed(0));
+  el('stat-open-duel').textContent = perf.opening_kill_pct ? perf.opening_kill_pct.toFixed(0) + '%' : '—';
+  el('stat-top-weapon').textContent = perf.top_weapon || '—';
+  el('stat-total-rounds').textContent = (perf.total_rounds || 0).toLocaleString();
+  el('stat-hltv-rating').textContent = (trends.averages?.avg_rating || 0).toFixed(2);
+  el('stat-total-matches').textContent = (perf.total_matches || 0).toLocaleString();
+}
+
+function renderSideStats(perf, mapFilter) {
+  const section = document.getElementById('side-stats-section');
+  if (!mapFilter) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+
+  const el = id => document.getElementById(id);
+  const mapName = mapFilter.replace('de_', '').charAt(0).toUpperCase() + mapFilter.replace('de_', '').slice(1);
+  el('side-stats-title').textContent = mapName + ' — Side Effectiveness';
+
+  // CT stats
+  el('side-ct-winrate').textContent = perf.ct_win_pct + '%';
+  el('side-ct-bar').style.width = perf.ct_win_pct + '%';
+  const ct = perf.ct_role || {};
+  el('side-ct-adr').textContent = ct.adr || '—';
+  el('side-ct-survival').textContent = ct.survival_pct ? ct.survival_pct.toFixed(0) + '%' : '—';
+  el('side-ct-rounds').textContent = (ct.rounds || 0) + ' rounds';
+  el('side-ct-kd').textContent = (ct.kills || 0) + 'K / ' + (ct.deaths || 0) + 'D';
+
+  // T stats
+  el('side-t-winrate').textContent = perf.t_win_pct + '%';
+  el('side-t-bar').style.width = perf.t_win_pct + '%';
+  const t = perf.t_role || {};
+  el('side-t-adr').textContent = t.adr || '—';
+  el('side-t-survival').textContent = t.survival_pct ? t.survival_pct.toFixed(0) + '%' : '—';
+  el('side-t-rounds').textContent = (t.rounds || 0) + ' rounds';
+  el('side-t-kd').textContent = (t.kills || 0) + 'K / ' + (t.deaths || 0) + 'D';
+}
+
+function renderSideRoles(perf, mapFilter) {
+  const section = document.getElementById('side-roles-section');
+  if (!mapFilter) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+
+  const el = id => document.getElementById(id);
+  const mapName = mapFilter.replace('de_', '').charAt(0).toUpperCase() + mapFilter.replace('de_', '').slice(1);
+  el('side-roles-title').textContent = mapName + ' — Side Roles';
+
+  // Show heuristic roles first
+  applyRoleData(perf.ct_role, perf.t_role, false);
+
+  // Then check for persisted AI roles
+  fetch(API + '/performance/ai-roles?maps=' + encodeURIComponent(mapFilter))
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data && data.ct_role && data.ct_role.name) {
+        applyRoleData(data.ct_role, data.t_role, true);
+      }
+    })
+    .catch(() => {});
+}
+
+function applyRoleData(ctRole, tRole, isAI) {
+  const el = id => document.getElementById(id);
+  const ct = ctRole || {};
+  el('ct-role-icon').textContent = ct.icon || 'help';
+  el('ct-role-name').textContent = ct.name || 'Unknown';
+  el('ct-role-desc').textContent = ct.description || 'No data available.';
+  el('ct-role-fk').textContent = ct.opening_kills ?? '—';
+  el('ct-role-fd').textContent = ct.opening_deaths ?? '—';
+
+  const t = tRole || {};
+  el('t-role-icon').textContent = t.icon || 'help';
+  el('t-role-name').textContent = t.name || 'Unknown';
+  el('t-role-desc').textContent = t.description || 'No data available.';
+  el('t-role-fk').textContent = t.opening_kills ?? '—';
+  el('t-role-fd').textContent = t.opening_deaths ?? '—';
+
+  // Draw radar charts
+  if (ct.axes) drawRoleRadar('ct-role-radar', ct.axes, TC.cyan || '#53ddfc');
+  if (t.axes) drawRoleRadar('t-role-radar', t.axes, TC.pink || '#ff86c3');
+
+  // Show/hide AI badge
+  const badge = document.getElementById('ai-role-badge');
+  if (badge) badge.classList.toggle('hidden', !isAI);
+}
+
+// --- Radar chart for 5-axis role assessment ---
+function drawRoleRadar(canvasId, axes, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const labels = ['Aggression', 'Trading', 'Isolation', 'Survival', 'Sniper'];
+  const keys = ['aggression', 'trading', 'isolation', 'survival', 'sniper'];
+  const values = keys.map(k => (axes[k] || 0) / 100);
+  const n = labels.length;
+  const cx = w / 2;
+  const cy = h / 2;
+  const R = Math.min(cx, cy) - 28;
+  const angleStep = (Math.PI * 2) / n;
+  const startAngle = -Math.PI / 2; // top
+
+  // Grid rings
+  for (let ring = 1; ring <= 4; ring++) {
+    const r = R * ring / 4;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const a = startAngle + i * angleStep;
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = TC.grid || 'rgba(255,255,255,' + (ring === 4 ? 0.12 : 0.06) + ')';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Axis lines + labels
+  ctx.font = '600 8px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    const a = startAngle + i * angleStep;
+    const xEnd = cx + Math.cos(a) * R;
+    const yEnd = cy + Math.sin(a) * R;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(xEnd, yEnd);
+    ctx.strokeStyle = TC.grid || 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Label
+    const labelR = R + 16;
+    const lx = cx + Math.cos(a) * labelR;
+    const ly = cy + Math.sin(a) * labelR;
+    ctx.fillStyle = TC.gridText || 'rgba(255,255,255,0.45)';
+    ctx.fillText(labels[i], lx, ly);
+  }
+
+  // Data polygon (filled)
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const a = startAngle + i * angleStep;
+    const v = Math.max(values[i], 0.04); // minimum visibility
+    const x = cx + Math.cos(a) * R * v;
+    const y = cy + Math.sin(a) * R * v;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = color + '18'; // ~10% opacity
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Data points
+  for (let i = 0; i < n; i++) {
+    const a = startAngle + i * angleStep;
+    const v = Math.max(values[i], 0.04);
+    const x = cx + Math.cos(a) * R * v;
+    const y = cy + Math.sin(a) * R * v;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = TC.dotStroke || '#0a1628';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Value label near point
+    const valR = Math.max(v * R + 10, 14);
+    const vx = cx + Math.cos(a) * valR;
+    const vy = cy + Math.sin(a) * valR;
+    ctx.fillStyle = color;
+    ctx.font = 'bold 8px system-ui, sans-serif';
+    ctx.fillText(Math.round(axes[keys[i]] || 0), vx, vy);
+  }
+}
+
+async function analyzeRolesWithAI() {
+  if (!activeMap) return;
+  const btn = document.getElementById('ai-role-btn');
+  const btnText = document.getElementById('ai-role-btn-text');
+  btn.disabled = true;
+  btn.classList.add('opacity-60');
+  btnText.textContent = 'Analyzing...';
+  try {
+    const res = await fetch(API + '/performance/ai-roles?maps=' + encodeURIComponent(activeMap), { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'AI analysis failed');
+    }
+    const data = await res.json();
+    // Use shared render function
+    applyRoleData(data.ct_role, data.t_role, true);
+    // Show AI badge
+    btnText.textContent = 'AI \u2713';
+    btn.classList.remove('opacity-60');
+    btn.classList.add('border-secondary/50', 'text-secondary');
+    setTimeout(() => {
+      btnText.textContent = 'AI Analyze';
+      btn.classList.remove('border-secondary/50', 'text-secondary');
+      btn.disabled = false;
+    }, 3000);
+  } catch (err) {
+    btnText.textContent = err.message.length > 30 ? 'Failed' : err.message;
+    btn.classList.remove('opacity-60');
+    btn.classList.add('border-error/50', 'text-error');
+    setTimeout(() => {
+      btnText.textContent = 'AI Analyze';
+      btn.classList.remove('border-error/50', 'text-error');
+      btn.disabled = false;
+    }, 4000);
+  }
+}
+
+// --- Sidebar collapse ---
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const main = document.getElementById('main-area');
+  sb.classList.toggle('collapsed');
+  const collapsed = sb.classList.contains('collapsed');
+  main.style.paddingLeft = collapsed ? '6rem' : '';
+  try { localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0'); } catch(e) {}
+}
+(function applySidebarState() {
+  try {
+    if (localStorage.getItem('sidebar-collapsed') === '1') {
+      const sb = document.getElementById('sidebar');
+      const main = document.getElementById('main-area');
+      if (sb) { sb.classList.add('collapsed'); }
+      if (main) { main.style.paddingLeft = '6rem'; }
+    }
+  } catch(e) {}
+})();
+
+document.addEventListener('DOMContentLoaded', () => { loadAccounts(); loadPerformance(); });
+</script>
+</body></html>

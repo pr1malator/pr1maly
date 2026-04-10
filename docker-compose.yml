@@ -1,0 +1,12 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      # Mount your CS2 demo folder for sync. Adjust the host path to your demo location.
+      # The container path (/demos) is what you enter in the Sync Folder UI.
+      - "C:/Program Files (x86)/Steam/steamapps/common/Counter-Strike Global Offensive/game/csgo/replays:/demos:ro"
+    environment:
+      - DB_PATH=/app/data/pr1mealazyer.db

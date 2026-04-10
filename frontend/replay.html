@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>pr1maly // 2D Replay</title>
+<link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
+<link rel="icon" type="image/png" href="img/logo-big.png"/>
+<link rel="stylesheet" href="theme.css"/>
+<script src="theme.js"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "secondary-container": "rgb(var(--c-secondary-container) / <alpha-value>)",
+        "on-secondary-fixed-variant": "rgb(var(--c-on-secondary-fixed-variant) / <alpha-value>)",
+        "tertiary-fixed-dim": "rgb(var(--c-tertiary-fixed-dim) / <alpha-value>)",
+        "surface-container-low": "rgb(var(--c-surface-container-low) / <alpha-value>)",
+        "primary-fixed": "rgb(var(--c-primary-fixed) / <alpha-value>)",
+        "on-tertiary-container": "rgb(var(--c-on-tertiary-container) / <alpha-value>)",
+        "error-dim": "rgb(var(--c-error-dim) / <alpha-value>)",
+        "secondary-fixed-dim": "rgb(var(--c-secondary-fixed-dim) / <alpha-value>)",
+        "on-error": "rgb(var(--c-on-error) / <alpha-value>)",
+        "inverse-primary": "rgb(var(--c-inverse-primary) / <alpha-value>)",
+        "surface-tint": "rgb(var(--c-surface-tint) / <alpha-value>)",
+        "surface-variant": "rgb(var(--c-surface-variant) / <alpha-value>)",
+        "tertiary-fixed": "rgb(var(--c-tertiary-fixed) / <alpha-value>)",
+        "tertiary-container": "rgb(var(--c-tertiary-container) / <alpha-value>)",
+        "primary-fixed-dim": "rgb(var(--c-primary-fixed-dim) / <alpha-value>)",
+        "on-primary": "rgb(var(--c-on-primary) / <alpha-value>)",
+        "error-container": "rgb(var(--c-error-container) / <alpha-value>)",
+        "on-tertiary-fixed": "rgb(var(--c-on-tertiary-fixed) / <alpha-value>)",
+        "surface-container-lowest": "rgb(var(--c-surface-container-lowest) / <alpha-value>)",
+        "on-primary-fixed": "rgb(var(--c-on-primary-fixed) / <alpha-value>)",
+        "on-primary-fixed-variant": "rgb(var(--c-on-primary-fixed-variant) / <alpha-value>)",
+        "on-secondary-container": "rgb(var(--c-on-secondary-container) / <alpha-value>)",
+        "surface-container-high": "rgb(var(--c-surface-container-high) / <alpha-value>)",
+        "surface-dim": "rgb(var(--c-surface-dim) / <alpha-value>)",
+        "primary": "rgb(var(--c-primary) / <alpha-value>)",
+        "on-tertiary-fixed-variant": "rgb(var(--c-on-tertiary-fixed-variant) / <alpha-value>)",
+        "background": "rgb(var(--c-background) / <alpha-value>)",
+        "outline-variant": "rgb(var(--c-outline-variant) / <alpha-value>)",
+        "on-secondary-fixed": "rgb(var(--c-on-secondary-fixed) / <alpha-value>)",
+        "secondary-fixed": "rgb(var(--c-secondary-fixed) / <alpha-value>)",
+        "primary-dim": "rgb(var(--c-primary-dim) / <alpha-value>)",
+        "surface-bright": "rgb(var(--c-surface-bright) / <alpha-value>)",
+        "surface-container": "rgb(var(--c-surface-container) / <alpha-value>)",
+        "primary-container": "rgb(var(--c-primary-container) / <alpha-value>)",
+        "on-error-container": "rgb(var(--c-on-error-container) / <alpha-value>)",
+        "secondary-dim": "rgb(var(--c-secondary-dim) / <alpha-value>)",
+        "on-tertiary": "rgb(var(--c-on-tertiary) / <alpha-value>)",
+        "on-surface-variant": "rgb(var(--c-on-surface-variant) / <alpha-value>)",
+        "tertiary-dim": "rgb(var(--c-tertiary-dim) / <alpha-value>)",
+        "error": "rgb(var(--c-error) / <alpha-value>)",
+        "surface": "rgb(var(--c-surface) / <alpha-value>)",
+        "tertiary": "rgb(var(--c-tertiary) / <alpha-value>)",
+        "on-secondary": "rgb(var(--c-on-secondary) / <alpha-value>)",
+        "on-background": "rgb(var(--c-on-background) / <alpha-value>)",
+        "on-surface": "rgb(var(--c-on-surface) / <alpha-value>)",
+        "on-surface-variant-2": "rgb(var(--c-outline) / <alpha-value>)",
+        "on-primary-container": "rgb(var(--c-on-primary-container) / <alpha-value>)",
+        "inverse-surface": "rgb(var(--c-inverse-surface) / <alpha-value>)",
+        "secondary": "rgb(var(--c-secondary) / <alpha-value>)",
+        "outline": "rgb(var(--c-outline) / <alpha-value>)",
+        "surface-container-highest": "rgb(var(--c-surface-container-highest) / <alpha-value>)",
+        "inverse-on-surface": "rgb(var(--c-inverse-on-surface) / <alpha-value>)"
+      },
+      fontFamily: {
+        "headline": ["Space Grotesk", "sans-serif"],
+        "body": ["Manrope", "sans-serif"],
+        "label": ["Space Grotesk", "sans-serif"]
+      },
+      borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+    },
+  },
+}
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  #sidebar { transition: width 0.25s cubic-bezier(.4,0,.2,1); overflow: hidden; }
+  #sidebar .sidebar-label { transition: opacity 0.2s; white-space: nowrap; }
+  #sidebar.collapsed { width: 4.5rem !important; }
+  #sidebar.collapsed .sidebar-label { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+  #sidebar.collapsed .sidebar-brand { display: none; }
+  #sidebar.collapsed .sidebar-actions { display: none; }
+  #sidebar.collapsed nav a { justify-content: center; padding-left: 0; padding-right: 0; }
+  #sidebar.collapsed .sidebar-logo { margin-left: auto; margin-right: auto; }
+  #sidebar.collapsed .sidebar-header { justify-content: center; padding-left: 0; padding-right: 0; }
+  #main-area { transition: padding-left 0.25s cubic-bezier(.4,0,.2,1); }
+  #sidebar-toggle { transition: transform 0.25s; }
+  #sidebar.collapsed #sidebar-toggle { transform: rotate(180deg); }
+
+  /* Replay-specific */
+  #replay-canvas { image-rendering: auto; }
+  .speed-btn.active { background: var(--speed-btn-bg); color: var(--speed-btn-color); border-color: var(--speed-btn-border); }
+  .kill-feed-item { animation: fadeInSlide 0.3s ease-out; }
+  @keyframes fadeInSlide {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .kill-feed-item.fade-out { opacity: 0; transition: opacity 0.5s; }
+</style>
+</head>
+<body class="bg-background text-on-surface font-body antialiased min-h-screen">
+
+<!-- Sidebar -->
+<aside id="sidebar" class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container shadow-2xl shadow-purple-900/20 border-r border-white/5 pt-6 z-40">
+  <div class="sidebar-header px-6 py-4 mb-8">
+    <div class="flex items-center gap-3">
+      <div class="sidebar-logo w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+        <img src="img/logo-big.png" alt="pr1maly" class="w-full h-full object-cover"/>
+      </div>
+      <div class="sidebar-brand flex-1 min-w-0">
+        <div class="font-headline text-sm font-bold uppercase tracking-widest text-on-surface">pr1maly</div>
+        <div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">CS2 Analytics</div>
+      </div>
+    </div>
+  </div>
+  <nav class="flex-1 space-y-1">
+    <a class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="breakdown.html">
+      <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">insights</span>
+      <span class="sidebar-label">Trend</span>
+    </a>
+    <a id="nav-match" class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="match-breakdown.html">
+      <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">sports_esports</span>
+      <span class="sidebar-label">Match Breakdown</span>
+    </a>
+  </nav>
+  <div class="px-6 mb-2">
+    <button onclick="toggleTheme()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Toggle light/dark mode">
+      <span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme</span>
+    </button>
+  </div>
+  <button id="sidebar-toggle" onclick="toggleSidebar()" class="mx-auto mb-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-highest border border-white/10 text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors" title="Collapse sidebar">
+    <span class="material-symbols-outlined text-base">chevron_left</span>
+  </button>
+</aside>
+
+<!-- Main Content -->
+<main id="main-area" class="lg:pl-[17.5rem] pt-6 pb-24 lg:pb-12 px-4">
+<div class="mx-auto max-w-[1400px] space-y-4">
+
+  <!-- Header -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold font-headline tracking-tighter text-on-surface">2D Replay</h1>
+      <p id="match-info" class="text-xs text-on-surface-variant mt-1">Select a match to start</p>
+    </div>
+    <a id="back-to-match" href="#" class="hidden bg-surface-container-highest px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all flex items-center gap-2">
+      <span class="material-symbols-outlined text-sm">arrow_back</span> Back to Match
+    </a>
+  </div>
+
+  <!-- No replay data message -->
+  <div id="no-replay-msg" class="hidden rounded-2xl bg-surface-container p-12 text-center border border-white/5">
+    <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4">videocam_off</span>
+    <p class="text-lg font-headline text-on-surface-variant">No replay data available</p>
+    <p class="text-xs text-on-surface-variant/60 mt-2">Re-upload the demo file to generate replay data for this match.</p>
+  </div>
+
+  <!-- Replay Container -->
+  <div id="replay-container" class="hidden">
+    <div class="flex flex-col xl:flex-row gap-4">
+
+      <!-- Radar + Canvas -->
+      <div class="flex-1 min-w-0">
+        <div class="rounded-2xl bg-surface-container border border-white/5 overflow-hidden">
+          <div class="relative" style="padding-bottom: 100%; max-height: 80vh;">
+            <canvas id="replay-canvas" width="1024" height="1024" class="absolute inset-0 w-full h-full"></canvas>
+          </div>
+        </div>
+
+        <!-- Playback Controls -->
+        <div class="mt-3 rounded-2xl bg-surface-container border border-white/5 p-4 space-y-3">
+          <!-- Timeline scrubber -->
+          <div class="flex items-center gap-3">
+            <span id="time-current" class="text-xs font-mono text-secondary w-12 text-right">0:00</span>
+            <div class="flex-1 relative h-2 bg-surface-container-highest rounded-full cursor-pointer group" id="timeline-bar">
+              <div id="timeline-progress" class="absolute left-0 top-0 h-full bg-gradient-to-r from-secondary to-primary rounded-full transition-none"></div>
+              <div id="timeline-thumb" class="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-secondary rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="left: 0"></div>
+            </div>
+            <span id="time-total" class="text-xs font-mono text-on-surface-variant w-12">0:00</span>
+          </div>
+
+          <!-- Buttons row -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <!-- Previous round -->
+              <button onclick="prevRound()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-container-highest border border-white/10 text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors" title="Previous round">
+                <span class="material-symbols-outlined text-base">skip_previous</span>
+              </button>
+              <!-- Play/Pause -->
+              <button id="play-btn" onclick="togglePlay()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/20 border border-secondary/30 text-secondary hover:bg-secondary/30 transition-colors" title="Play / Pause">
+                <span class="material-symbols-outlined text-xl" id="play-icon">play_arrow</span>
+              </button>
+              <!-- Next round -->
+              <button onclick="nextRound()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-container-highest border border-white/10 text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors" title="Next round">
+                <span class="material-symbols-outlined text-base">skip_next</span>
+              </button>
+            </div>
+
+            <!-- Speed controls -->
+            <div class="flex items-center gap-1">
+              <span class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mr-2">Speed</span>
+              <button onclick="setSpeed(0.25)" class="speed-btn text-[10px] font-bold px-2 py-1 rounded border border-white/10 text-on-surface-variant hover:text-secondary transition-colors">0.25x</button>
+              <button onclick="setSpeed(0.5)" class="speed-btn text-[10px] font-bold px-2 py-1 rounded border border-white/10 text-on-surface-variant hover:text-secondary transition-colors">0.5x</button>
+              <button onclick="setSpeed(1)" class="speed-btn active text-[10px] font-bold px-2 py-1 rounded border border-white/10 text-on-surface-variant hover:text-secondary transition-colors">1x</button>
+              <button onclick="setSpeed(2)" class="speed-btn text-[10px] font-bold px-2 py-1 rounded border border-white/10 text-on-surface-variant hover:text-secondary transition-colors">2x</button>
+              <button onclick="setSpeed(4)" class="speed-btn text-[10px] font-bold px-2 py-1 rounded border border-white/10 text-on-surface-variant hover:text-secondary transition-colors">4x</button>
+            </div>
+
+            <!-- Round selector -->
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Round</span>
+              <select id="round-select" onchange="loadRound(parseInt(this.value))" class="bg-surface-container-highest text-on-surface text-xs p-1.5 rounded-lg border border-white/10 focus:border-secondary/30 focus:ring-0 appearance-none min-w-[60px]">
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side Panel: Player List + Kill Feed -->
+      <div class="xl:w-72 space-y-4">
+        <!-- Player list -->
+        <div class="rounded-2xl bg-surface-container border border-white/5 p-4">
+          <h3 class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Players</h3>
+          <div id="ct-players" class="space-y-1 mb-3">
+            <div class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Counter-Terrorists</div>
+          </div>
+          <div id="t-players" class="space-y-1">
+            <div class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-1">Terrorists</div>
+          </div>
+        </div>
+
+        <!-- Kill Feed -->
+        <div class="rounded-2xl bg-surface-container border border-white/5 p-4">
+          <h3 class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Kill Feed</h3>
+          <div id="kill-feed" class="space-y-1 max-h-64 overflow-y-auto text-xs"></div>
+        </div>
+
+        <!-- Round info -->
+        <div class="rounded-2xl bg-surface-container border border-white/5 p-4">
+          <h3 class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Round Info</h3>
+          <div id="round-info" class="text-xs text-on-surface-variant">
+            <p>Round: <span id="ri-round" class="text-on-surface">—</span></p>
+            <p>Frames: <span id="ri-frames" class="text-on-surface">—</span></p>
+            <p>Duration: <span id="ri-duration" class="text-on-surface">—</span></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</main>
+
+<!-- Mobile nav -->
+<nav class="fixed lg:hidden bottom-0 w-full z-50 flex justify-around items-center px-6 pb-6 pt-3 bg-background/90 backdrop-blur-lg border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] rounded-t-3xl">
+  <a class="flex flex-col items-center justify-center text-slate-500" href="breakdown.html">
+    <span class="material-symbols-outlined">insights</span>
+    <span class="font-headline text-[10px] font-bold uppercase mt-1">Trend</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-slate-500" href="match-breakdown.html">
+    <span class="material-symbols-outlined">sports_esports</span>
+    <span class="font-headline text-[10px] font-bold uppercase mt-1">Matches</span>
+  </a>
+</nav>
+
+<script>
+// ===================================================================
+// Sidebar toggle
+// ===================================================================
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('collapsed');
+  const main = document.getElementById('main-area');
+  main.style.paddingLeft = sb.classList.contains('collapsed') ? '5.5rem' : '';
+}
+
+// ===================================================================
+// State
+// ===================================================================
+let matchId = null;
+let matchMeta = null;      // overview response (round list)
+let roundData = null;      // current round's frame data
+let radarImage = null;
+let radarLoaded = false;
+
+let playing = false;
+let speed = 1;
+let currentFrameIdx = 0;
+let lastTimestamp = 0;
+let accumulator = 0;       // ms accumulated for frame stepping
+
+const TICK_RATE = 64;
+const SAMPLE_INTERVAL = 32;
+const MS_PER_FRAME = (SAMPLE_INTERVAL / TICK_RATE) * 1000;  // ~500ms real time per frame
+
+// Kill feed items with expiry
+let killFeedItems = [];
+
+// Canvas
+let canvas, ctx;
+
+// ===================================================================
+// Init
+// ===================================================================
+window.addEventListener('DOMContentLoaded', () => {
+  canvas = document.getElementById('replay-canvas');
+  ctx = canvas.getContext('2d');
+
+  // Get match_id from URL params
+  const params = new URLSearchParams(window.location.search);
+  matchId = params.get('id');
+  const startRound = parseInt(params.get('round')) || 1;
+
+  if (!matchId) {
+    document.getElementById('match-info').textContent = 'No match ID provided. Open a match from the Match Breakdown page.';
+    return;
+  }
+
+  // Update back link
+  const backLink = document.getElementById('back-to-match');
+  backLink.href = `match-breakdown.html?id=${encodeURIComponent(matchId)}`;
+  backLink.classList.remove('hidden');
+
+  // Update match link in sidebar
+  const navMatch = document.getElementById('nav-match');
+  if (navMatch) navMatch.href = `match-breakdown.html?id=${encodeURIComponent(matchId)}`;
+
+  loadMatchReplay(startRound);
+
+  // Timeline scrubber click/drag
+  setupTimeline();
+});
+
+// ===================================================================
+// Data loading
+// ===================================================================
+async function loadMatchReplay(startRound) {
+  try {
+    const res = await fetch(`/api/matches/${encodeURIComponent(matchId)}/replay`);
+    if (!res.ok) throw new Error('Failed to fetch replay metadata');
+    matchMeta = await res.json();
+
+    if (!matchMeta.has_replay) {
+      document.getElementById('no-replay-msg').classList.remove('hidden');
+      document.getElementById('match-info').textContent = `${matchMeta.map_name || 'Unknown map'} — No replay data`;
+      return;
+    }
+
+    document.getElementById('replay-container').classList.remove('hidden');
+    document.getElementById('match-info').textContent = `${matchMeta.map_name} — ${matchMeta.total_rounds} rounds`;
+
+    // Populate round selector
+    const sel = document.getElementById('round-select');
+    sel.innerHTML = '';
+    for (const r of matchMeta.rounds) {
+      const opt = document.createElement('option');
+      opt.value = r.round;
+      opt.textContent = r.round;
+      sel.appendChild(opt);
+    }
+
+    // Load radar image
+    radarImage = new Image();
+    radarImage.onload = () => { radarLoaded = true; drawFrame(); };
+    radarImage.onerror = () => { radarLoaded = false; drawFrame(); };
+    radarImage.src = matchMeta.radar_image;
+
+    // Load first round
+    const targetRound = matchMeta.rounds.find(r => r.round === startRound) ? startRound : matchMeta.rounds[0]?.round || 1;
+    await loadRound(targetRound);
+  } catch (err) {
+    document.getElementById('match-info').textContent = 'Error loading replay: ' + err.message;
+    console.error(err);
+  }
+}
+
+async function loadRound(roundNum) {
+  stop();
+  currentFrameIdx = 0;
+  accumulator = 0;
+  killFeedItems = [];
+  document.getElementById('kill-feed').innerHTML = '';
+
+  try {
+    const res = await fetch(`/api/matches/${encodeURIComponent(matchId)}/replay?round_number=${roundNum}`);
+    if (!res.ok) throw new Error('Failed to fetch round data');
+    roundData = await res.json();
+
+    // Update round selector
+    document.getElementById('round-select').value = roundNum;
+
+    // Update round info
+    document.getElementById('ri-round').textContent = roundNum;
+    document.getElementById('ri-frames').textContent = roundData.frames?.length || 0;
+    const totalTicks = roundData.frames?.length ? roundData.frames[roundData.frames.length - 1][0] : 0;
+    const durationSec = totalTicks / TICK_RATE;
+    document.getElementById('ri-duration').textContent = formatTime(durationSec);
+
+    // Build player list
+    buildPlayerList(roundData.players || {});
+
+    // Update timeline
+    updateTimeDisplay();
+    drawFrame();
+  } catch (err) {
+    console.error('Error loading round:', err);
+  }
+}
+
+// ===================================================================
+// Player list
+// ===================================================================
+function buildPlayerList(players) {
+  const ctEl = document.getElementById('ct-players');
+  const tEl = document.getElementById('t-players');
+  ctEl.innerHTML = '<div class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Counter-Terrorists</div>';
+  tEl.innerHTML = '<div class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-1">Terrorists</div>';
+
+  for (const [sid, info] of Object.entries(players)) {
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-2 px-2 py-1 rounded';
+    div.id = `player-${sid}`;
+    const color = info.team === 3 ? 'bg-blue-500' : 'bg-yellow-500';
+    div.innerHTML = `
+      <div class="w-2.5 h-2.5 rounded-full ${color} flex-shrink-0"></div>
+      <span class="text-xs text-on-surface truncate">${escapeHtml(info.name)}</span>
+      <span class="ml-auto text-[10px] text-on-surface-variant player-hp" data-sid="${sid}">100</span>
+    `;
+    if (info.team === 3) ctEl.appendChild(div);
+    else tEl.appendChild(div);
+  }
+}
+
+// ===================================================================
+// Canvas rendering
+// ===================================================================
+function drawFrame() {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, 1024, 1024);
+
+  // Draw radar background
+  if (radarLoaded && radarImage) {
+    ctx.drawImage(radarImage, 0, 0, 1024, 1024);
+  } else {
+    ctx.fillStyle = TC.canvasBg || '#0a1628';
+    ctx.fillRect(0, 0, 1024, 1024);
+  }
+
+  if (!roundData || !roundData.frames || roundData.frames.length === 0) return;
+
+  const players = roundData.players || {};
+  const frames = roundData.frames;
+  const events = roundData.events || [];
+  const idx = Math.min(currentFrameIdx, frames.length - 1);
+  const currentTick = frames[idx][0];
+  const positions = frames[idx][1];
+
+  // Interpolate between current and next frame for smooth movement
+  let interpPositions = positions;
+  if (playing && idx < frames.length - 1) {
+    const nextPositions = frames[idx + 1][1];
+    const tickDelta = frames[idx + 1][0] - frames[idx][0];
+    if (tickDelta > 0) {
+      const t = Math.min(accumulator / (MS_PER_FRAME / speed), 1);
+      interpPositions = {};
+      for (const sid of Object.keys(positions)) {
+        if (nextPositions[sid]) {
+          interpPositions[sid] = [
+            positions[sid][0] + (nextPositions[sid][0] - positions[sid][0]) * t,
+            positions[sid][1] + (nextPositions[sid][1] - positions[sid][1]) * t,
+            positions[sid][2],  // HP doesn't interpolate
+          ];
+        } else {
+          interpPositions[sid] = positions[sid];
+        }
+      }
+      // Add players only in next frame
+      for (const sid of Object.keys(nextPositions)) {
+        if (!interpPositions[sid]) interpPositions[sid] = nextPositions[sid];
+      }
+    }
+  }
+
+  // Draw movement trails (last 10 frames)
+  const trailLen = Math.min(10, idx);
+  if (trailLen > 0) {
+    ctx.globalAlpha = 0.15;
+    ctx.lineWidth = 2;
+    for (const sid of Object.keys(players)) {
+      const team = players[sid].team;
+      ctx.strokeStyle = team === 3 ? (TC.ct || '#60a5fa') : (TC.t || '#facc15');
+      ctx.beginPath();
+      let started = false;
+      for (let ti = Math.max(0, idx - trailLen); ti <= idx; ti++) {
+        const pos = frames[ti][1][sid];
+        if (!pos || pos[2] <= 0) continue;
+        if (!started) { ctx.moveTo(pos[0], pos[1]); started = true; }
+        else ctx.lineTo(pos[0], pos[1]);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Draw kill lines for recent kills
+  for (const ev of events) {
+    if (ev.type !== 'kill') continue;
+    const evTick = ev.t;
+    const tickDiff = currentTick - evTick;
+    if (tickDiff < 0 || tickDiff > SAMPLE_INTERVAL * 4) continue; // Show for ~2s
+
+    const attackerPos = positions[ev.attacker];
+    const victimPos = positions[ev.victim];
+    if (!attackerPos || !victimPos) continue;
+
+    const alpha = Math.max(0, 1 - tickDiff / (SAMPLE_INTERVAL * 4));
+    ctx.globalAlpha = alpha * 0.6;
+    ctx.strokeStyle = TC.kill || '#ff6e84';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(attackerPos[0], attackerPos[1]);
+    ctx.lineTo(victimPos[0], victimPos[1]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+
+    // Death X marker
+    if (tickDiff < SAMPLE_INTERVAL * 6) {
+      const xAlpha = Math.max(0, 1 - tickDiff / (SAMPLE_INTERVAL * 6));
+      ctx.globalAlpha = xAlpha * 0.8;
+      ctx.strokeStyle = TC.kill || '#ff6e84';
+      ctx.lineWidth = 3;
+      const sz = 8;
+      ctx.beginPath();
+      ctx.moveTo(victimPos[0] - sz, victimPos[1] - sz);
+      ctx.lineTo(victimPos[0] + sz, victimPos[1] + sz);
+      ctx.moveTo(victimPos[0] + sz, victimPos[1] - sz);
+      ctx.lineTo(victimPos[0] - sz, victimPos[1] + sz);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Draw grenade events
+  // Per-type display durations in ticks (TICK_RATE = 64)
+  const NADE_DURATIONS = { flash: 128, he: 128, smoke: 1152, molotov: 448 }; // flash/HE 2s, smoke 18s, molotov 7s
+  const NADE_COLORS = { flash: '#fffbe6', he: '#ff6e84', smoke: '#a3e635', molotov: '#fb923c' };
+  const NADE_ICONS = { flash: '⚡', he: '💥', smoke: '💨', molotov: '🔥' };
+  const NADE_RADIUS = { flash: 14, he: 14, smoke: 24, molotov: 22 };
+  for (const ev of events) {
+    if (ev.type !== 'grenade' || ev.px == null || ev.py == null) continue;
+    const diff = currentTick - ev.t;
+    const duration = NADE_DURATIONS[ev.grenade] || 128;
+    if (diff < 0 || diff > duration) continue;
+
+    const progress = diff / duration; // 0→1
+    const gx = ev.px, gy = ev.py;
+    const color = NADE_COLORS[ev.grenade] || '#ffffff';
+    const baseRadius = NADE_RADIUS[ev.grenade] || 14;
+
+    // ------- Flight path from thrower to detonation -------
+    if (ev.thrower) {
+      // Find thrower position at the grenade tick from frames
+      let throwerPos = null;
+      for (let fi = Math.max(0, idx - 4); fi <= Math.min(frames.length - 1, idx + 2); fi++) {
+        if (frames[fi][1][ev.thrower]) {
+          const fp = frames[fi][1][ev.thrower];
+          if (fp[2] > 0) { throwerPos = fp; break; }
+        }
+      }
+      if (throwerPos) {
+        ctx.globalAlpha = Math.max(0.1, 0.5 * (1 - progress));
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(throwerPos[0], throwerPos[1]);
+        ctx.lineTo(gx, gy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Small dot at thrower origin
+        ctx.globalAlpha = Math.max(0.1, 0.4 * (1 - progress));
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(throwerPos[0], throwerPos[1], 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // ------- Filled circle (smoke/molotov persistent, HE/flash burst) -------
+    if (ev.grenade === 'smoke') {
+      // Smoke cloud — solid green disc, fades in last 3s
+      const fadeStart = 1 - (3 * TICK_RATE / duration); // start fading at 15s
+      const smokeAlpha = progress < fadeStart ? 0.45 : 0.45 * (1 - (progress - fadeStart) / (1 - fadeStart));
+      ctx.globalAlpha = Math.max(0.08, smokeAlpha);
+      ctx.fillStyle = '#a3e635';
+      ctx.beginPath();
+      ctx.arc(gx, gy, baseRadius, 0, Math.PI * 2);
+      ctx.fill();
+      // Outer ring
+      ctx.globalAlpha = Math.max(0.15, smokeAlpha * 0.7);
+      ctx.strokeStyle = '#a3e635';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(gx, gy, baseRadius + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (ev.grenade === 'molotov') {
+      // Molotov fire — solid orange disc, fades in last 2s
+      const fadeStart = 1 - (2 * TICK_RATE / duration);
+      const fireAlpha = progress < fadeStart ? 0.5 : 0.5 * (1 - (progress - fadeStart) / (1 - fadeStart));
+      ctx.globalAlpha = Math.max(0.08, fireAlpha);
+      ctx.fillStyle = '#fb923c';
+      ctx.beginPath();
+      ctx.arc(gx, gy, baseRadius, 0, Math.PI * 2);
+      ctx.fill();
+      // Flickering outer ring
+      ctx.globalAlpha = Math.max(0.15, fireAlpha * 0.7);
+      ctx.strokeStyle = '#ff6347';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(gx, gy, baseRadius + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      // HE / Flash — burst circle that expands then fades
+      const burstRadius = baseRadius + progress * 12;
+      const burstAlpha = Math.max(0.1, 0.7 * (1 - progress));
+      ctx.globalAlpha = burstAlpha;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(gx, gy, burstRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = burstAlpha * 0.8;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(gx, gy, burstRadius + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // ------- Activation timer for smoke / molotov -------
+    if (ev.grenade === 'smoke' || ev.grenade === 'molotov') {
+      const totalSec = (ev.grenade === 'smoke') ? 18 : 7;
+      const elapsedSec = diff / TICK_RATE;
+      const remainSec = Math.max(0, totalSec - elapsedSec);
+      const fadeAlpha = progress < 0.8 ? 0.9 : 0.9 * (1 - (progress - 0.8) / 0.2);
+      ctx.globalAlpha = Math.max(0.15, fadeAlpha);
+      ctx.font = 'bold 11px "Space Grotesk", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(remainSec.toFixed(1) + 's', gx, gy + baseRadius + 12);
+    }
+
+    // ------- Center icon -------
+    const iconAlpha = (ev.grenade === 'smoke' || ev.grenade === 'molotov')
+      ? Math.max(0.15, progress < 0.85 ? 0.9 : 0.9 * (1 - (progress - 0.85) / 0.15))
+      : Math.max(0.2, 1 - progress);
+    ctx.globalAlpha = iconAlpha;
+    ctx.font = 'bold 13px "Space Grotesk", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(NADE_ICONS[ev.grenade] || '◆', gx, gy);
+
+    // ------- Thrower name label -------
+    if (ev.thrower && players[ev.thrower]) {
+      const throwerInfo = players[ev.thrower];
+      ctx.globalAlpha = Math.max(0.1, 0.7 * (1 - progress * 0.8));
+      ctx.font = 'bold 9px "Space Grotesk", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = throwerInfo.team === 3 ? (TC.ctName || '#93c5fd') : (TC.tName || '#fde047');
+      ctx.fillText(throwerInfo.name || '', gx, gy - baseRadius - 4);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // Draw player dots
+  for (const [sid, pos] of Object.entries(interpPositions)) {
+    const px = pos[0], py = pos[1], hp = pos[2];
+    const info = players[sid];
+    if (!info) continue;
+
+    const isCT = info.team === 3;
+    const alive = hp > 0;
+
+    if (!alive) {
+      // Dead: small X
+      ctx.globalAlpha = 0.3;
+      ctx.strokeStyle = isCT ? (TC.ct || '#60a5fa') : (TC.t || '#facc15');
+      ctx.lineWidth = 2;
+      const sz = 5;
+      ctx.beginPath();
+      ctx.moveTo(px - sz, py - sz); ctx.lineTo(px + sz, py + sz);
+      ctx.moveTo(px + sz, py - sz); ctx.lineTo(px - sz, py + sz);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      continue;
+    }
+
+    const radius = 10;
+
+    // Outer glow
+    ctx.shadowColor = isCT ? 'rgba(96, 165, 250, 0.5)' : 'rgba(250, 204, 21, 0.5)';
+    ctx.shadowBlur = 8;
+
+    // Player circle
+    ctx.fillStyle = isCT ? (TC.ctDot || '#3b82f6') : (TC.tDot || '#eab308');
+    ctx.beginPath();
+    ctx.arc(px, py, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    // HP ring (if damaged)
+    if (hp < 100) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(px, py, radius + 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2), false);
+      ctx.stroke();
+
+      const hpAngle = (hp / 100) * Math.PI * 2;
+      const hpColor = hp > 50 ? (TC.hpGood || '#4ade80') : hp > 25 ? (TC.hpWarn || '#facc15') : (TC.kill || '#ff6e84');
+      ctx.strokeStyle = hpColor;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(px, py, radius + 2, -Math.PI / 2, -Math.PI / 2 + hpAngle, false);
+      ctx.stroke();
+    }
+
+    // Player name
+    ctx.font = 'bold 10px "Space Grotesk", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = isCT ? (TC.ctName || '#93c5fd') : (TC.tName || '#fde047');
+    ctx.fillText(info.name || sid.slice(0, 6), px, py - radius - 5);
+  }
+
+  // Update player HP in sidebar
+  document.querySelectorAll('.player-hp').forEach(el => {
+    const sid = el.dataset.sid;
+    const pos = positions[sid];
+    if (pos) {
+      el.textContent = pos[2] > 0 ? pos[2] : '☠';
+      el.className = `ml-auto text-[10px] player-hp ${pos[2] > 0 ? 'text-on-surface-variant' : 'text-error/50'}`;
+    }
+  });
+
+  // Process kill events for kill feed
+  for (const ev of events) {
+    if (ev.t <= currentTick && !ev._shown) {
+      ev._shown = true;
+      if (ev.type === 'kill') addKillFeedItem(ev, players);
+      else if (ev.type === 'grenade') addGrenadeFeedItem(ev, players);
+    }
+  }
+}
+
+// ===================================================================
+// Kill feed
+// ===================================================================
+function addKillFeedItem(ev, players) {
+  const feed = document.getElementById('kill-feed');
+  const attackerName = players[ev.attacker]?.name || '?';
+  const victimName = players[ev.victim]?.name || '?';
+  const attackerTeam = players[ev.attacker]?.team;
+  const victimTeam = players[ev.victim]?.team;
+  const aColor = attackerTeam === 3 ? 'text-blue-400' : 'text-yellow-400';
+  const vColor = victimTeam === 3 ? 'text-blue-400' : 'text-yellow-400';
+  const hs = ev.headshot ? ' <span class="text-error">HS</span>' : '';
+  const weapon = ev.weapon || '?';
+
+  const div = document.createElement('div');
+  div.className = 'kill-feed-item flex items-center gap-1 py-0.5';
+  div.innerHTML = `<span class="${aColor} font-bold truncate max-w-[70px]">${escapeHtml(attackerName)}</span>
+    <span class="text-on-surface-variant/50 text-[10px]">[${escapeHtml(weapon)}${hs}]</span>
+    <span class="${vColor} truncate max-w-[70px]">${escapeHtml(victimName)}</span>`;
+  feed.appendChild(div);
+  feed.scrollTop = feed.scrollHeight;
+
+  // Auto-remove after 8 seconds
+  setTimeout(() => {
+    div.classList.add('fade-out');
+    setTimeout(() => div.remove(), 500);
+  }, 8000);
+}
+
+function addGrenadeFeedItem(ev, players) {
+  const feed = document.getElementById('kill-feed');
+  const throwerName = players[ev.thrower]?.name || '';
+  const throwerTeam = players[ev.thrower]?.team;
+  const tColor = throwerTeam === 3 ? 'text-blue-400' : throwerTeam === 2 ? 'text-yellow-400' : 'text-on-surface-variant';
+  const labels = { flash: '⚡ Flash', he: '💥 HE', smoke: '💨 Smoke', molotov: '🔥 Molotov' };
+  const colors = { flash: 'text-yellow-200', he: 'text-red-400', smoke: 'text-green-400', molotov: 'text-orange-400' };
+  const label = labels[ev.grenade] || ev.grenade;
+  const nColor = colors[ev.grenade] || 'text-on-surface-variant';
+
+  const div = document.createElement('div');
+  div.className = 'kill-feed-item flex items-center gap-1 py-0.5';
+  if (throwerName) {
+    div.innerHTML = `<span class="${tColor} font-bold truncate max-w-[70px]">${escapeHtml(throwerName)}</span>
+      <span class="${nColor} text-[10px]">${label}</span>`;
+  } else {
+    div.innerHTML = `<span class="${nColor} text-[10px]">${label}</span>`;
+  }
+  feed.appendChild(div);
+  feed.scrollTop = feed.scrollHeight;
+
+  setTimeout(() => {
+    div.classList.add('fade-out');
+    setTimeout(() => div.remove(), 500);
+  }, 5000);
+}
+
+// ===================================================================
+// Playback loop
+// ===================================================================
+function gameLoop(timestamp) {
+  if (!playing) return;
+
+  if (lastTimestamp === 0) lastTimestamp = timestamp;
+  const dt = timestamp - lastTimestamp;
+  lastTimestamp = timestamp;
+
+  accumulator += dt * speed;
+  const msPerFrame = MS_PER_FRAME;
+
+  let stepped = false;
+  while (accumulator >= msPerFrame) {
+    accumulator -= msPerFrame;
+    currentFrameIdx++;
+    stepped = true;
+  }
+
+  if (roundData && roundData.frames && currentFrameIdx >= roundData.frames.length) {
+    currentFrameIdx = roundData.frames.length - 1;
+    stop();
+    return;
+  }
+
+  if (stepped) {
+    drawFrame();
+    updateTimeDisplay();
+  } else if (playing) {
+    // Still interpolate between frames for smooth motion
+    drawFrame();
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+function togglePlay() {
+  if (playing) stop();
+  else play();
+}
+
+function play() {
+  if (!roundData || !roundData.frames || roundData.frames.length === 0) return;
+  // If at end, restart
+  if (currentFrameIdx >= roundData.frames.length - 1) {
+    currentFrameIdx = 0;
+    accumulator = 0;
+    // Reset kill feed shown flags
+    if (roundData.events) roundData.events.forEach(e => e._shown = false);
+    killFeedItems = [];
+    document.getElementById('kill-feed').innerHTML = '';
+  }
+  playing = true;
+  lastTimestamp = 0;
+  document.getElementById('play-icon').textContent = 'pause';
+  requestAnimationFrame(gameLoop);
+}
+
+function stop() {
+  playing = false;
+  document.getElementById('play-icon').textContent = 'play_arrow';
+}
+
+function setSpeed(s) {
+  speed = s;
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.classList.toggle('active', parseFloat(btn.textContent) === s);
+  });
+}
+
+function prevRound() {
+  if (!matchMeta?.rounds) return;
+  const sel = document.getElementById('round-select');
+  const cur = parseInt(sel.value);
+  const rounds = matchMeta.rounds.map(r => r.round);
+  const idx = rounds.indexOf(cur);
+  if (idx > 0) loadRound(rounds[idx - 1]);
+}
+
+function nextRound() {
+  if (!matchMeta?.rounds) return;
+  const sel = document.getElementById('round-select');
+  const cur = parseInt(sel.value);
+  const rounds = matchMeta.rounds.map(r => r.round);
+  const idx = rounds.indexOf(cur);
+  if (idx < rounds.length - 1) loadRound(rounds[idx + 1]);
+}
+
+// ===================================================================
+// Timeline scrubber
+// ===================================================================
+function setupTimeline() {
+  const bar = document.getElementById('timeline-bar');
+  let dragging = false;
+
+  function seekTo(e) {
+    if (!roundData?.frames?.length) return;
+    const rect = bar.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    currentFrameIdx = Math.floor(pct * (roundData.frames.length - 1));
+    accumulator = 0;
+
+    // Reset kill events shown state up to current tick
+    const currentTick = roundData.frames[currentFrameIdx][0];
+    if (roundData.events) {
+      roundData.events.forEach(ev => { ev._shown = ev.t <= currentTick; });
+    }
+    // Rebuild kill feed
+    document.getElementById('kill-feed').innerHTML = '';
+    if (roundData.events) {
+      for (const ev of roundData.events) {
+        if (ev.t <= currentTick && ev.type === 'kill') {
+          addKillFeedItem(ev, roundData.players || {});
+        }
+      }
+    }
+
+    drawFrame();
+    updateTimeDisplay();
+  }
+
+  bar.addEventListener('mousedown', (e) => { dragging = true; seekTo(e); });
+  window.addEventListener('mousemove', (e) => { if (dragging) seekTo(e); });
+  window.addEventListener('mouseup', () => { dragging = false; });
+}
+
+function updateTimeDisplay() {
+  if (!roundData?.frames?.length) return;
+  const total = roundData.frames.length - 1;
+  const idx = Math.min(currentFrameIdx, total);
+  const pct = total > 0 ? (idx / total) * 100 : 0;
+
+  document.getElementById('timeline-progress').style.width = pct + '%';
+  document.getElementById('timeline-thumb').style.left = `calc(${pct}% - 8px)`;
+
+  const currentTick = roundData.frames[idx]?.[0] || 0;
+  const totalTick = roundData.frames[total]?.[0] || 0;
+  document.getElementById('time-current').textContent = formatTime(currentTick / TICK_RATE);
+  document.getElementById('time-total').textContent = formatTime(totalTick / TICK_RATE);
+}
+
+// ===================================================================
+// Utilities
+// ===================================================================
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+// ===================================================================
+// Keyboard shortcuts
+// ===================================================================
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+  switch (e.key) {
+    case ' ':
+      e.preventDefault();
+      togglePlay();
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      if (e.shiftKey) nextRound();
+      else if (roundData?.frames) {
+        currentFrameIdx = Math.min(currentFrameIdx + 5, roundData.frames.length - 1);
+        accumulator = 0;
+        drawFrame();
+        updateTimeDisplay();
+      }
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      if (e.shiftKey) prevRound();
+      else if (roundData?.frames) {
+        currentFrameIdx = Math.max(currentFrameIdx - 5, 0);
+        accumulator = 0;
+        drawFrame();
+        updateTimeDisplay();
+      }
+      break;
+    case '+':
+    case '=':
+      { const speeds = [0.25, 0.5, 1, 2, 4]; const i = speeds.indexOf(speed); if (i < speeds.length - 1) setSpeed(speeds[i + 1]); }
+      break;
+    case '-':
+      { const speeds = [0.25, 0.5, 1, 2, 4]; const i = speeds.indexOf(speed); if (i > 0) setSpeed(speeds[i - 1]); }
+      break;
+  }
+});
+</script>
+</body>
+</html>

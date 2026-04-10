@@ -1,0 +1,338 @@
+/* ========================================================================
+   pr1maly — Theme variables (Material Design 3 tokens)
+   Values are space-separated RGB channels for Tailwind opacity support.
+   Usage in Tailwind config: "primary": "rgb(var(--c-primary) / <alpha-value>)"
+   ======================================================================== */
+
+/* --- Dark mode (default) --- */
+:root {
+  --c-background: 6 14 32;
+  --c-surface: 6 14 32;
+  --c-surface-dim: 6 14 32;
+  --c-surface-bright: 31 43 73;
+  --c-surface-container-lowest: 0 0 0;
+  --c-surface-container-low: 9 19 40;
+  --c-surface-container: 15 25 48;
+  --c-surface-container-high: 20 31 56;
+  --c-surface-container-highest: 25 37 64;
+  --c-surface-variant: 25 37 64;
+  --c-surface-tint: 204 151 255;
+
+  --c-on-surface: 222 229 255;
+  --c-on-surface-variant: 163 170 196;
+  --c-on-background: 222 229 255;
+
+  --c-primary: 204 151 255;
+  --c-primary-dim: 156 72 234;
+  --c-primary-container: 194 132 255;
+  --c-primary-fixed: 194 132 255;
+  --c-primary-fixed-dim: 185 113 255;
+  --c-on-primary: 71 0 124;
+  --c-on-primary-container: 54 0 97;
+  --c-on-primary-fixed: 0 0 0;
+  --c-on-primary-fixed-variant: 67 0 118;
+  --c-inverse-primary: 132 44 211;
+
+  --c-secondary: 83 221 252;
+  --c-secondary-dim: 64 206 237;
+  --c-secondary-container: 0 104 122;
+  --c-secondary-fixed: 101 225 255;
+  --c-secondary-fixed-dim: 72 212 243;
+  --c-on-secondary: 0 75 88;
+  --c-on-secondary-container: 236 250 255;
+  --c-on-secondary-fixed: 0 58 69;
+  --c-on-secondary-fixed-variant: 0 89 105;
+
+  --c-tertiary: 255 134 195;
+  --c-tertiary-dim: 242 113 181;
+  --c-tertiary-container: 246 115 183;
+  --c-tertiary-fixed: 255 139 197;
+  --c-tertiary-fixed-dim: 249 118 186;
+  --c-on-tertiary: 95 0 62;
+  --c-on-tertiary-container: 74 0 47;
+  --c-on-tertiary-fixed: 54 0 33;
+  --c-on-tertiary-fixed-variant: 115 0 75;
+
+  --c-error: 255 110 132;
+  --c-error-dim: 215 51 87;
+  --c-error-container: 167 1 56;
+  --c-on-error: 73 0 19;
+  --c-on-error-container: 255 178 185;
+
+  --c-outline: 109 117 140;
+  --c-outline-variant: 64 72 93;
+
+  --c-inverse-surface: 250 248 255;
+  --c-inverse-on-surface: 77 85 107;
+
+  /* Sidebar-specific */
+  --sidebar-bg: 15 25 48;
+  --sidebar-border: rgba(255,255,255,0.05);
+  --mobile-nav-bg: rgba(6,14,32,0.9);
+
+  /* Glass panel */
+  --glass-bg: rgba(25, 37, 64, 0.6);
+
+  /* Glows */
+  --glow-primary: rgba(204, 151, 255, 0.2);
+  --glow-secondary: rgba(83, 221, 252, 0.2);
+  --glow-tertiary: rgba(255, 134, 195, 0.2);
+  --stat-glow-secondary: rgba(83, 221, 252, 0.4);
+  --stat-glow-tertiary: rgba(255, 134, 195, 0.4);
+
+  /* Speed button active */
+  --speed-btn-bg: rgba(83, 221, 252, 0.2);
+  --speed-btn-color: #53ddfc;
+  --speed-btn-border: rgba(83, 221, 252, 0.3);
+
+  /* Replay round list accent colors */
+  --rr-ct-bg: rgba(59, 130, 246, 0.25);
+  --rr-ct-color: #60a5fa;
+  --rr-t-bg: rgba(234, 179, 8, 0.25);
+  --rr-t-color: #facc15;
+  --rr-win-color: #34d399;
+  --rr-loss-color: #f87171;
+  --rr-num-color: #c8d0e0;
+  --rr-btn-border: rgba(255,255,255,0.08);
+  --rr-btn-bg: rgba(255,255,255,0.03);
+  --rr-btn-hover-border: rgba(83,221,252,0.3);
+  --rr-btn-hover-bg: rgba(83,221,252,0.06);
+  --rr-btn-active-border: rgba(83,221,252,0.5);
+  --rr-btn-active-bg: rgba(83,221,252,0.12);
+  --rr-btn-active-shadow: 0 0 8px rgba(83,221,252,0.15);
+
+  /* ---- Chart / canvas colors ---- */
+  --chart-bg: #0f1930;
+  --chart-canvas-bg: #0a1628;
+  --chart-ct: #60a5fa;
+  --chart-ct-dot: #3b82f6;
+  --chart-ct-name: #93c5fd;
+  --chart-t: #facc15;
+  --chart-t-dot: #eab308;
+  --chart-t-name: #fde047;
+  --chart-hp-good: #4ade80;
+  --chart-hp-warn: #facc15;
+  --chart-kill: #ff6e84;
+  --chart-death: #ff4466;
+  --chart-success: #34d399;
+  --chart-fail: #f87171;
+  --chart-error: #ef4444;
+  --chart-amber: #fbbf24;
+  --chart-orange: #fb923c;
+  --chart-molotov: #f97316;
+  --chart-cyan: #53ddfc;
+  --chart-sky: #38bdf8;
+  --chart-purple: #cc97ff;
+  --chart-purple-alt: #c084fc;
+  --chart-pink: #ff86c3;
+  --chart-smoke: #cbd5e1;
+  --chart-on-text: #dee5ff;
+  --chart-dot-stroke: #0a1628;
+  --chart-buy-full: #c497ff;
+  --chart-buy-half: #bb86fc;
+  --chart-buy-force: #03dac6;
+  --chart-buy-pistol: #fb923c;
+  --chart-flash: #fde047;
+  --chart-he: #f87171;
+  --chart-pre-aim: #22d3ee;
+  --chart-grid: rgba(255,255,255,0.08);
+  --chart-grid-text: rgba(255,255,255,0.35);
+  --chart-track: rgba(255,255,255,0.04);
+  --chart-avg-stroke: #ffffff;
+}
+
+/* --- Light mode — "Pastel Tactical Editorial" palette --- */
+[data-theme="light"] {
+  /* Core surfaces — warm off-white → white card stacking */
+  --c-background: 247 250 252;           /* #f7fafc */
+  --c-surface: 247 250 252;
+  --c-surface-dim: 220 226 231;
+  --c-surface-bright: 255 255 255;
+  --c-surface-container-lowest: 255 255 255;  /* white cards */
+  --c-surface-container-low: 239 244 247;     /* #eff4f7 sections */
+  --c-surface-container: 233 238 243;
+  --c-surface-container-high: 227 233 239;
+  --c-surface-container-highest: 221 228 235;
+  --c-surface-variant: 224 230 236;
+  --c-surface-tint: 109 78 163;          /* #6d4ea3 */
+
+  /* Text — warm grey-brown, never pure black */
+  --c-on-surface: 43 52 55;              /* #2b3437 */
+  --c-on-surface-variant: 85 94 99;
+  --c-on-background: 43 52 55;
+
+  /* Primary — Soft Lavender */
+  --c-primary: 109 78 163;               /* #6d4ea3 */
+  --c-primary-dim: 88 58 140;
+  --c-primary-container: 194 160 252;     /* #c2a0fc */
+  --c-primary-fixed: 237 220 255;
+  --c-primary-fixed-dim: 194 160 252;
+  --c-on-primary: 255 255 255;
+  --c-on-primary-container: 40 6 82;
+  --c-on-primary-fixed: 40 6 82;
+  --c-on-primary-fixed-variant: 82 48 140;
+  --c-inverse-primary: 194 160 252;
+
+  /* Secondary — Mint / Teal */
+  --c-secondary: 0 121 107;              /* #00796b */
+  --c-secondary-dim: 0 100 88;
+  --c-secondary-container: 164 240 233;   /* #a4f0e9 */
+  --c-secondary-fixed: 164 240 233;
+  --c-secondary-fixed-dim: 130 220 210;
+  --c-on-secondary: 255 255 255;
+  --c-on-secondary-container: 0 38 33;
+  --c-on-secondary-fixed: 0 38 33;
+  --c-on-secondary-fixed-variant: 0 90 80;
+
+  /* Tertiary — Muted Coral */
+  --c-tertiary: 142 77 57;               /* #8e4d39 */
+  --c-tertiary-dim: 120 58 38;
+  --c-tertiary-container: 247 164 139;    /* #f7a48b */
+  --c-tertiary-fixed: 255 220 208;
+  --c-tertiary-fixed-dim: 247 164 139;
+  --c-on-tertiary: 255 255 255;
+  --c-on-tertiary-container: 58 20 8;
+  --c-on-tertiary-fixed: 58 20 8;
+  --c-on-tertiary-fixed-variant: 120 52 34;
+
+  /* Error — muted red */
+  --c-error: 186 26 26;
+  --c-error-dim: 160 0 16;
+  --c-error-container: 255 218 218;
+  --c-on-error: 255 255 255;
+  --c-on-error-container: 65 0 2;
+
+  /* Outline — soft grey per design doc */
+  --c-outline: 170 179 183;              /* #aab3b7 */
+  --c-outline-variant: 196 204 208;      /* ghost border base */
+
+  --c-inverse-surface: 48 54 57;
+  --c-inverse-on-surface: 242 246 248;
+
+  /* Sidebar — light tonal shift */
+  --sidebar-bg: 239 244 247;
+  --sidebar-border: rgba(170,179,183,0.15);
+  --mobile-nav-bg: rgba(247,250,252,0.95);
+
+  /* Glass panel — frosted, per design doc */
+  --glass-bg: rgba(239, 244, 247, 0.80);
+
+  /* Glows — pastel-soft */
+  --glow-primary: rgba(109, 78, 163, 0.10);
+  --glow-secondary: rgba(0, 121, 107, 0.10);
+  --glow-tertiary: rgba(142, 77, 57, 0.10);
+  --stat-glow-secondary: rgba(0, 121, 107, 0.18);
+  --stat-glow-tertiary: rgba(142, 77, 57, 0.18);
+
+  /* Speed button — secondary teal accent */
+  --speed-btn-bg: rgba(0, 121, 107, 0.10);
+  --speed-btn-color: #00796b;
+  --speed-btn-border: rgba(0, 121, 107, 0.25);
+
+  /* Replay round list */
+  --rr-ct-bg: rgba(37, 99, 235, 0.10);
+  --rr-ct-color: #1d4ed8;
+  --rr-t-bg: rgba(142, 77, 57, 0.10);
+  --rr-t-color: #8e4d39;
+  --rr-win-color: #00796b;
+  --rr-loss-color: #ba1a1a;
+  --rr-num-color: #2b3437;
+  --rr-btn-border: rgba(170,179,183,0.15);
+  --rr-btn-bg: rgba(0,0,0,0.02);
+  --rr-btn-hover-border: rgba(109,78,163,0.25);
+  --rr-btn-hover-bg: rgba(109,78,163,0.05);
+  --rr-btn-active-border: rgba(109,78,163,0.40);
+  --rr-btn-active-bg: rgba(109,78,163,0.10);
+  --rr-btn-active-shadow: 0 0 8px rgba(109,78,163,0.10);
+
+  /* ---- Chart / canvas — light mode uses design doc palette ---- */
+  --chart-bg: #ffffff;
+  --chart-canvas-bg: #f7fafc;
+  --chart-ct: #2563eb;
+  --chart-ct-dot: #1d4ed8;
+  --chart-ct-name: #1e40af;
+  --chart-t: #b45309;
+  --chart-t-dot: #92400e;
+  --chart-t-name: #78350f;
+  --chart-hp-good: #00796b;
+  --chart-hp-warn: #b45309;
+  --chart-kill: #ba1a1a;
+  --chart-death: #ba1a1a;
+  --chart-success: #00796b;
+  --chart-fail: #ba1a1a;
+  --chart-error: #ba1a1a;
+  --chart-amber: #8e4d39;
+  --chart-orange: #8e4d39;
+  --chart-molotov: #c2410c;
+  --chart-cyan: #00796b;
+  --chart-sky: #1d4ed8;
+  --chart-purple: #6d4ea3;
+  --chart-purple-alt: #7c3aed;
+  --chart-pink: #8e4d39;
+  --chart-smoke: #556063;
+  --chart-on-text: #2b3437;
+  --chart-dot-stroke: #eff4f7;
+  --chart-buy-full: #6d4ea3;
+  --chart-buy-half: #8b68b8;
+  --chart-buy-force: #00796b;
+  --chart-buy-pistol: #8e4d39;
+  --chart-flash: #b45309;
+  --chart-he: #ba1a1a;
+  --chart-pre-aim: #00796b;
+  --chart-grid: rgba(43,52,55,0.18);
+  --chart-grid-text: rgba(43,52,55,0.55);
+  --chart-track: rgba(43,52,55,0.06);
+  --chart-avg-stroke: #2b3437;
+}
+
+/* ========================================================================
+   Light mode overrides for Tailwind standard colors & overlays
+   "Pastel Tactical Editorial" — no pure black, ghost borders, tonal depth
+   ======================================================================== */
+
+/* White overlays → ghost-style tonal shifts (design doc: "No-Line Rule") */
+[data-theme="light"] .bg-white\/5  { background-color: rgba(170,179,183,0.06) !important; }
+[data-theme="light"] .bg-white\/10 { background-color: rgba(170,179,183,0.10) !important; }
+[data-theme="light"] .border-white\/5  { border-color: rgba(170,179,183,0.12) !important; }
+[data-theme="light"] .border-white\/10 { border-color: rgba(170,179,183,0.18) !important; }
+[data-theme="light"] .divide-white\/5 > * + * { border-color: rgba(170,179,183,0.12) !important; }
+[data-theme="light"] .hover\:bg-white\/5:hover { background-color: rgba(170,179,183,0.08) !important; }
+[data-theme="light"] .hover\:bg-white\/20:hover { background-color: rgba(170,179,183,0.12) !important; }
+[data-theme="light"] .shadow-purple-900\/20 { --tw-shadow-color: rgba(109,78,163,0.08) !important; }
+
+/* Ambient shadow — 24px blur, 6% opacity (design doc Elevation §4) */
+[data-theme="light"] .shadow-lg { box-shadow: 0 4px 24px rgba(43,52,55,0.06) !important; }
+
+/* Text: map bright dark-mode Tailwind colors → design doc palette */
+[data-theme="light"] .text-emerald-400 { color: #00796b !important; }  /* secondary teal */
+[data-theme="light"] .text-blue-400   { color: #1d4ed8 !important; }
+[data-theme="light"] .text-yellow-400 { color: #8e4d39 !important; }  /* tertiary coral */
+[data-theme="light"] .text-red-400    { color: #ba1a1a !important; }  /* error */
+[data-theme="light"] .text-cyan-400   { color: #00796b !important; }  /* secondary teal */
+[data-theme="light"] .text-purple-300 { color: #6d4ea3 !important; }  /* primary lavender */
+[data-theme="light"] .text-green-400  { color: #00796b !important; }  /* secondary teal */
+[data-theme="light"] .text-orange-400 { color: #8e4d39 !important; }  /* tertiary coral */
+[data-theme="light"] .text-pink-400   { color: #8e4d39 !important; }  /* tertiary coral */
+[data-theme="light"] .text-amber-400  { color: #8e4d39 !important; }  /* tertiary coral */
+[data-theme="light"] .text-indigo-400 { color: #6d4ea3 !important; }  /* primary lavender */
+[data-theme="light"] .text-sky-400    { color: #1d4ed8 !important; }
+[data-theme="light"] .text-teal-400   { color: #00796b !important; }  /* secondary teal */
+[data-theme="light"] .text-rose-400   { color: #ba1a1a !important; }  /* error */
+[data-theme="light"] .text-violet-400 { color: #6d4ea3 !important; }  /* primary lavender */
+[data-theme="light"] .text-lime-400   { color: #00796b !important; }  /* secondary teal */
+[data-theme="light"] .text-fuchsia-400 { color: #8e4d39 !important; } /* tertiary coral */
+[data-theme="light"] .text-slate-500  { color: #556063 !important; }  /* on-surface-variant */
+
+/* Border accent colors → design doc palette */
+[data-theme="light"] .border-cyan-400   { border-color: #00796b !important; }
+[data-theme="light"] .border-emerald-400 { border-color: #00796b !important; }
+
+/* Gradient — sidebar active uses primary lavender tint */
+[data-theme="light"] .from-purple-500\/20 { --tw-gradient-from: rgba(109,78,163,0.08) !important; }
+
+/* Silk-finish gradient for primary CTAs (design doc §2 Signature Textures) */
+[data-theme="light"] .bg-gradient-to-r.from-primary.to-primary-dim {
+  background: linear-gradient(135deg, #6d4ea3, #c2a0fc) !important;
+}
+
+/* Chart.js canvas background (handled via JS) */
