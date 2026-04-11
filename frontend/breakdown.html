@@ -541,6 +541,149 @@
 </a>
 </nav>
 <!-- Upload Modal -->
+<!-- Onboarding Modal -->
+<div id="onboarding-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/70 backdrop-blur-md">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-2xl mx-4 border border-white/10 shadow-[0_0_60px_rgba(204,151,255,0.2)] max-h-[90vh] overflow-y-auto">
+
+    <!-- Step indicators -->
+    <div class="flex items-center justify-center gap-2 mb-8">
+      <div id="ob-dot-0" class="w-2.5 h-2.5 rounded-full bg-primary transition-colors"></div>
+      <div id="ob-dot-1" class="w-2.5 h-2.5 rounded-full bg-white/20 transition-colors"></div>
+      <div id="ob-dot-2" class="w-2.5 h-2.5 rounded-full bg-white/20 transition-colors"></div>
+      <div id="ob-dot-3" class="w-2.5 h-2.5 rounded-full bg-white/20 transition-colors"></div>
+      <div id="ob-dot-4" class="w-2.5 h-2.5 rounded-full bg-white/20 transition-colors"></div>
+    </div>
+
+    <!-- Step 0: Welcome -->
+    <div id="ob-step-0" class="ob-step">
+      <div class="text-center">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(204,151,255,0.3)]">
+          <img src="img/logo-big.png" alt="pr1maly" class="w-full h-full object-cover"/>
+        </div>
+        <h2 class="font-headline text-2xl font-bold uppercase tracking-widest mb-3">Welcome to pr1maly</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed max-w-md mx-auto">
+          Your fully local CS2 analytics suite. Parse demo files, track performance trends, replay rounds, and get AI-powered insights — all on your machine.
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 1: Features -->
+    <div id="ob-step-1" class="ob-step hidden">
+      <h2 class="font-headline text-lg font-bold uppercase tracking-widest mb-6 text-center">What you can do</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="p-4 rounded-xl bg-surface-container-highest border border-white/5">
+          <span class="material-symbols-outlined text-primary mb-2 block">insights</span>
+          <h3 class="font-headline text-sm font-bold mb-1">Trend Tracking</h3>
+          <p class="text-[11px] text-on-surface-variant leading-relaxed">Track K/D, KAST%, HLTV rating, ADR, win rate and more across matches. Filter by map.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-container-highest border border-white/5">
+          <span class="material-symbols-outlined text-secondary mb-2 block">sports_esports</span>
+          <h3 class="font-headline text-sm font-bold mb-1">Match Breakdown</h3>
+          <p class="text-[11px] text-on-surface-variant leading-relaxed">Scoreboard, aim analysis, utility usage, economy timeline, and behavioral radar per match.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-container-highest border border-white/5">
+          <span class="material-symbols-outlined text-tertiary mb-2 block">play_circle</span>
+          <h3 class="font-headline text-sm font-bold mb-1">2D Round Replay</h3>
+          <p class="text-[11px] text-on-surface-variant leading-relaxed">Watch rounds on the radar with player movement, grenades, kill lines, and flash effects.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-container-highest border border-white/5">
+          <span class="material-symbols-outlined text-cyan-400 mb-2 block">psychology</span>
+          <h3 class="font-headline text-sm font-bold mb-1">AI Insights</h3>
+          <p class="text-[11px] text-on-surface-variant leading-relaxed">Get AI-powered tactical analysis, role identification, and improvement suggestions.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Setup — pick player & friends from .dem.info -->
+    <div id="ob-step-2" class="ob-step hidden">
+      <h2 class="font-headline text-lg font-bold uppercase tracking-widest mb-2 text-center">Set up your identity</h2>
+      <p class="text-xs text-on-surface-variant text-center mb-6">Upload a <span class="text-primary font-bold">.dem</span> and its <span class="text-primary font-bold">.dem.info</span> file to detect all players with their nicknames. Then pick yourself and tag your friends.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Demo File (.dem) <span class="normal-case font-normal text-on-surface-variant/50">— for player nicknames</span></label>
+          <input type="file" id="ob-dem-file" accept=".dem" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-secondary/80 file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Demo Info File (.dem.info) <span class="normal-case font-normal text-on-surface-variant/50">— for player IDs</span></label>
+          <input type="file" id="ob-info-file" accept=".info" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-on-primary-container file:text-[10px] file:font-bold file:uppercase"/>
+          <div id="ob-detect-status" class="text-xs mt-2 hidden"></div>
+        </div>
+
+        <!-- Player list (shown after .info parsed) -->
+        <div id="ob-players-section" class="hidden">
+          <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Players found in this match</p>
+          <p class="text-[10px] text-on-surface-variant mb-3">Click <span class="text-primary font-bold">Set as Me</span> to mark your account, or <span class="text-cyan-400 font-bold">Add Friend</span> to tag teammates.</p>
+          <div id="ob-players-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+        </div>
+
+        <!-- Summary of selections -->
+        <div id="ob-selections-summary" class="hidden p-4 rounded-xl bg-surface-container-highest border border-white/5">
+          <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Your setup</p>
+          <div id="ob-my-account" class="text-xs text-on-surface-variant mb-1"></div>
+          <div id="ob-my-friends" class="text-xs text-cyan-400"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: AI Configuration (optional) -->
+    <div id="ob-step-3" class="ob-step hidden">
+      <h2 class="font-headline text-lg font-bold uppercase tracking-widest mb-2 text-center">AI-Powered Insights</h2>
+      <p class="text-xs text-on-surface-variant text-center mb-6">Connect an AI provider to unlock tactical analysis, role identification, and improvement suggestions. <span class="text-on-surface-variant/50">You can skip this and configure it later in Settings.</span></p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Provider</label>
+          <div id="ob-ai-provider-tabs" class="flex gap-2 flex-wrap"></div>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">API Key</label>
+          <input type="password" id="ob-ai-key" placeholder="Enter API key..." class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <p class="text-[9px] text-on-surface-variant/50 mt-1">Your key is stored locally and never sent anywhere except to the provider.</p>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Model</label>
+          <select id="ob-ai-model" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"></select>
+        </div>
+        <div id="ob-ai-status" class="text-xs text-center hidden"></div>
+      </div>
+    </div>
+
+    <!-- Step 4: Getting started -->
+    <div id="ob-step-4" class="ob-step hidden">
+      <div class="text-center">
+        <span class="material-symbols-outlined text-5xl text-secondary mb-4 block">rocket_launch</span>
+        <h2 class="font-headline text-lg font-bold uppercase tracking-widest mb-3">You're all set!</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed max-w-md mx-auto mb-6">
+          Upload your first demo using the <span class="text-primary font-bold">Upload Demo</span> button in the sidebar, or set up a <span class="text-secondary font-bold">Sync Folder</span> to auto-import matches.
+        </p>
+        <div class="flex items-center justify-center gap-2 text-xs text-on-surface-variant">
+          <span class="material-symbols-outlined text-sm">info</span>
+          You can always manage accounts and friends in <span class="text-primary font-bold cursor-pointer" onclick="closeOnboarding();openSettingsModal()">Settings</span>.
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation buttons -->
+    <div class="flex items-center justify-between mt-8 pt-6 border-t border-white/5">
+      <div class="flex items-center gap-3">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" id="ob-dismiss-check" class="w-4 h-4 rounded bg-surface-container-highest border-white/20 text-primary focus:ring-primary/30 focus:ring-offset-0">
+          <span class="text-[10px] text-on-surface-variant">Don't show again</span>
+        </label>
+      </div>
+      <div class="flex gap-3">
+        <button id="ob-prev-btn" onclick="obPrev()" class="hidden px-6 py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">
+          Back
+        </button>
+        <button id="ob-next-btn" onclick="obNext()" class="px-8 py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r from-primary to-primary-dim text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="upload-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
   <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)]">
     <div class="flex justify-between items-center mb-6">
@@ -634,10 +777,11 @@
       <button onclick="closeSettingsModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
     </div>
     <!-- Tabs -->
-    <div class="flex gap-2 mb-6">
+    <div class="flex gap-2 mb-6 flex-wrap">
       <button id="settings-tab-accounts" onclick="switchSettingsTab('accounts')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Accounts</button>
       <button id="settings-tab-friends" onclick="switchSettingsTab('friends')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Friends</button>
       <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
+      <button id="settings-tab-reset" onclick="switchSettingsTab('reset')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Reset</button>
     </div>
     <!-- Accounts Tab -->
     <div id="settings-accounts-panel">
@@ -693,6 +837,35 @@
         Save AI Configuration
       </button>
       <div id="ai-settings-status" class="text-xs text-center mt-3 hidden"></div>
+    </div>
+    <!-- Factory Reset Tab -->
+    <div id="settings-reset-panel" class="hidden">
+      <div class="text-center mb-6">
+        <span class="material-symbols-outlined text-4xl text-error mb-3 block">warning</span>
+        <h3 class="font-headline text-sm font-bold uppercase tracking-widest mb-2">Factory Reset</h3>
+        <p class="text-xs text-on-surface-variant leading-relaxed max-w-sm mx-auto">
+          This will permanently delete <span class="text-error font-bold">all match data</span>, accounts, friends, AI roles, and settings. The application will return to a fresh-install state.
+        </p>
+      </div>
+      <div class="p-4 rounded-xl bg-error/5 border border-error/20 mb-6">
+        <p class="text-[10px] font-bold text-error uppercase tracking-widest mb-2">This action deletes:</p>
+        <ul class="text-[11px] text-on-surface-variant space-y-1">
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-error text-sm">database</span> All match history & round stats</li>
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-error text-sm">person_remove</span> All accounts & friends</li>
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-error text-sm">psychology</span> AI roles & configuration</li>
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-error text-sm">sync_disabled</span> Sync folder settings</li>
+        </ul>
+      </div>
+      <div class="space-y-3">
+        <label class="flex items-center gap-3 cursor-pointer select-none">
+          <input type="checkbox" id="reset-confirm-check" class="w-4 h-4 rounded bg-surface-container-highest border-white/20 text-error focus:ring-error/30 focus:ring-offset-0" onchange="document.getElementById('reset-btn').disabled = !this.checked">
+          <span class="text-xs text-on-surface-variant">I understand this cannot be undone</span>
+        </label>
+        <button id="reset-btn" disabled onclick="doFactoryReset()" class="w-full bg-gradient-to-r from-error to-error-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-error shadow-[0_0_15px_rgba(255,100,100,0.3)] hover:scale-[1.02] transition-transform disabled:opacity-30 disabled:pointer-events-none">
+          Reset Everything
+        </button>
+        <div id="reset-status" class="text-xs text-center hidden"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -792,10 +965,11 @@ function closeSettingsModal() {
 document.getElementById('settings-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettingsModal(); });
 
 function switchSettingsTab(tab) {
-  const tabs = ['accounts', 'friends', 'ai'];
+  const tabs = ['accounts', 'friends', 'ai', 'reset'];
   tabs.forEach(t => {
     const btn = document.getElementById('settings-tab-' + t);
     const panel = document.getElementById('settings-' + t + '-panel');
+    if (!btn || !panel) return;
     if (t === tab) {
       btn.className = btn.className.replace('bg-surface-container-highest text-on-surface-variant hover:bg-white/10', '').replace('bg-primary text-on-primary-fixed', '') + ' bg-primary text-on-primary-fixed';
       panel.classList.remove('hidden');
@@ -1769,6 +1943,285 @@ function toggleSidebar() {
   } catch(e) {}
 })();
 
-document.addEventListener('DOMContentLoaded', () => { loadAccounts(); loadPerformance(); });
+// ─── Factory Reset ───
+async function doFactoryReset() {
+  const status = document.getElementById('reset-status');
+  const btn = document.getElementById('reset-btn');
+  btn.disabled = true; btn.textContent = 'RESETTING...';
+  status.classList.add('hidden');
+  try {
+    const res = await fetch(API + '/factory-reset', { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      status.textContent = 'Reset complete. Reloading...';
+      status.className = 'text-xs text-center text-secondary';
+      status.classList.remove('hidden');
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      status.textContent = 'Partial reset: ' + (data.errors || []).join(', ');
+      status.className = 'text-xs text-center text-error';
+      status.classList.remove('hidden');
+      btn.disabled = false; btn.textContent = 'Reset Everything';
+    }
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'text-xs text-center text-error';
+    status.classList.remove('hidden');
+    btn.disabled = false; btn.textContent = 'Reset Everything';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => { loadAccounts(); loadPerformance(); checkOnboarding(); });
+
+// ─── Onboarding ───
+let _obStep = 0;
+const OB_TOTAL = 5;
+let _obSelectedAccount = null;
+let _obFriends = [];
+let _obAllPlayers = [];
+
+async function checkOnboarding() {
+  try {
+    const res = await fetch(API + '/onboarding');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.completed) return;
+    }
+  } catch (_) {}
+  openOnboarding();
+}
+
+function openOnboarding() {
+  _obStep = 0; _obSelectedAccount = null; _obFriends = []; _obAllPlayers = [];
+  updateObStep();
+  const m = document.getElementById('onboarding-modal');
+  m.classList.remove('hidden'); m.classList.add('flex');
+}
+
+function closeOnboarding() {
+  const m = document.getElementById('onboarding-modal');
+  m.classList.add('hidden'); m.classList.remove('flex');
+  if (document.getElementById('ob-dismiss-check').checked) {
+    fetch(API + '/onboarding', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({completed: true}) }).catch(() => {});
+  }
+}
+
+function updateObStep() {
+  for (let i = 0; i < OB_TOTAL; i++) {
+    const step = document.getElementById('ob-step-' + i);
+    const dot = document.getElementById('ob-dot-' + i);
+    if (step) step.classList.toggle('hidden', i !== _obStep);
+    if (dot) {
+      dot.classList.toggle('bg-primary', i === _obStep);
+      dot.classList.toggle('bg-white/20', i !== _obStep);
+    }
+  }
+  const prev = document.getElementById('ob-prev-btn');
+  const next = document.getElementById('ob-next-btn');
+  prev.classList.toggle('hidden', _obStep === 0);
+  if (_obStep === OB_TOTAL - 1) {
+    next.textContent = 'Get Started';
+  } else {
+    next.textContent = (_obStep === 2 || _obStep === 3) ? 'Skip / Next' : 'Next';
+  }
+  // Init AI provider tabs when entering step 3
+  if (_obStep === 3) obInitAIStep();
+}
+
+function obNext() {
+  if (_obStep >= OB_TOTAL - 1) { closeOnboarding(); return; }
+  // Save AI config when leaving step 3
+  if (_obStep === 3) obSaveAIConfig();
+  _obStep++;
+  updateObStep();
+}
+
+function obPrev() {
+  if (_obStep <= 0) return;
+  _obStep--;
+  updateObStep();
+}
+
+// ─── Onboarding: AI config step ───
+let _obAIProviders = null;
+let _obSelectedProvider = '';
+
+async function obInitAIStep() {
+  if (_obAIProviders) { obRenderAIProviders(); return; }
+  try {
+    const res = await fetch(API + '/ai/providers');
+    _obAIProviders = await res.json();
+    _obSelectedProvider = _obSelectedProvider || Object.keys(_obAIProviders)[0];
+    obRenderAIProviders();
+  } catch (_) {}
+}
+
+function obRenderAIProviders() {
+  if (!_obAIProviders) return;
+  const tabsEl = document.getElementById('ob-ai-provider-tabs');
+  tabsEl.innerHTML = Object.keys(_obAIProviders).map(p => {
+    const isActive = p === _obSelectedProvider;
+    return `<button type="button" onclick="obSelectAIProvider('${p}')" class="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${isActive ? 'bg-primary text-on-primary-fixed' : 'bg-surface-container-highest text-on-surface-variant hover:bg-white/10'}">${p}</button>`;
+  }).join('');
+  const modelSel = document.getElementById('ob-ai-model');
+  const models = _obAIProviders[_obSelectedProvider] || [];
+  const defaultModel = models.length > 0 ? models[0] : '';
+  modelSel.innerHTML = models.map(m => `<option value="${m}" ${m === defaultModel ? 'selected' : ''}>${m}</option>`).join('');
+}
+
+function obSelectAIProvider(provider) {
+  _obSelectedProvider = provider;
+  document.getElementById('ob-ai-key').value = '';
+  obRenderAIProviders();
+}
+
+async function obSaveAIConfig() {
+  const key = document.getElementById('ob-ai-key').value.trim();
+  if (!key) return; // Skip if no key entered
+  const model = document.getElementById('ob-ai-model').value;
+  try {
+    const body = {
+      active_provider: _obSelectedProvider,
+      active_model: model,
+      providers: {}
+    };
+    body.providers[_obSelectedProvider] = { api_key: key };
+    await fetch(API + '/ai/config', {
+      method: 'PUT', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+  } catch (_) {}
+}
+
+// ─── Onboarding: .dem.info player detection ───
+document.getElementById('ob-info-file').addEventListener('change', async function() {
+  const status = document.getElementById('ob-detect-status');
+  const section = document.getElementById('ob-players-section');
+  status.classList.add('hidden');
+  section.classList.add('hidden');
+  if (!this.files.length) return;
+  status.textContent = 'Detecting players...';
+  status.className = 'text-xs mt-2 text-on-surface-variant';
+  status.classList.remove('hidden');
+  const fd = new FormData();
+  fd.append('info_file', this.files[0]);
+  const demInput = document.getElementById('ob-dem-file');
+  if (demInput && demInput.files.length) fd.append('demo_file', demInput.files[0]);
+  try {
+    const res = await fetch(API + '/matches/detect-player', { method: 'POST', body: fd });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Detection failed'); }
+    const data = await res.json();
+    _obAllPlayers = [];
+    // Build combined player list from matched + unmatched
+    if (data.matched) data.matched.forEach(a => _obAllPlayers.push({ steam_id: a.steam_id, name: a.name, known: true }));
+    if (data.unmatched) data.unmatched.forEach(u => _obAllPlayers.push({ steam_id: u.steam_id, name: u.name || '', known: false }));
+    if (_obAllPlayers.length === 0) {
+      status.textContent = 'No players found in this file.';
+      status.className = 'text-xs mt-2 text-error';
+      return;
+    }
+    status.textContent = _obAllPlayers.length + ' player(s) detected.';
+    status.className = 'text-xs mt-2 text-secondary';
+    renderObPlayers();
+    section.classList.remove('hidden');
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'text-xs mt-2 text-error';
+  }
+});
+
+function renderObPlayers() {
+  const list = document.getElementById('ob-players-list');
+  list.innerHTML = _obAllPlayers.map((p, i) => {
+    const isMe = _obSelectedAccount && _obSelectedAccount.steam_id === p.steam_id;
+    const isFriend = _obFriends.some(f => f.steam_id === p.steam_id);
+    const label = p.name ? esc(p.name) + ' <span class="text-on-surface-variant/50 font-mono text-[9px]">' + esc(p.steam_id) + '</span>' : '<span class="font-mono text-[10px]">' + esc(p.steam_id) + '</span>';
+    const meBtnClass = isMe
+      ? 'bg-primary text-on-primary-container'
+      : 'bg-surface-container-highest text-primary border border-primary/30 hover:bg-primary/10';
+    const friendBtnClass = isFriend
+      ? 'bg-cyan-400/20 text-cyan-400'
+      : 'bg-surface-container-highest text-cyan-400 border border-cyan-400/30 hover:bg-cyan-400/10';
+    return `<div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest/50 border border-white/5">
+      <div class="flex-1 min-w-0 text-xs">${label}</div>
+      <button type="button" onclick="obSetMe(${i})" class="text-[9px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider transition-all ${meBtnClass}">
+        ${isMe ? '✓ Me' : 'Set as Me'}
+      </button>
+      <button type="button" onclick="obToggleFriend(${i})" class="text-[9px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider transition-all ${friendBtnClass}" ${isMe ? 'disabled style="opacity:0.3;pointer-events:none"' : ''}>
+        ${isFriend ? '✓ Friend' : 'Add Friend'}
+      </button>
+    </div>`;
+  }).join('');
+  updateObSummary();
+}
+
+async function obSetMe(idx) {
+  const p = _obAllPlayers[idx];
+  // Remove from friends if tagged
+  _obFriends = _obFriends.filter(f => f.steam_id !== p.steam_id);
+  // Prompt for a name if unknown
+  let name = p.name;
+  if (!name) {
+    name = prompt('Enter a name for this account:', '') || 'Main Account';
+  }
+  _obSelectedAccount = { steam_id: p.steam_id, name: name };
+  // Save to backend
+  try {
+    const res = await fetch(API + '/accounts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, steam_id: p.steam_id, display_name: name, rank: '' })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      // Ignore "already exists" errors
+      if (!err.detail?.includes?.('exists')) throw new Error(err.detail);
+    }
+    // Activate this account
+    await fetch(API + '/accounts/' + p.steam_id + '/activate', { method: 'PUT' });
+  } catch (err) { console.error('Failed to save account:', err); }
+  renderObPlayers();
+}
+
+async function obToggleFriend(idx) {
+  const p = _obAllPlayers[idx];
+  if (_obSelectedAccount && _obSelectedAccount.steam_id === p.steam_id) return;
+  const existing = _obFriends.findIndex(f => f.steam_id === p.steam_id);
+  if (existing >= 0) {
+    // Remove friend
+    _obFriends.splice(existing, 1);
+    try { await fetch(API + '/friends/' + p.steam_id, { method: 'DELETE' }); } catch(e) {}
+  } else {
+    // Add friend
+    let name = p.name;
+    if (!name) {
+      name = prompt('Enter a name for this friend:', '') || 'Friend';
+    }
+    _obFriends.push({ steam_id: p.steam_id, name: name });
+    try {
+      await fetch(API + '/friends', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ steam_id: p.steam_id, name: name })
+      });
+    } catch(e) {}
+  }
+  renderObPlayers();
+}
+
+function updateObSummary() {
+  const summary = document.getElementById('ob-selections-summary');
+  const acctEl = document.getElementById('ob-my-account');
+  const friendsEl = document.getElementById('ob-my-friends');
+  if (!_obSelectedAccount && _obFriends.length === 0) {
+    summary.classList.add('hidden');
+    return;
+  }
+  summary.classList.remove('hidden');
+  acctEl.innerHTML = _obSelectedAccount
+    ? '<span class="text-primary font-bold">You:</span> ' + esc(_obSelectedAccount.name) + ' <span class="text-on-surface-variant/50 font-mono">(' + esc(_obSelectedAccount.steam_id) + ')</span>'
+    : '<span class="text-on-surface-variant">No account selected yet</span>';
+  friendsEl.innerHTML = _obFriends.length
+    ? '<span class="font-bold">Friends:</span> ' + _obFriends.map(f => esc(f.name || f.steam_id)).join(', ')
+    : '';
+}
 </script>
 </body></html>

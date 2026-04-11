@@ -513,6 +513,35 @@ def _extract_round_economy(
     return pd.DataFrame(rows) if rows else pd.DataFrame()
 
 
+def extract_player_names(demo_path: str | Path) -> dict[str, str]:
+    """Quickly extract a mapping of steamid64 → in-game name from a .dem file.
+
+    Parses only a single tick, making this far cheaper than a full parse.
+    Returns a dict like ``{"76561198207768576": "pr1me", ...}``.
+    """
+    try:
+        from demoparser2 import DemoParser  # type: ignore[import-untyped]
+    except ImportError:
+        return {}
+
+    demo_path = Path(demo_path)
+    if not demo_path.exists():
+        return {}
+
+    try:
+        parser = DemoParser(str(demo_path))
+        df = parser.parse_ticks(["name"], ticks=[1])
+        name_map: dict[str, str] = {}
+        for _, row in df.iterrows():
+            sid = str(row.get("steamid", ""))
+            name = str(row.get("name", ""))
+            if sid and name and sid not in name_map:
+                name_map[sid] = name
+        return name_map
+    except Exception:
+        return {}
+
+
 def parse_info_file(info_bytes: bytes) -> dict[str, Any]:
     """Parse a .dem.info protobuf sidecar file.
 

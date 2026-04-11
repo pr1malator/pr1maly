@@ -35,7 +35,7 @@ from src.database import (
     update_context_notes,
     save_match,
 )
-from src.parser import parse_demo, parse_info_file
+from src.parser import parse_demo, parse_info_file, extract_player_names
 from src.processor import calculate_match_stats, compute_benchmarks
 from src.callouts import get_radar_config, game_to_pixel, get_zone_center, get_all_zones_pixel, is_map_supported, get_callout
 from src.ai_service import (
@@ -373,11 +373,15 @@ def delete_friend(steam_id: str):
 # Detect player from .info file
 # ---------------------------------------------------------------------------
 @app.post("/api/matches/detect-player")
-def detect_player(info_file: UploadFile = File(...)):
+def detect_player(
+    info_file: UploadFile = File(...),
+    demo_file: UploadFile | None = File(default=None),
+):
     """Read a .dem.info sidecar and match account IDs against configured accounts.
 
     Returns ``matched`` (list of known accounts found in the match) and
     ``unmatched`` (steam IDs present in the demo but not in accounts).
+    If a .dem file is also provided, player names are resolved from it.
     """
     if not info_file.filename:
         raise HTTPException(status_code=400, detail="Info file is required")
@@ -390,10 +394,30 @@ def detect_player(info_file: UploadFile = File(...)):
     if not demo_ids:
         raise HTTPException(status_code=422, detail="No player accounts found in info file")
 
+    # Resolve names from .dem file if provided
+    name_map: dict[str, str] = {}
+    if demo_file and demo_file.filename:
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".dem", delete=False) as tmp:
+                tmp.write(demo_file.file.read())
+                tmp_path = tmp.name
+            name_map = extract_player_names(tmp_path)
+        except Exception:
+            pass
+        finally:
+            try:
+                Path(tmp_path).unlink(missing_ok=True)
+            except Exception:
+                pass
+
     accounts = _load_accounts()
     acct_by_sid = {a["steam_id"]: a for a in accounts}
     matched = [acct_by_sid[sid] for sid in demo_ids if sid in acct_by_sid]
-    unmatched = [sid for sid in demo_ids if sid not in acct_by_sid]
+    unmatched = [
+        {"steam_id": sid, "name": name_map.get(sid, "")}
+        for sid in demo_ids
+        if sid not in acct_by_sid
+    ]
 
     return {
         "matched": matched,
@@ -657,6 +681,118 @@ def set_sync_config(body: dict):
     cfg["folder"] = str(p)
     _save_sync_config(cfg)
     return cfg
+
+
+# ---------------------------------------------------------------------------
+# Onboarding state
+# ---------------------------------------------------------------------------
+_ONBOARDING_FILE = Path(__file__).parent / "data" / "onboarding.json"
+
+
+def _load_onboarding() -> dict:
+    if _ONBOARDING_FILE.exists():
+        try:
+            return json.loads(_ONBOARDING_FILE.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, KeyError):
+            pass
+    return {"completed": False}
+
+
+def _save_onboarding(state: dict) -> None:
+    _ONBOARDING_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _ONBOARDING_FILE.write_text(
+        json.dumps(state, indent=2) + "\n", encoding="utf-8"
+    )
+
+
+@app.get("/api/onboarding")
+def get_onboarding():
+    return _load_onboarding()
+
+
+@app.put("/api/onboarding")
+def set_onboarding(body: dict):
+    state = _load_onboarding()
+    if "completed" in body:
+        state["completed"] = bool(body["completed"])
+    _save_onboarding(state)
+    return state
+
+
+# ---------------------------------------------------------------------------
+# Factory Reset
+# ---------------------------------------------------------------------------
+@app.post("/api/factory-reset")
+def factory_reset():
+    """Delete all user data: database, accounts, friends, AI roles, sync config, steamID.
+
+    Returns the application to a fresh-install state.
+    """
+    from src.database import _DEFAULT_DB_PATH as db_path
+
+    errors: list[str] = []
+
+    # 1. Delete the SQLite database
+    try:
+        if db_path.exists():
+            db_path.unlink()
+    except Exception as exc:
+        errors.append(f"Database: {exc}")
+
+    # 2. Reset accounts
+    try:
+        _save_accounts([])
+    except Exception as exc:
+        errors.append(f"Accounts: {exc}")
+
+    # 3. Reset friends
+    try:
+        _save_friends([])
+    except Exception as exc:
+        errors.append(f"Friends: {exc}")
+
+    # 4. Clear steamID file
+    try:
+        if _STEAM_ID_FILE.exists():
+            _STEAM_ID_FILE.write_text("", encoding="utf-8")
+    except Exception as exc:
+        errors.append(f"SteamID: {exc}")
+
+    # 5. Reset sync config
+    try:
+        _save_sync_config({"folder": ""})
+    except Exception as exc:
+        errors.append(f"Sync config: {exc}")
+
+    # 6. Delete AI roles
+    try:
+        ai_roles_file = Path(__file__).parent / "data" / "ai_roles.json"
+        if ai_roles_file.exists():
+            ai_roles_file.unlink()
+    except Exception as exc:
+        errors.append(f"AI roles: {exc}")
+
+    # 7. Reset AI config (keep structure, clear keys)
+    try:
+        ai_cfg_file = Path(__file__).parent / "data" / "ai_config.json"
+        if ai_cfg_file.exists():
+            cfg = json.loads(ai_cfg_file.read_text(encoding="utf-8"))
+            for prov in cfg.get("providers", {}).values():
+                prov["api_key"] = ""
+            cfg["system_instructions"] = ""
+            ai_cfg_file.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+    except Exception as exc:
+        errors.append(f"AI config: {exc}")
+
+    # 8. Reset onboarding state
+    try:
+        _save_onboarding({"completed": False})
+    except Exception as exc:
+        errors.append(f"Onboarding: {exc}")
+
+    if errors:
+        return {"status": "partial", "errors": errors}
+    return {"status": "ok"}
 
 
 @app.get("/api/sync/scan")

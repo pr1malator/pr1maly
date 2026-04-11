@@ -466,6 +466,7 @@
       <button id="settings-tab-accounts" onclick="switchSettingsTab('accounts')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Accounts</button>
       <button id="settings-tab-friends" onclick="switchSettingsTab('friends')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Friends</button>
       <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
+      <button id="settings-tab-reset" onclick="switchSettingsTab('reset')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Reset</button>
     </div>
     <!-- Accounts Tab -->
     <div id="settings-accounts-panel">
@@ -522,6 +523,35 @@
       </button>
       <div id="ai-settings-status" class="text-xs text-center mt-3 hidden"></div>
     </div>
+    <!-- Factory Reset Tab -->
+    <div id="settings-reset-panel" class="hidden">
+      <div class="text-center mb-6">
+        <span class="material-symbols-outlined text-4xl text-error mb-3 block">warning</span>
+        <h3 class="font-headline text-sm font-bold uppercase tracking-widest mb-2">Factory Reset</h3>
+        <p class="text-xs text-on-surface-variant leading-relaxed max-w-sm mx-auto">
+          This will permanently delete <span class="text-error font-bold">all match data</span>, accounts, friends, AI roles, and settings. The application will return to a fresh-install state.
+        </p>
+      </div>
+      <div class="p-4 rounded-xl bg-error/5 border border-error/20 mb-6">
+        <p class="text-[10px] font-bold text-error uppercase tracking-widest mb-2">This action deletes:</p>
+        <ul class="text-[11px] text-on-surface-variant space-y-1">
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-error text-sm">database</span> All match history & round stats</li>
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-error text-sm">person_remove</span> All accounts & friends</li>
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-error text-sm">psychology</span> AI roles & configuration</li>
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-error text-sm">sync_disabled</span> Sync folder settings</li>
+        </ul>
+      </div>
+      <div class="space-y-3">
+        <label class="flex items-center gap-3 cursor-pointer select-none">
+          <input type="checkbox" id="reset-confirm-check" class="w-4 h-4 rounded bg-surface-container-highest border-white/20 text-error focus:ring-error/30 focus:ring-offset-0" onchange="document.getElementById('reset-btn').disabled = !this.checked">
+          <span class="text-xs text-on-surface-variant">I understand this cannot be undone</span>
+        </label>
+        <button id="reset-btn" disabled onclick="doFactoryReset()" class="w-full bg-gradient-to-r from-error to-error-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-error shadow-[0_0_15px_rgba(255,100,100,0.3)] hover:scale-[1.02] transition-transform disabled:opacity-30 disabled:pointer-events-none">
+          Reset Everything
+        </button>
+        <div id="reset-status" class="text-xs text-center hidden"></div>
+      </div>
+    </div>
   </div>
 </div>
 <!-- Background Decorative Elements -->
@@ -571,10 +601,11 @@ function closeSettingsModal() {
 document.getElementById('settings-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettingsModal(); });
 
 function switchSettingsTab(tab) {
-  const tabs = ['accounts', 'friends', 'ai'];
+  const tabs = ['accounts', 'friends', 'ai', 'reset'];
   tabs.forEach(t => {
     const btn = document.getElementById('settings-tab-' + t);
     const panel = document.getElementById('settings-' + t + '-panel');
+    if (!btn || !panel) return;
     if (t === tab) {
       btn.className = btn.className.replace('bg-surface-container-highest text-on-surface-variant hover:bg-white/10', '').replace('bg-primary text-on-primary-fixed', '') + ' bg-primary text-on-primary-fixed';
       panel.classList.remove('hidden');
@@ -1048,6 +1079,33 @@ function toggleSidebar() {
 })();
 
 // --- Init ---
+async function doFactoryReset() {
+  const status = document.getElementById('reset-status');
+  const btn = document.getElementById('reset-btn');
+  btn.disabled = true; btn.textContent = 'RESETTING...';
+  status.classList.add('hidden');
+  try {
+    const res = await fetch(API + '/factory-reset', { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      status.textContent = 'Reset complete. Reloading...';
+      status.className = 'text-xs text-center text-secondary';
+      status.classList.remove('hidden');
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      status.textContent = 'Partial reset: ' + (data.errors || []).join(', ');
+      status.className = 'text-xs text-center text-error';
+      status.classList.remove('hidden');
+      btn.disabled = false; btn.textContent = 'Reset Everything';
+    }
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'text-xs text-center text-error';
+    status.classList.remove('hidden');
+    btn.disabled = false; btn.textContent = 'Reset Everything';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => { loadAccounts(); loadDashboard(); });
 </script>
 </body></html>
