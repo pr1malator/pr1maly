@@ -87,7 +87,7 @@ uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Open **http://localhost:8000** in your browser. The app redirects you to the
-Performance dashboard automatically.
+Performance Breakdown page automatically.
 
 ### Option B — Run with Docker
 
@@ -112,42 +112,36 @@ The SQLite database is persisted in `./data/` on your host via a Docker volume.
 ## First-Time Setup
 
 1. **Open the app** at **http://localhost:8000**. You'll land on the
-   Performance dashboard.
+   Performance Breakdown page.
 
-2. **Configure your Steam ID** — you have two options:
-   - **Via file**: create `data/steamID` containing your 64-bit Steam ID on a
-     single line (find yours at [steamid.io](https://steamid.io)):
-     ```
-     76561197971699749
-     ```
-   - **Via API**: call `PUT /api/config` with `{"steam_id": "76561197971699749"}`.
-   - **Via accounts API**: create an account with
-     `POST /api/accounts` (see API section below). The first account is
-     activated automatically.
+2. **Complete the onboarding wizard** — a guided 5-step modal appears on your
+   first visit:
+   - **Welcome** — quick intro to the app
+   - **Features** — overview of what's available
+   - **Identity Setup** — upload any `.dem` + `.dem.info` file, the app parses
+     all 10 players. Click **"Set as Me"** on your name to create your account,
+     and **"Add Friend"** on anyone you queue with. (Both steps are skippable
+     and can be done later in Settings.)
+   - **AI Config** *(optional)* — select a provider (OpenAI, Anthropic, Gemini,
+     or Mistral), paste your API key, and pick a model. Skip this if you don't
+     want AI features.
+   - **Done** — you're ready to go.
 
-3. **Download a demo** from CS2: go to *CS2 → Profile → Matches* and download
-   the `.dem` file for the match you want to analyze.
+3. **Upload demos** — three methods, all in the UI:
+   - **Single upload**: click **Upload Demo** in the sidebar, pick your `.dem`
+     file (and optionally a `.dem.info` for auto-dating), add notes/tags.
+   - **Bulk upload**: click **Bulk Upload** in the sidebar, select multiple
+     `.dem` and `.dem.info` files at once.
+   - **Sync folder**: click **Sync Folder** in the sidebar, point it at your
+     CS2 replays directory (e.g.
+     `C:\...\Counter-Strike Global Offensive\game\csgo\replays`), scan for new
+     demos, and selectively import them.
 
-4. **Upload the demo**:
-   - **curl**:
-     ```bash
-     curl -X POST http://localhost:8000/api/matches/upload \
-       -F "file=@path/to/demo.dem" \
-       -F "context_notes=ranked game" \
-       -F "tags=solo queue,good game"
-     ```
-   - **Swagger UI**: open **http://localhost:8000/docs**, find the
-     `/api/matches/upload` endpoint, and use the "Try it out" form to select
-     your `.dem` file.
-   - **Bulk upload**: send multiple `.dem` files at once to
-     `POST /api/matches/upload-bulk`. Pair each demo with its `.dem.info`
-     sidecar for automatic date detection and account matching.
-   - **Sync folder**: click the Sync Folder button on the Breakdown or Match
-     Breakdown page to scan your CS2 replays directory and selectively import
-     new demos (see the Sync Folder section below).
-
-5. **Browse your stats** — every page updates automatically once matches are
+4. **Browse your stats** — every page updates automatically once matches are
    uploaded.
+
+> **Tip**: You can manage accounts, friends, AI config, and more anytime via
+> the **Settings** button (gear icon) in the sidebar.
 
 ---
 
@@ -158,7 +152,7 @@ between them using the sidebar.
 
 ### Performance Dashboard (`performance.html`)
 
-The main landing page showing your overall career stats.
+Career-level stats and trends overview.
 
 - **KPI cards**: K/D Ratio, KAST%, HLTV Rating, Win Rate, Aim Score — each
   with a trend indicator comparing to your career average
@@ -472,7 +466,8 @@ pr1mealazyer/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── data/
-│   ├── steamID           # Active Steam ID (auto-managed)
+│   ├── steamID           # Active Steam ID (legacy, managed by accounts)
+│   ├── onboarding.json   # Onboarding wizard state
 │   ├── accounts.json     # Multi-account configuration
 │   ├── friends.json      # Friends list
 │   ├── ai_config.json    # AI provider keys & settings
@@ -486,7 +481,6 @@ pr1mealazyer/
 │   ├── calibrate.html    # Callout calibration tool
 │   ├── theme.css / theme.js  # Dark/light theme support
 │   ├── img/radar/        # Map radar images (1024×1024)
-│   └── txt/maps/         # Map overview config files
 ├── src/
 │   ├── parser.py         # Demo parsing (Layer 1)
 │   ├── processor.py      # Metrics calculation (Layer 2)
