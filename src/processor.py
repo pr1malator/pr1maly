@@ -498,30 +498,96 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
     reaction_values: list[float] = []
     reaction_categories: list[str] = []
 
+    # Accuracy per-encounter
+    accuracy_values: list[float] = []    # hit_pct per engagement
+    first_bullet_hits: list[bool] = []
+    hitgroup_head: int = 0
+    hitgroup_upper: int = 0
+    hitgroup_lower: int = 0
+    hitgroup_total: int = 0
+
+    # Per-data-point encounter outcomes: "kill" | "death" | "damage"
+    outcomes_mov: list[str] = []
+    outcomes_preaim: list[str] = []
+    outcomes_ttk: list[str] = []
+    outcomes_rxn: list[str] = []
+    outcomes_acc: list[str] = []
+
+    # Per-encounter objects for the 2D scatter plot (each has whichever KPIs are available)
+    encounters: list[dict[str, Any]] = []
+
     for r in enriched_rounds:
+        died_this_round = r.get("death_detail") is not None
+
         for k in r.get("kills_detail", []):
+            outcome = "death" if died_this_round else "kill"
             weapon = k.get("weapon", "")
+            enc: dict[str, Any] = {"outcome": outcome}
+
             mv = k.get("movement")
             if mv:
                 shot_speeds.append(mv["shot_speed"])
                 movement_qualities.append(mv["movement_quality"])
                 kill_weapons.append(weapon)
+                outcomes_mov.append(outcome)
+                enc["movement"] = mv["shot_speed"]
 
             pa = k.get("preaim")
             if pa:
                 preaim_errors.append(pa["crosshair_error"])
                 preaim_qualities.append(pa["preaim_quality"])
+                outcomes_preaim.append(outcome)
+                enc["preaim"] = pa["crosshair_error"]
 
             ttd = k.get("ttd")
             if ttd and ttd.get("ttk_seconds", 0) > 0:
                 ttk_values.append(ttd["ttk_seconds"])
                 ttk_shots.append(ttd.get("shots_fired", ttd.get("hits", 1)))
                 ttk_hits.append(ttd.get("hits", 1))
+                outcomes_ttk.append(outcome)
+                enc["ttk"] = ttd["ttk_seconds"]
 
             rxn = k.get("reaction")
             if rxn and rxn.get("reaction_ms") is not None:
                 reaction_values.append(rxn["reaction_ms"])
                 reaction_categories.append(rxn["category"])
+                outcomes_rxn.append(outcome)
+                enc["reaction"] = rxn["reaction_ms"]
+
+            # Accuracy (from ttd sub-dict)
+            acc = ttd.get("accuracy") if ttd else None
+            if acc and acc.get("hit_pct") is not None:
+                accuracy_values.append(acc["hit_pct"])
+                first_bullet_hits.append(acc["first_bullet_hit"])
+                hitgroup_head += acc.get("head", 0)
+                hitgroup_upper += acc.get("upper", 0)
+                hitgroup_lower += acc.get("lower", 0)
+                hitgroup_total += acc.get("head", 0) + acc.get("upper", 0) + acc.get("lower", 0)
+                outcomes_acc.append(outcome)
+                enc["accuracy"] = acc["hit_pct"]
+
+            encounters.append(enc)
+
+        # Damage-only encounters (hurt enemy but did not kill)
+        for d in r.get("damage_encounters", []):
+            enc = {"outcome": "damage"}
+
+            mv = d.get("movement")
+            if mv:
+                shot_speeds.append(mv["shot_speed"])
+                movement_qualities.append(mv["movement_quality"])
+                kill_weapons.append(d.get("weapon", ""))
+                outcomes_mov.append("damage")
+                enc["movement"] = mv["shot_speed"]
+
+            pa = d.get("preaim")
+            if pa:
+                preaim_errors.append(pa["crosshair_error"])
+                preaim_qualities.append(pa["preaim_quality"])
+                outcomes_preaim.append("damage")
+                enc["preaim"] = pa["crosshair_error"]
+
+            encounters.append(enc)
 
     n_mov = len(movement_qualities)
     n_aim = len(preaim_qualities)
@@ -543,6 +609,7 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
             "speeds": [round(s, 1) for s in shot_speeds],
             "weapons": kill_weapons,
             "low_penalty": low_penalty_flags,
+            "outcomes": outcomes_mov,
             "avg": round(sum(shot_speeds) / len(shot_speeds), 1),
             "min": round(min(shot_speeds), 1),
             "max": round(max(shot_speeds), 1),
@@ -561,6 +628,7 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
         poor = sum(1 for q in preaim_qualities if q == "poor")
         preaim = {
             "errors": [round(e, 1) for e in preaim_errors],
+            "outcomes": outcomes_preaim,
             "avg": round(sum(preaim_errors) / len(preaim_errors), 1),
             "min": round(min(preaim_errors), 1),
             "max": round(max(preaim_errors), 1),
@@ -576,6 +644,7 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
         total_hits = sum(ttk_hits)
         ttk = {
             "values": [round(v, 3) for v in ttk_values],
+            "outcomes": outcomes_ttk,
             "avg": round(sum(ttk_values) / len(ttk_values), 3),
             "min": round(min(ttk_values), 3),
             "max": round(max(ttk_values), 3),
@@ -593,6 +662,7 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
         slow = sum(1 for c in reaction_categories if c == "slow")
         reaction = {
             "values": [round(v, 1) for v in reaction_values],
+            "outcomes": outcomes_rxn,
             "avg": round(sum(reaction_values) / n_rxn, 1),
             "min": round(min(reaction_values), 1),
             "max": round(max(reaction_values), 1),
@@ -600,6 +670,25 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
             "fast_pct": round(fast / n_rxn * 100, 1),
             "average_pct": round(average / n_rxn * 100, 1),
             "slow_pct": round(slow / n_rxn * 100, 1),
+        }
+
+    accuracy = {}
+    if accuracy_values:
+        n_acc = len(accuracy_values)
+        fb_hit = sum(1 for fb in first_bullet_hits if fb)
+        accuracy = {
+            "values": [round(v, 1) for v in accuracy_values],
+            "outcomes": outcomes_acc,
+            "avg": round(sum(accuracy_values) / n_acc, 1),
+            "min": round(min(accuracy_values), 1),
+            "max": round(max(accuracy_values), 1),
+            "first_bullet_pct": round(fb_hit / n_acc * 100, 1) if n_acc else 0,
+            "head_pct": round(hitgroup_head / hitgroup_total * 100, 1) if hitgroup_total else 0,
+            "upper_pct": round(hitgroup_upper / hitgroup_total * 100, 1) if hitgroup_total else 0,
+            "lower_pct": round(hitgroup_lower / hitgroup_total * 100, 1) if hitgroup_total else 0,
+            "head_count": hitgroup_head,
+            "upper_count": hitgroup_upper,
+            "lower_count": hitgroup_lower,
         }
 
     # Approximate aim rating (0-100)
@@ -642,7 +731,9 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
         "preaim": preaim,
         "ttk": ttk,
         "reaction": reaction,
+        "accuracy": accuracy,
         "aim_rating": aim_rating,
+        "encounters": encounters,
     }
 
 
@@ -2457,6 +2548,11 @@ def build_enriched_rounds(
         # --- Death detail ---
         round_data["death_detail"] = _get_round_death(death_df, sid, r, positions_df, map_name)
 
+        # --- Damage-only encounters ---
+        round_data["damage_encounters"] = _get_round_damage_encounters(
+            hurt_df, death_df, sid, r, velocities_df,
+        )
+
         # --- Opening duel ---
         round_data["opening_duel"] = _get_opening_duel(death_df, sid, r)
 
@@ -2992,6 +3088,12 @@ def _analyze_time_to_damage(
     engage_first_hit = int(ticks[cluster_start_idx])
     engage_hits = len(ticks) - cluster_start_idx
 
+    # Hitgroup distribution for the engagement cluster
+    engage_rows = pair_hits.iloc[cluster_start_idx:]
+    hitgroups: list[str] = []
+    if "hitgroup" in engage_rows.columns:
+        hitgroups = engage_rows["hitgroup"].dropna().astype(str).str.lower().tolist()
+
     # Look for weapon_fire events (misses) shortly before the first hit
     first_shot_tick = engage_first_hit
     shots_fired = engage_hits  # at least as many as hits
@@ -3013,7 +3115,7 @@ def _analyze_time_to_damage(
 
     ttk_ticks = kill_tick - first_shot_tick
 
-    return {
+    result = {
         "first_shot_tick": first_shot_tick,
         "first_hit_tick": engage_first_hit,
         "ttk_ticks": ttk_ticks,
@@ -3021,6 +3123,26 @@ def _analyze_time_to_damage(
         "hits": engage_hits,
         "shots_fired": shots_fired,
     }
+
+    # Accuracy metrics for this engagement
+    if shots_fired > 0:
+        hit_pct = min(100.0, round(engage_hits / shots_fired * 100, 1))
+        # First-bullet accuracy: did the first shot hit?
+        first_bullet_hit = engage_first_hit <= first_shot_tick + 2  # small tick tolerance
+        # Hitgroup breakdown: string labels from demoparser2
+        head = sum(1 for h in hitgroups if h in ("head", "neck"))
+        upper = sum(1 for h in hitgroups if h in ("chest", "stomach"))
+        lower = sum(1 for h in hitgroups if h in ("left_arm", "right_arm", "left_leg", "right_leg"))
+        result["accuracy"] = {
+            "hit_pct": hit_pct,
+            "first_bullet_hit": first_bullet_hit,
+            "hitgroups": hitgroups,
+            "head": head,
+            "upper": upper,
+            "lower": lower,
+        }
+
+    return result
 
 
 def _get_round_kills(
@@ -3185,6 +3307,76 @@ def _get_round_death(
                 info["victim_position"] = get_callout(map_name, victim_pos[0], victim_pos[1])
 
     return info
+
+
+def _get_round_damage_encounters(
+    hurt_df: pd.DataFrame,
+    death_df: pd.DataFrame,
+    sid: str,
+    rnd: int,
+    velocities_df: pd.DataFrame | None = None,
+) -> list[dict[str, Any]]:
+    """Get damage-only encounters: enemies hurt but not killed by the player."""
+    if hurt_df.empty or "round" not in hurt_df.columns:
+        return []
+
+    player_damage = hurt_df[
+        (hurt_df["round"] == rnd)
+        & (hurt_df["attacker_steamid"].astype(str) == sid)
+    ]
+    if player_damage.empty:
+        return []
+
+    # Find victims the player killed this round
+    killed_victims: set[str] = set()
+    if not death_df.empty and "round" in death_df.columns:
+        kills = death_df[
+            (death_df["round"] == rnd)
+            & (death_df["attacker_steamid"].astype(str) == sid)
+        ]
+        killed_victims = set(kills["user_steamid"].astype(str))
+
+    result: list[dict[str, Any]] = []
+    for victim_sid, group in player_damage.groupby(
+        player_damage["user_steamid"].astype(str)
+    ):
+        if victim_sid in killed_victims:
+            continue  # Already counted as a kill
+
+        first_hit = group.sort_values("tick").iloc[0]
+        tick = int(first_hit["tick"])
+        weapon = str(first_hit.get("weapon", ""))
+
+        enc: dict[str, Any] = {
+            "weapon": _weapon_display(weapon),
+        }
+
+        # Movement and preaim analysis at time of first hit
+        if velocities_df is not None and not velocities_df.empty:
+            try:
+                atk_steamid = int(sid)
+            except (ValueError, TypeError):
+                atk_steamid = None
+
+            if atk_steamid is not None:
+                movement = _analyze_movement(velocities_df, atk_steamid, tick)
+                if movement:
+                    enc["movement"] = movement
+
+                try:
+                    vic_steamid_int = int(victim_sid)
+                except (ValueError, TypeError):
+                    vic_steamid_int = None
+                if vic_steamid_int is not None:
+                    preaim = _analyze_preaim(
+                        velocities_df, atk_steamid, vic_steamid_int, tick,
+                    )
+                    if preaim:
+                        enc["preaim"] = preaim
+
+        result.append(enc)
+
+    return result
 
 
 def _get_opening_duel(
