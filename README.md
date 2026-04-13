@@ -1,33 +1,33 @@
-﻿# pr1maly â€” CS2 Local Analytics & Trend Tracker
+﻿# pr1maly — CS2 Local Analytics & Trend Tracker
 
 A standalone, locally-hosted application for Counter-Strike 2. Upload `.dem`
 files, extract advanced player metrics, and track performance trends over
-time â€” all stored locally with no external services required.
+time — all stored locally with no external services required.
 
 ## Features
 
-- **HLTV 2.0 Rating, ADR, KAST%, K/D, Impact, KPR/DPR** â€” HP-accurate ADR
+- **HLTV 2.0 Rating, ADR, KAST%, K/D, Impact, KPR/DPR** — HP-accurate ADR
   (no overkill, matches Refrag/Leetify)
-- **Multi-kill rounds** (2Kâ€“5K), **clutch detection** (1vX), **trade detection**
+- **Multi-kill rounds** (2K–5K), **clutch detection** (1vX), **trade detection**
 - **Full 10-player scoreboard** with team split and rank extraction
 - **Round-by-round enriched data**: economy, buy type, kill/death callout
   positions, opening duels, bomb events, utility usage
-- **Aim & movement analysis**: aim score (0â€“100), counterstrafe detection,
+- **Aim & movement analysis**: aim score (0–100), counterstrafe detection,
   stance breakdown, per-weapon movement penalties, reaction time, crosshair
   placement quality, time-to-kill efficiency
 - **Utility analysis**: grenades bought vs thrown vs wasted, flash efficiency
   (enemies flashed, blind duration, team flash penalty), HE/molotov damage per
-  throw, smoke zone coverage, utility rating (0â€“100)
+  throw, smoke zone coverage, utility rating (0–100)
 - **2D replay viewer**: canvas-based playback on radar images with all 10
   players, health bars, grenades (flash/HE/smoke/molotov with flight paths,
   durations, countdown timers), kill markers, and animated kill feed
 - **Interactive minimap**: per-round kill/death/grenade positions on radar
 - **5-axis behavioral chart**: Aggression, Trading, Isolation, Survival, Sniper
-  â€” computed per side (CT/T) with win rate per dominant axis
+  — computed per side (CT/T) with win rate per dominant axis
 - **Map-specific role detection**: positional roles classified from actual player
   coordinates with spider chart visualization
 - **AI-powered coaching**: chat with OpenAI, Anthropic, Google Gemini, or
-  Mistral about any match â€” round narratives with callout positions built
+  Mistral about any match — round narratives with callout positions built
   automatically
 - **AI role assessment**: AI analyzes your positioning patterns to identify CT &
   T roles per map
@@ -55,12 +55,12 @@ time â€” all stored locally with no external services required.
 
 | Layer | Purpose | Tech |
 |-------|---------|------|
-| **1 â€“ Parser** | Reads raw `.dem` files into DataFrames | `demoparser2` |
-| **2 â€“ Processor** | Filters events by Steam ID, calculates stats | `pandas` |
-| **3 â€“ Storage** | Persists matches, round timelines, tags, players | `sqlite3` |
-| **4 â€“ API** | REST endpoints + serves the frontend | `FastAPI`, `uvicorn` |
-| **5 â€“ Frontend** | Interactive HTML/JS pages | Vanilla JS, Chart.js |
-| **6 â€“ AI** | Match coaching & role assessment | OpenAI / Anthropic / Gemini / Mistral |
+| **1 – Parser** | Reads raw `.dem` files into DataFrames | `demoparser2` |
+| **2 – Processor** | Filters events by Steam ID, calculates stats | `pandas` |
+| **3 – Storage** | Persists matches, round timelines, tags, players | `sqlite3` |
+| **4 – API** | REST endpoints + serves the frontend | `FastAPI`, `uvicorn` |
+| **5 – Frontend** | Interactive HTML/JS pages | Vanilla JS, Chart.js |
+| **6 – AI** | Match coaching & role assessment | OpenAI / Anthropic / Gemini / Mistral |
 
 ---
 
@@ -72,7 +72,7 @@ time â€” all stored locally with no external services required.
 - **pip** (comes with Python)
 - **Docker** and **Docker Compose** *(only needed for Option B)*
 
-### Option A â€” Run locally (recommended)
+### Option A — Run locally (recommended)
 
 ```bash
 # 1. Clone the repository
@@ -89,7 +89,7 @@ uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 Open **http://localhost:8000** in your browser. The app redirects you to the
 Performance Breakdown page automatically.
 
-### Option B â€” Run with Docker
+### Option B — Run with Docker
 
 ```bash
 # 1. Build and start
@@ -114,20 +114,20 @@ The SQLite database is persisted in `./data/` on your host via a Docker volume.
 1. **Open the app** at **http://localhost:8000**. You'll land on the
    Performance Breakdown page.
 
-2. **Complete the onboarding wizard** â€” a guided 5-step modal appears on your
+2. **Complete the onboarding wizard** — a guided 5-step modal appears on your
    first visit:
-   - **Welcome** â€” quick intro to the app
-   - **Features** â€” overview of what's available
-   - **Identity Setup** â€” upload any `.dem` + `.dem.info` file, the app parses
+   - **Welcome** — quick intro to the app
+   - **Features** — overview of what's available
+   - **Identity Setup** — upload any `.dem` + `.dem.info` file, the app parses
      all 10 players. Click **"Set as Me"** on your name to create your account,
      and **"Add Friend"** on anyone you queue with. (Both steps are skippable
      and can be done later in Settings.)
-   - **AI Config** *(optional)* â€” select a provider (OpenAI, Anthropic, Gemini,
+   - **AI Config** *(optional)* — select a provider (OpenAI, Anthropic, Gemini,
      or Mistral), paste your API key, and pick a model. Skip this if you don't
      want AI features.
-   - **Done** â€” you're ready to go.
+   - **Done** — you're ready to go.
 
-3. **Upload demos** â€” three methods, all in the UI:
+3. **Upload demos** — three methods, all in the UI:
    - **Single upload**: click **Upload Demo** in the sidebar, pick your `.dem`
      file (and optionally a `.dem.info` for auto-dating), add notes/tags.
    - **Bulk upload**: click **Bulk Upload** in the sidebar, select multiple
@@ -137,7 +137,7 @@ The SQLite database is persisted in `./data/` on your host via a Docker volume.
      `C:\...\Counter-Strike Global Offensive\game\csgo\replays`), scan for new
      demos, and selectively import them.
 
-4. **Browse your stats** â€” every page updates automatically once matches are
+4. **Browse your stats** — every page updates automatically once matches are
    uploaded.
 
 > **Tip**: You can manage accounts, friends, AI config, and more anytime via
@@ -154,14 +154,14 @@ between them using the sidebar.
 
 Career-level stats and trends overview.
 
-- **KPI cards**: K/D Ratio, KAST%, HLTV Rating, Win Rate, Aim Score â€” each
+- **KPI cards**: K/D Ratio, KAST%, HLTV Rating, Win Rate, Aim Score — each
   with a trend indicator comparing to your career average
 - **Performance trend chart**: HLTV rating and ADR plotted over your last 20
   matches
 - **Tactical AI feedback**: three-section AI analysis ("The Good", "The Bad",
   "The Ugly") highlighting strengths and areas for improvement
 - **Recent matches table**: your latest matches with map, score, K/D/A, rating,
-  and result â€” click any row to jump to the full match breakdown
+  and result — click any row to jump to the full match breakdown
 
 ### Performance Breakdown (`breakdown.html`)
 
@@ -194,10 +194,10 @@ dashboard or by navigating to `match-breakdown.html?id=<match_id>`.
   rounds
 - **Side analysis**: CT vs T score, win rates, ADR, survival, pistol round
   badges
-- **Aim analysis**: overall aim score (0â€“100), counterstrafe/movement analysis,
+- **Aim analysis**: overall aim score (0–100), counterstrafe/movement analysis,
   stance breakdown (standing, counterstrafing, running), per-weapon movement
   penalty
-- **AI match chat**: ask an LLM questions about the match â€” pre-built prompts
+- **AI match chat**: ask an LLM questions about the match — pre-built prompts
   for match overview, round-by-round analysis, economy, opening duels, and
   clutch/impact analysis
 - **Interactive minimap**: per-round kill, death, and grenade positions
@@ -205,7 +205,7 @@ dashboard or by navigating to `match-breakdown.html?id=<match_id>`.
 
 ### Callout Calibration (`calibrate.html`)
 
-Developer tool for calibrating map coordinate â†’ pixel position mappings.
+Developer tool for calibrating map coordinate → pixel position mappings.
 
 - Select a map from the dropdown, then click on the radar image to place
   callout markers
@@ -217,11 +217,11 @@ Tick-by-tick playback of an entire match on a 2D canvas.
 
 - **All 10 players** rendered on the radar with team colors and health bars
 - **Grenades**: smoke (18 s), molotov/incendiary (7 s), HE (2 s), flashbang
-  (2 s) â€” each with flight path, activation radius, thrower label, and
+  (2 s) — each with flight path, activation radius, thrower label, and
   countdown timer
 - **Kill markers**: skull icons at death positions with animated kill feed
   overlay
-- **Playback controls**: play / pause, speed (0.5Ã—â€“8Ã—), round selector, tick
+- **Playback controls**: play / pause, speed (0.5×–8×), round selector, tick
   scrubber
 - Accessed from the Match Breakdown page
 
@@ -234,12 +234,12 @@ replays directory and selectively import new demos.
 
 1. Open either the **Performance Breakdown** or **Match Breakdown** page.
 2. Click the **Sync Folder** button in the sidebar.
-3. **Configure the folder path** â€” the default path is the standard CS2
+3. **Configure the folder path** — the default path is the standard CS2
    replays location. Change it if your Steam library is elsewhere.
-4. **Select an account** â€” the scan reads `.dem.info` sidecars to filter demos
+4. **Select an account** — the scan reads `.dem.info` sidecars to filter demos
    to matches the selected player actually participated in.
-5. **Scan** â€” returns only demos not yet imported for that player.
-6. **Select & process** â€” check the demos you want to import, click Process,
+5. **Scan** — returns only demos not yet imported for that player.
+6. **Select & process** — check the demos you want to import, click Process,
    and they are uploaded and analyzed in sequence with a progress bar.
 
 ---
@@ -247,7 +247,7 @@ replays directory and selectively import new demos.
 ## AI Features (Optional)
 
 AI features require an API key from one of the supported providers. The app
-works fully without AI â€” these features are additive.
+works fully without AI — these features are additive.
 
 ### Supported Providers
 
@@ -279,7 +279,7 @@ Or edit `data/ai_config.json` directly (created on first use).
 
 ### What AI Powers
 
-- **Match chat**: ask questions about any match â€” the system automatically
+- **Match chat**: ask questions about any match — the system automatically
   builds a detailed context with round-by-round narratives including economy,
   kill/death positions with callouts, utility usage, clutch info, and trade
   details
@@ -290,10 +290,10 @@ Or edit `data/ai_config.json` directly (created on first use).
 
 ---
 
-## Behavioral Assessment â€” How It Works
+## Behavioral Assessment — How It Works
 
 The 5-axis behavioral chart scores your playstyle on each side (CT and T)
-across five dimensions. Every axis is scored **0â€“100** and computed from your
+across five dimensions. Every axis is scored **0–100** and computed from your
 round-level data. The chart is shown per match in the Match Breakdown page and
 aggregated in the Performance Breakdown.
 
@@ -305,19 +305,19 @@ aggregated in the Performance Breakdown.
 | **Trading** | How well you support teammates through trades and flashes | Trade-death %, flash assists per round, enemies flashed per round |
 | **Isolation** | Tendency to play independently and pick off enemies without early confrontation | Survival % when *not* involved in the opening duel, non-involvement rate, kills per round |
 | **Survival** | Ability to stay alive and contribute utility damage | Round survival %, utility damage per round (HE + Molotov), low-death rate |
-| **Sniper** | Reliance on the AWP and long-range engagements | AWP kill ratio (% of all kills), long-range kill ratio (distance â‰¥ 30 units) |
+| **Sniper** | Reliance on the AWP and long-range engagements | AWP kill ratio (% of all kills), long-range kill ratio (distance ≥ 30 units) |
 
 ### Scoring formulas (simplified)
 
-- **Aggression** = `involvement_rate Ã— 0.5 + opening_kill_% Ã— 0.5` (capped at 100)
-- **Trading** = `trade_death_% Ã— 0.4 + flash_assists_pr Ã— 50 (max 30) + enemies_flashed_pr Ã— 25 (max 30)`
-- **Isolation** = `survival_% Ã— 0.4 + non_involvement_% Ã— 0.3 + kills_pr Ã— 40 (max 30)`
-- **Survival** = `survival_% Ã— 0.5 + util_dmg_pr Ã— 3 (max 25) + (100 âˆ’ death_rate) Ã— 0.25`
-- **Sniper** = `awp_kill_ratio Ã— 0.7 + long_range_kill_ratio Ã— 0.3`
+- **Aggression** = `involvement_rate × 0.5 + opening_kill_% × 0.5` (capped at 100)
+- **Trading** = `trade_death_% × 0.4 + flash_assists_pr × 50 (max 30) + enemies_flashed_pr × 25 (max 30)`
+- **Isolation** = `survival_% × 0.4 + non_involvement_% × 0.3 + kills_pr × 40 (max 30)`
+- **Survival** = `survival_% × 0.5 + util_dmg_pr × 3 (max 25) + (100 − death_rate) × 0.25`
+- **Sniper** = `awp_kill_ratio × 0.7 + long_range_kill_ratio × 0.3`
 
 ### Dominant axis & success rate
 
-Each round is also tagged with its **dominant behavior** â€” the axis that
+Each round is also tagged with its **dominant behavior** — the axis that
 scored highest in that specific round. The card then shows the **win rate**
 for rounds where each axis was dominant, so you can see which playstyle
 translates into actual round wins.
@@ -332,7 +332,7 @@ translates into actual round wins.
   alive while enabling teammates.
 - A large **Sniper** axis with low **Trading** may indicate a passive AWPer
   who relies on picks instead of team play.
-- Compare your CT chart to your T chart â€” most players have different profiles
+- Compare your CT chart to your T chart — most players have different profiles
   per side.
 
 ---
@@ -453,7 +453,7 @@ del data\pr1mealazyer.db
 ```
 
 The database is recreated automatically on the next API start. Match demos are
-not stored â€” only the extracted statistics.
+not stored — only the extracted statistics.
 
 ---
 
@@ -461,34 +461,34 @@ not stored â€” only the extracted statistics.
 
 ```
 pr1mealazyer/
-â”œâ”€â”€ api.py                # FastAPI REST backend (Layer 4)
-â”œâ”€â”€ requirements.txt
-â”œâ”€â”€ Dockerfile
-â”œâ”€â”€ docker-compose.yml
-â”œâ”€â”€ data/
-â”‚   â”œâ”€â”€ steamID           # Active Steam ID (legacy, managed by accounts)
-â”‚   â”œâ”€â”€ onboarding.json   # Onboarding wizard state
-â”‚   â”œâ”€â”€ accounts.json     # Multi-account configuration
-â”‚   â”œâ”€â”€ friends.json      # Friends list
-â”‚   â”œâ”€â”€ ai_config.json    # AI provider keys & settings
-â”‚   â”œâ”€â”€ ai_roles.json     # Persisted AI role assessments
-â”‚   â””â”€â”€ sync_config.json  # Sync folder path configuration
-â”œâ”€â”€ frontend/
-â”‚   â”œâ”€â”€ performance.html  # Main dashboard
-â”‚   â”œâ”€â”€ breakdown.html    # Aggregated performance breakdown
-â”‚   â”œâ”€â”€ match-breakdown.html  # Single match detail
-â”‚   â”œâ”€â”€ replay.html       # 2D tick-by-tick replay viewer
-â”‚   â”œâ”€â”€ calibrate.html    # Callout calibration tool
-â”‚   â”œâ”€â”€ theme.css / theme.js  # Dark/light theme support
-â”‚   â”œâ”€â”€ img/radar/        # Map radar images (1024Ã—1024)
-â”œâ”€â”€ src/
-â”‚   â”œâ”€â”€ parser.py         # Demo parsing (Layer 1)
-â”‚   â”œâ”€â”€ processor.py      # Metrics calculation (Layer 2)
-â”‚   â”œâ”€â”€ database.py       # SQLite storage (Layer 3)
-â”‚   â”œâ”€â”€ callouts.py       # Map coordinate â†’ callout translation
-â”‚   â””â”€â”€ ai_service.py     # Multi-provider AI integration
-â””â”€â”€ tests/
-    â”œâ”€â”€ test_api.py
-    â”œâ”€â”€ test_processor.py
-    â””â”€â”€ test_database.py
+├── api.py                # FastAPI REST backend (Layer 4)
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+├── data/
+│   ├── steamID           # Active Steam ID (legacy, managed by accounts)
+│   ├── onboarding.json   # Onboarding wizard state
+│   ├── accounts.json     # Multi-account configuration
+│   ├── friends.json      # Friends list
+│   ├── ai_config.json    # AI provider keys & settings
+│   ├── ai_roles.json     # Persisted AI role assessments
+│   └── sync_config.json  # Sync folder path configuration
+├── frontend/
+│   ├── performance.html  # Main dashboard
+│   ├── breakdown.html    # Aggregated performance breakdown
+│   ├── match-breakdown.html  # Single match detail
+│   ├── replay.html       # 2D tick-by-tick replay viewer
+│   ├── calibrate.html    # Callout calibration tool
+│   ├── theme.css / theme.js  # Dark/light theme support
+│   ├── img/radar/        # Map radar images (1024×1024)
+├── src/
+│   ├── parser.py         # Demo parsing (Layer 1)
+│   ├── processor.py      # Metrics calculation (Layer 2)
+│   ├── database.py       # SQLite storage (Layer 3)
+│   ├── callouts.py       # Map coordinate → callout translation
+│   └── ai_service.py     # Multi-provider AI integration
+└── tests/
+    ├── test_api.py
+    ├── test_processor.py
+    └── test_database.py
 ```
