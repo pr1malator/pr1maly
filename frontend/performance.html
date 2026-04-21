@@ -916,7 +916,11 @@ async function startBulkUpload() {
       const ok = r.status === 'ok';
       row.className = 'flex items-center gap-2 text-xs p-2 rounded-lg ' + (ok ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error');
       const icon = ok ? 'check_circle' : 'error';
-      const detail = ok ? (r.map_name || '') + (r.player_name ? ' — ' + r.player_name : '') : (r.error || 'Failed');
+      const partial = ok && (r.partial_import || (r.stats && r.stats.partial_import));
+      const partialLabel = partial ? ' — PARTIAL IMPORT' : '';
+      const detail = ok
+        ? (r.map_name || '') + (r.player_name ? ' — ' + r.player_name : '') + partialLabel
+        : (r.error || 'Failed');
       row.innerHTML = '<span class="material-symbols-outlined text-[16px]">' + icon + '</span><span class="font-medium truncate flex-1">' + r.filename + '</span><span class="text-on-surface-variant/70 text-[10px]">' + detail + '</span>';
       resultsDiv.appendChild(row);
     });
@@ -1032,10 +1036,17 @@ function renderRecentMatches(matches) {
     const rating = (m.hltv_rating || 0).toFixed(2);
     const ratingColor = (m.hltv_rating || 0) >= 1.0 ? 'text-secondary' : 'text-on-surface';
     const result = m.match_result === 'Victory' ? 'VICTORY' : m.match_result === 'Defeat' ? 'DEFEAT' : (m.match_result || '').toUpperCase();
+    const isPartial = !!m.partial_import;
+    const partialBadge = isPartial
+      ? '<div class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-400/15 text-amber-300 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"><span class="material-symbols-outlined text-[10px]">warning</span>Partial Import</div>'
+      : '';
     html += `<div class="grid grid-cols-4 md:grid-cols-12 items-center bg-surface-container hover:bg-surface-container-high transition-all p-4 rounded-xl border-l-4 ${borderColor} group cursor-pointer" onclick="window.location.href='match-breakdown.html?id=${m.match_id}'">
       <div class="md:col-span-2 flex items-center gap-3">
         <div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center font-bold text-xs text-on-surface-variant">${mapAbbrev(m.map_name)}</div>
-        <div class="font-bold text-xs uppercase tracking-widest">${mapFull(m.map_name)}</div>
+        <div>
+          <div class="font-bold text-xs uppercase tracking-widest">${mapFull(m.map_name)}</div>
+          ${partialBadge}
+        </div>
       </div>
       <div class="md:col-span-2 font-headline text-xl font-bold ${scoreColor}">${score}</div>
       <div class="hidden md:block md:col-span-2">

@@ -223,3 +223,21 @@ def test_match_players_empty_when_no_players(conn):
     mid = save_match(conn, _STATS, "match.dem", "76561198000000001")
     players = get_match_players(conn, mid)
     assert players == []
+
+
+def test_partial_import_metadata_persisted(conn):
+    stats = {
+        **_STATS,
+        "partial_import": True,
+        "parse_mode": "header_only_fallback",
+        "parse_warning": "new schema not fully supported",
+        "source_patch_version": 14152,
+    }
+    mid = save_match(conn, stats, "new_patch.dem", "76561198000000001")
+    match = get_match(conn, mid)
+
+    assert match is not None
+    assert match["partial_import"] == 1
+    assert match["parse_mode"] == "header_only_fallback"
+    assert "new schema" in (match["parse_warning"] or "")
+    assert match["source_patch_version"] == 14152

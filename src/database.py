@@ -48,6 +48,10 @@ CREATE TABLE IF NOT EXISTS matches (
     aim_stats     TEXT,
     role_data     TEXT,
     utility_data  TEXT,
+    partial_import INTEGER DEFAULT 0,
+    parse_mode    TEXT,
+    parse_warning TEXT,
+    source_patch_version INTEGER,
     context_notes TEXT,
     uploaded_at   TEXT
 );
@@ -164,6 +168,15 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
     if "utility_data" not in columns:
         conn.execute("ALTER TABLE matches ADD COLUMN utility_data TEXT")
         conn.commit()
+    for col, definition in [
+        ("partial_import", "INTEGER DEFAULT 0"),
+        ("parse_mode", "TEXT"),
+        ("parse_warning", "TEXT"),
+        ("source_patch_version", "INTEGER"),
+    ]:
+        if col not in columns:
+            conn.execute(f"ALTER TABLE matches ADD COLUMN {col} {definition}")
+    conn.commit()
     # Migrate: add replay_json to round_stats if missing
     cursor = conn.execute("PRAGMA table_info(round_stats)")
     columns = {row["name"] for row in cursor.fetchall()}
@@ -212,14 +225,18 @@ def save_match(
             kast, adr, kpr, dpr, impact, hltv_rating,
             kd_ratio, rounds_2k, rounds_3k, rounds_4k, rounds_5k,
             team_score, enemy_score, match_result,
-            aim_stats, role_data, utility_data, context_notes, uploaded_at
+            aim_stats, role_data, utility_data,
+            partial_import, parse_mode, parse_warning, source_patch_version,
+            context_notes, uploaded_at
         ) VALUES (
             :match_id, :filename, :date, :map_name, :player_steam_id,
             :player_name, :total_rounds, :kills, :deaths, :assists,
             :kast, :adr, :kpr, :dpr, :impact, :hltv_rating,
             :kd_ratio, :rounds_2k, :rounds_3k, :rounds_4k, :rounds_5k,
             :team_score, :enemy_score, :match_result,
-            :aim_stats, :role_data, :utility_data, :context_notes, :uploaded_at
+            :aim_stats, :role_data, :utility_data,
+            :partial_import, :parse_mode, :parse_warning, :source_patch_version,
+            :context_notes, :uploaded_at
         )
         """,
         {
@@ -250,6 +267,10 @@ def save_match(
             "aim_stats": json.dumps(stats.get("aim_stats")) if stats.get("aim_stats") else None,
             "role_data": json.dumps(stats.get("role_data")) if stats.get("role_data") else None,
             "utility_data": json.dumps(stats.get("utility_data")) if stats.get("utility_data") else None,
+            "partial_import": int(bool(stats.get("partial_import", False))),
+            "parse_mode": stats.get("parse_mode"),
+            "parse_warning": stats.get("parse_warning"),
+            "source_patch_version": stats.get("source_patch_version"),
             "context_notes": context_notes,
             "uploaded_at": uploaded_at,
         },

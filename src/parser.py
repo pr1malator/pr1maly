@@ -12,6 +12,9 @@ from typing import Any
 import pandas as pd
 
 
+_CS2_ENTITY_SCHEMA_BREAK_PATCH = 14152
+
+
 def parse_demo(demo_path: str | Path) -> dict[str, Any]:
     """
     Parse a CS2 .dem file and return a dictionary of event DataFrames.
@@ -43,22 +46,42 @@ def parse_demo(demo_path: str | Path) -> dict[str, Any]:
     if not demo_path.exists():
         raise FileNotFoundError(f"Demo file not found: {demo_path}")
 
-    parser = DemoParser(str(demo_path))
+    try:
+        parser = DemoParser(str(demo_path))
+        header: dict[str, Any] = parser.parse_header()
+    except BaseException as exc:
+        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+            raise
+        raise RuntimeError(f"Failed to parse demo header: {exc}") from exc
 
-    header: dict[str, Any] = parser.parse_header()
+    try:
+        # Enriched death events — weapon, headshot, distance, special conditions
+        death_df: pd.DataFrame = parser.parse_event(
+            "player_death",
+            player=["steamid", "name", "team_num"],
+        )
 
-    # Enriched death events — weapon, headshot, distance, special conditions
-    death_df: pd.DataFrame = parser.parse_event(
-        "player_death",
-        player=["steamid", "name", "team_num"],
-    )
+        hurt_df: pd.DataFrame = parser.parse_event(
+            "player_hurt",
+            player=["steamid", "name", "team_num"],
+        )
 
-    hurt_df: pd.DataFrame = parser.parse_event(
-        "player_hurt",
-        player=["steamid", "name", "team_num"],
-    )
-
-    round_end_df: pd.DataFrame = parser.parse_event("round_end")
+        round_end_df: pd.DataFrame = parser.parse_event("round_end")
+    except Exception as exc:
+        # April 2026 CS2 patch changed entity schema in a way older demoparser2
+        # builds cannot decode. Preserve import flow with a metadata-only fallback.
+        if _should_use_header_only_fallback(header, exc):
+            fallback_header = dict(header)
+            fallback_header["parse_mode"] = "header_only_fallback"
+            fallback_header[
+                "parse_warning"
+            ] = (
+                "This demo uses a newer CS2 entity schema that is not fully "
+                "supported by the installed demoparser2 build. Imported in "
+                "metadata-only mode; advanced stats were set to 0."
+            )
+            return _empty_parsed_result(fallback_header)
+        raise
 
     # Round freeze-end events (marks when buy time ends and action starts)
     round_freeze_end_df = _safe_parse_event(parser, "round_freeze_end", [])
@@ -657,6 +680,53 @@ def _safe_parse_event(
         return pd.DataFrame(result) if result else pd.DataFrame()
     except Exception:
         return pd.DataFrame()
+
+
+def _is_entity_not_found_error(exc: Exception) -> bool:
+    """Return True when demoparser2 failed with an EntityNotFound-style error."""
+    text = str(exc)
+    return "EntityNotFound" in text or "entity not found" in text.lower()
+
+
+def _should_use_header_only_fallback(header: dict[str, Any], exc: Exception) -> bool:
+    """Gate fallback mode to known post-update demos only."""
+    if not _is_entity_not_found_error(exc):
+        return False
+    patch_version = header.get("patch_version")
+    try:
+        return int(patch_version) >= _CS2_ENTITY_SCHEMA_BREAK_PATCH
+    except (TypeError, ValueError):
+        return False
+
+
+def _empty_parsed_result(header: dict[str, Any]) -> dict[str, Any]:
+    """Build a parse result payload with empty event DataFrames."""
+    empty = pd.DataFrame()
+    return {
+        "player_death": empty.copy(),
+        "player_hurt": empty.copy(),
+        "round_end": empty.copy(),
+        "item_purchase": empty.copy(),
+        "player_blind": empty.copy(),
+        "bomb_planted": empty.copy(),
+        "bomb_defused": empty.copy(),
+        "bomb_exploded": empty.copy(),
+        "positions": empty.copy(),
+        "ranks": empty.copy(),
+        "rank_update": empty.copy(),
+        "end_stats": empty.copy(),
+        "flash_detonate": empty.copy(),
+        "he_detonate": empty.copy(),
+        "smoke_detonate": empty.copy(),
+        "molotov_detonate": empty.copy(),
+        "velocities": empty.copy(),
+        "weapon_fire": empty.copy(),
+        "round_positions": empty.copy(),
+        "replay_positions": empty.copy(),
+        "round_freeze_end": empty.copy(),
+        "economy": empty.copy(),
+        "header": header,
+    }
 
 
 def _assign_rounds(

@@ -329,7 +329,11 @@
 <div class="flex items-center gap-2 mb-2">
 <span class="bg-secondary/10 text-secondary px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest">MAP: DE_ANUBIS</span>
 <span id="match-date-badge" class="bg-primary/10 text-primary px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest hidden"></span>
+<span id="partial-import-badge" class="bg-amber-400/15 text-amber-300 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest hidden">PARTIAL IMPORT</span>
 <span class="text-on-surface-variant font-label text-[10px] tracking-widest">MATCH_ID: #8821-X</span>
+<button id="reimport-match-btn" onclick="reimportCurrentMatch()" class="ml-2 bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 hidden" title="Re-import this match with a demo file">
+<span class="material-symbols-outlined text-xs">upload_file</span> Re-import
+</button>
 <button id="delete-match-btn" onclick="deleteCurrentMatch()" class="ml-2 bg-error/10 hover:bg-error/20 text-error px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1" title="Delete this match">
 <span class="material-symbols-outlined text-xs">delete</span> Delete
 </button>
@@ -1482,6 +1486,7 @@ async function removeFriend(steamId) {
 }
 
 let currentMatchId = null;
+let currentMatchData = null;
 let currentMapName = null;
 let minimapData = null;
 let aiConfig = null;
@@ -2143,6 +2148,7 @@ async function loadMatchDetail() {
 }
 
 function renderMatchDetail(m) {
+  currentMatchData = m;
   // Store match data globally
   currentMapName = m.map_name || '';
   const matchResult = (m.match_result || '').toLowerCase();
@@ -2168,6 +2174,22 @@ function renderMatchDetail(m) {
 
   const matchIdBadge = document.querySelector('.text-on-surface-variant.font-label');
   if (matchIdBadge) matchIdBadge.textContent = 'MATCH_ID: #' + (m.match_id || '').substring(0, 8);
+
+  const partialBadge = document.getElementById('partial-import-badge');
+  const reimportBtn = document.getElementById('reimport-match-btn');
+  if (partialBadge) {
+    if (m.partial_import) {
+      const warningText = m.parse_warning ? ` title="${esc(m.parse_warning)}"` : '';
+      partialBadge.classList.remove('hidden');
+      partialBadge.innerHTML = `<span class="inline-flex items-center gap-1"${warningText}><span class="material-symbols-outlined text-[11px]">warning</span>PARTIAL IMPORT</span>`;
+    } else {
+      partialBadge.classList.add('hidden');
+    }
+  }
+  if (reimportBtn) {
+    if (m.partial_import) reimportBtn.classList.remove('hidden');
+    else reimportBtn.classList.add('hidden');
+  }
 
   // Score and result
   const scoreEl = document.querySelector('h1.text-5xl');
@@ -4298,6 +4320,51 @@ async function deleteCurrentMatch() {
   } catch (err) { console.error('Delete error:', err); alert('Failed to delete match.'); }
 }
 
+async function reimportCurrentMatch() {
+  if (!currentMatchId) return;
+
+  const picker = document.createElement('input');
+  picker.type = 'file';
+  picker.accept = '.dem';
+  picker.onchange = async () => {
+    const file = picker.files && picker.files[0];
+    if (!file) return;
+
+    const btn = document.getElementById('reimport-match-btn');
+    const oldText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-symbols-outlined text-xs">hourglass_top</span> Re-importing...';
+    }
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      if (currentMatchData && currentMatchData.player_steam_id) {
+        fd.append('steam_id', currentMatchData.player_steam_id);
+      }
+
+      const res = await fetch(API + '/matches/' + encodeURIComponent(currentMatchId) + '/reimport', {
+        method: 'POST',
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Re-import failed');
+      }
+      const data = await res.json();
+      window.location.href = 'match-breakdown.html?id=' + encodeURIComponent(data.match_id);
+    } catch (err) {
+      alert(err.message || 'Re-import failed');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = oldText;
+      }
+    }
+  };
+  picker.click();
+}
+
 function exportMatch() {
   window.print();
 }
@@ -4340,6 +4407,9 @@ async function loadMatchList() {
       const mapName = (m.map_name || '').replace('de_','');
       const mapAbbrev = { mirage:'MIR', inferno:'INF', dust2:'D2', ancient:'ANC', anubis:'ANB', nuke:'NUK', vertigo:'VRT', overpass:'OVP' }[mapName.toLowerCase()] || mapName.substring(0,3).toUpperCase();
       const dateStr = m.date || '';
+      const partialBadge = m.partial_import
+        ? '<div class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-400/15 text-amber-300 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"><span class="material-symbols-outlined text-[10px]">warning</span>Partial</div>'
+        : '';
       // Find player name from accounts  
       const acct = accounts.find(a => a.steam_id === m.player_steam_id);
       const playerTag = acct ? acct.name : '';
@@ -4351,6 +4421,7 @@ async function loadMatchList() {
             <div>
               <div class="font-bold text-xs uppercase tracking-widest">${mapName.charAt(0).toUpperCase() + mapName.slice(1)}</div>
               ${dateStr ? '<div class="text-[9px] text-on-surface-variant">'+dateStr+'</div>' : ''}
+              ${partialBadge}
               ${playerTag && !filterSteamId ? '<div class="text-[9px] text-secondary font-bold">'+esc(playerTag)+'</div>' : ''}
             </div>
           </div>

@@ -1,4 +1,4 @@
-demoparser2>=0.6.0
+demoparser2==0.41.2
 pandas>=2.0.0
 fastapi>=0.111.0
 uvicorn[standard]>=0.30.0

@@ -474,6 +474,7 @@ def upload_demo(
     try:
         parsed = parse_demo(tmp_path)
         stats = calculate_match_stats(parsed, sid)
+        _apply_parse_metadata(stats, parsed)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Failed to parse demo: {exc}")
     finally:
@@ -520,7 +521,31 @@ def _match_summary(stats: dict[str, Any]) -> dict[str, Any]:
         "rounds_3k": stats.get("rounds_3k"),
         "rounds_4k": stats.get("rounds_4k"),
         "rounds_5k": stats.get("rounds_5k"),
+        "partial_import": bool(stats.get("partial_import", False)),
+        "parse_mode": stats.get("parse_mode"),
+        "parse_warning": stats.get("parse_warning"),
     }
+
+
+def _apply_parse_metadata(stats: dict[str, Any], parsed: dict[str, Any]) -> None:
+    """Copy parser compatibility metadata into stats for persistence and UI."""
+    header = parsed.get("header", {}) if isinstance(parsed, dict) else {}
+    parse_mode = header.get("parse_mode")
+    parse_warning = header.get("parse_warning")
+    patch_version = header.get("patch_version")
+
+    if parse_mode:
+        stats["parse_mode"] = str(parse_mode)
+    if parse_warning:
+        stats["parse_warning"] = str(parse_warning)
+    if parse_mode == "header_only_fallback" or parse_warning:
+        stats["partial_import"] = True
+
+    if patch_version is not None:
+        try:
+            stats["source_patch_version"] = int(patch_version)
+        except (TypeError, ValueError):
+            pass
 
 
 # ---------------------------------------------------------------------------
@@ -604,6 +629,7 @@ def upload_demos_bulk(
         try:
             parsed = parse_demo(tmp_path)
             stats = calculate_match_stats(parsed, sid)
+            _apply_parse_metadata(stats, parsed)
         except Exception as exc:
             entry["status"] = "error"
             entry["detail"] = f"Parse failed: {exc}"
@@ -636,6 +662,10 @@ def upload_demos_bulk(
         entry["player_steam_id"] = sid
         entry["map_name"] = stats.get("map_name")
         entry["stats"] = _match_summary(stats)
+        if stats.get("partial_import"):
+            entry["partial_import"] = True
+        if stats.get("parse_warning"):
+            entry["parse_warning"] = stats["parse_warning"]
         results.append(entry)
 
     ok_count = sum(1 for r in results if r["status"] == "ok")
@@ -912,6 +942,7 @@ def sync_process(body: dict):
         try:
             parsed = parse_demo(str(dem_path))
             stats = calculate_match_stats(parsed, sid)
+            _apply_parse_metadata(stats, parsed)
         except Exception as exc:
             entry["status"] = "error"
             entry["detail"] = f"Parse failed: {exc}"
@@ -935,6 +966,10 @@ def sync_process(body: dict):
         entry["player_name"] = acct_name or stats.get("player_name", "?")
         entry["map_name"] = stats.get("map_name")
         entry["stats"] = _match_summary(stats)
+        if stats.get("partial_import"):
+            entry["partial_import"] = True
+        if stats.get("parse_warning"):
+            entry["parse_warning"] = stats["parse_warning"]
         results.append(entry)
 
     ok_count = sum(1 for r in results if r["status"] == "ok")
@@ -1389,6 +1424,81 @@ def remove_match(match_id: str):
     delete_match(conn, match_id)
     conn.close()
     return {"deleted": match_id}
+
+
+@app.post("/api/matches/{match_id}/reimport")
+def reimport_match(
+    match_id: str,
+    file: UploadFile = File(...),
+    info_file: UploadFile | None = File(default=None),
+    steam_id: str = Form(default=""),
+):
+    """Replace an existing match by parsing a newly provided .dem file."""
+    if not file.filename or not file.filename.endswith(".dem"):
+        raise HTTPException(status_code=400, detail="File must be a .dem demo file")
+
+    conn = _db()
+    existing = get_match(conn, match_id)
+    if not existing:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    old_tags = get_tags(conn, match_id)
+    old_notes = existing.get("context_notes", "")
+
+    sid = steam_id.strip() or str(existing.get("player_steam_id") or "")
+    if not sid:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Steam ID is required")
+
+    info_date: str | None = None
+    if info_file and info_file.filename:
+        try:
+            info_data = parse_info_file(info_file.file.read())
+            info_date = info_data.get("match_date")
+        except Exception:
+            pass
+    resolved_date = info_date or existing.get("date")
+
+    with tempfile.NamedTemporaryFile(suffix=".dem", delete=False) as tmp:
+        tmp.write(file.file.read())
+        tmp_path = tmp.name
+
+    try:
+        parsed = parse_demo(tmp_path)
+        stats = calculate_match_stats(parsed, sid)
+        _apply_parse_metadata(stats, parsed)
+    except Exception as exc:
+        conn.close()
+        raise HTTPException(status_code=422, detail=f"Failed to parse demo: {exc}")
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+    new_match_id = save_match(
+        conn,
+        stats,
+        filename=file.filename or str(existing.get("filename") or "reimport.dem"),
+        steam_id=sid,
+        context_notes=old_notes,
+        match_date=resolved_date,
+    )
+
+    for tag in old_tags:
+        add_tag(conn, new_match_id, tag)
+
+    delete_match(conn, match_id)
+    conn.close()
+
+    response: dict[str, Any] = {
+        "reimported_from": match_id,
+        "match_id": new_match_id,
+        "stats": _match_summary(stats),
+    }
+    if stats.get("partial_import"):
+        response["partial_import"] = True
+    if stats.get("parse_warning"):
+        response["parse_warning"] = stats["parse_warning"]
+    return response
 
 
 # ---------------------------------------------------------------------------
