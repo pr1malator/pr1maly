@@ -281,6 +281,44 @@ _OVERPASS_ZONES: list[tuple[str, float, float, float, float]] = [
     ("Mid Area",       -2800, -1200,    100,  1000),
 ]
 
+_CACHE_ZONES: list[tuple[str, float, float, float, float]] = [
+    # Calibrated from de_cache radar: pos_x=-2000, pos_y=3250, scale=5.5.
+    # Key anchors from de_cache.txt:
+    #   CT Spawn ~(-1450, 586), T Spawn ~(2996, -45),
+    #   Bomb A ~(-170, 1786),   Bomb B ~(-57, -1199).
+    # Zones ordered specific-first; first match wins.
+
+    # ---- A site area ----
+    ("A Site",       -600,   300, 1350, 2200),   # bomb at (-170, 1786)
+    ("CT Short",     -950,  -200,  700, 1450),   # CT path up to A
+    ("A Main",        200,  1100, 1400, 2200),   # T ramp/main to A
+    ("Highway",       900,  2100, 1600, 2700),   # T long approach to A
+
+    # ---- Mid ----
+    ("Squeaky",       650,  1100,   50,  550),   # squeaky door
+    ("Catwalk",      -100,   800,  250,  950),   # elevated walkway
+    ("Mid",           300,  1150, -100,  600),   # central corridor
+    ("Boiler",        100,   750, -700,  -50),   # boiler room, B connector
+
+    # ---- B approaches ----
+    ("B Halls",      1200,  2100, -1000, -200),  # T-side halls to B
+    ("B Ramp",        500,  1350, -1500, -700),  # T ramp into B
+
+    # ---- B site ----
+    ("B Site",       -500,   600, -1700, -800),  # bomb at (-57, -1199)
+
+    # ---- Spawns & connector ----
+    ("CT Spawn",    -1900,  -800,    0, 1100),   # CT spawn at (-1450, 586)
+    ("Garage",       1500,  2600,  400, 1700),   # garage, T mid connector
+    ("T Spawn",      2100,  3300, -700,  550),   # T spawn at (2996, -45)
+
+    # ---- Fallback ----
+    ("A Side",       -1200,   700, 1100, 2900),
+    ("B Side",       -1200,   700, -2000, -400),
+    ("Mid Area",      -300,  1400, -200,  900),
+    ("T Area",        1500,  3400, -2000, 1100),
+]
+
 # Map name → zone list
 _MAP_ZONES: dict[str, list[tuple[str, float, float, float, float]]] = {
     "de_mirage":   _MIRAGE_ZONES,
@@ -290,6 +328,7 @@ _MAP_ZONES: dict[str, list[tuple[str, float, float, float, float]]] = {
     "de_nuke":     _NUKE_ZONES,
     "de_ancient":  _ANCIENT_ZONES,
     "de_overpass": _OVERPASS_ZONES,
+    "de_cache":    _CACHE_ZONES,
 }
 
 # ---------------------------------------------------------------------------
@@ -375,6 +414,7 @@ _MAP_RADAR: dict[str, dict[str, float]] = {
     "de_overpass": {"pos_x": -4831, "pos_y": 1781, "scale": 5.20},
     "de_vertigo":  {"pos_x": -3168, "pos_y": 1762, "scale": 4.00},
     "de_train":    {"pos_x": -2308, "pos_y": 2078, "scale": 4.082077},
+    "de_cache":    {"pos_x": -2000, "pos_y": 3250, "scale": 5.50},
 }
 
 

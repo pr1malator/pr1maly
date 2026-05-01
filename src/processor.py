@@ -1678,6 +1678,36 @@ _ROLE_ZONES: dict[str, dict[str, dict[str, list[str]]]] = {
             ],
         },
     },
+    "de_cache": {
+        "CT": {
+            "A Anchor": [
+                "A Site", "CT Short",
+            ],
+            "Catwalk (AWP)": [
+                "Catwalk", "Mid", "Squeaky", "Mid Area",
+            ],
+            "B Anchor": [
+                "B Site", "Boiler", "B Ramp",
+            ],
+            "CT Spawn Rotator": [
+                "CT Spawn", "Garage",
+            ],
+        },
+        "T": {
+            "Highway / A Pack": [
+                "Highway", "A Main", "A Site", "A Side",
+            ],
+            "Mid / Catwalk": [
+                "Mid", "Catwalk", "Squeaky", "Boiler", "Mid Area",
+            ],
+            "B Halls / Ramp Pack": [
+                "B Halls", "B Ramp", "B Site", "B Side",
+            ],
+            "Garage Lurk": [
+                "Garage", "T Spawn", "T Area",
+            ],
+        },
+    },
 }
 
 
