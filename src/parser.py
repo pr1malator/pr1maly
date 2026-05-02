@@ -586,7 +586,7 @@ def parse_info_file(info_bytes: bytes) -> dict[str, Any]:
             shift += 7
         return result, pos
 
-    result: dict[str, Any] = {"match_date": None, "account_ids": []}
+    result: dict[str, Any] = {"match_date": None, "map_name": None, "account_ids": []}
     pos = 0
     while pos < len(info_bytes):
         try:
@@ -604,7 +604,33 @@ def parse_info_file(info_bytes: bytes) -> dict[str, Any]:
             length, pos = _read_varint(info_bytes, pos)
             payload = info_bytes[pos:pos + length]
             pos += length
-            if field == 5:  # game_info submessage — extract account IDs
+            if field == 3:  # watchablematchinfo submessage — extract game_map (field 2)
+                sub_pos = 0
+                while sub_pos < len(payload):
+                    try:
+                        stag, sub_pos = _read_varint(payload, sub_pos)
+                    except Exception:
+                        break
+                    sfield = stag >> 3
+                    swtype = stag & 0x07
+                    if swtype == 2:
+                        slen, sub_pos = _read_varint(payload, sub_pos)
+                        sval = payload[sub_pos:sub_pos + slen]
+                        sub_pos += slen
+                        if sfield == 2:  # game_map string
+                            try:
+                                result["map_name"] = sval.decode("utf-8").strip()
+                            except Exception:
+                                pass
+                    elif swtype == 0:
+                        _, sub_pos = _read_varint(payload, sub_pos)
+                    elif swtype == 5:
+                        sub_pos += 4
+                    elif swtype == 1:
+                        sub_pos += 8
+                    else:
+                        break
+            elif field == 5:  # game_info submessage — extract account IDs
                 sub_pos = 0
                 while sub_pos < len(payload):
                     try:
@@ -662,6 +688,20 @@ def parse_info_file(info_bytes: bytes) -> dict[str, Any]:
             unique_ids.append(aid)
     result["account_ids"] = unique_ids
     return result
+
+
+def read_demo_map(demo_path: str | Path) -> str | None:
+    """Return the map name from a demo file's header, or None on failure.
+
+    Uses demoparser2's parse_header() which only reads the first portion of
+    the file, so it is fast enough to call during a folder scan.
+    """
+    try:
+        from demoparser2 import DemoParser  # type: ignore[import-untyped]
+        parser = DemoParser(str(demo_path))
+        return parser.parse_header().get("map_name") or None
+    except Exception:
+        return None
 
 
 def _safe_parse_event(

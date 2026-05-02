@@ -1291,7 +1291,7 @@ MINIMAP — <span id="minimap-title">Round ?</span>
 </div>
 <!-- Sync Folder Modal -->
 <div id="sync-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-2xl mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
     <div class="flex justify-between items-center mb-6">
       <h2 class="font-headline text-xl font-bold uppercase tracking-widest flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary">sync</span> Sync Folder
@@ -1733,11 +1733,17 @@ async function syncScan() {
     foundText.textContent = _syncDemos.length + ' new demo' + (_syncDemos.length > 1 ? 's' : '') + ' found (' + data.total_found + ' total in folder)';
     document.getElementById('sync-process-btn').classList.remove('hidden');
     fileList.innerHTML = _syncDemos.map((d, i) => `
-      <label class="flex items-center gap-3 p-2.5 rounded-lg bg-surface-container-highest hover:bg-white/5 cursor-pointer transition-colors">
-        <input type="checkbox" class="sync-file-cb accent-secondary" data-idx="${i}" checked />
-        <span class="material-symbols-outlined text-[14px] text-secondary">${d.has_info ? 'verified' : 'description'}</span>
-        <span class="text-xs text-on-surface font-medium truncate flex-1">${esc(d.filename)}</span>
-        <span class="text-[10px] text-on-surface-variant/50">${d.size_mb} MB</span>
+      <label class="flex items-start gap-3 p-2.5 rounded-lg bg-surface-container-highest hover:bg-white/5 cursor-pointer transition-colors">
+        <input type="checkbox" class="sync-file-cb accent-secondary mt-1" data-idx="${i}" checked />
+        <span class="material-symbols-outlined text-[14px] text-secondary mt-0.5">${d.has_info ? 'verified' : 'description'}</span>
+        <div class="flex-1 min-w-0">
+          <span class="text-xs text-on-surface font-medium block truncate">${esc(d.filename)}</span>
+          <div class="flex gap-3 mt-0.5">
+            ${d.match_date ? `<span class="text-[10px] text-on-surface-variant">${esc(d.match_date)}</span>` : ''}
+            ${d.map_name ? `<span class="text-[10px] text-primary font-semibold">${esc(d.map_name)}</span>` : ''}
+          </div>
+        </div>
+        <span class="text-[10px] text-on-surface-variant/50 mt-0.5 shrink-0">${d.size_mb} MB</span>
       </label>`).join('');
     resultsDiv.classList.remove('hidden');
   } catch(err) {

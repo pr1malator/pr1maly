@@ -155,6 +155,18 @@
 <main id="main-area" class="lg:pl-[17.5rem] pt-6 pb-24 lg:pb-8 min-h-screen px-6">
 
 <!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PLAYER FILTER BAR -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="player-filter-bar" class="mb-4 hidden">
+  <div class="bg-surface-container rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
+    <span class="material-symbols-outlined text-sm text-on-surface-variant">people</span>
+    <span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest shrink-0">Players:</span>
+    <button id="pf-all" onclick="togglePlayerFilter(null)" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all">All</button>
+    <div id="pf-chips" class="flex gap-2 flex-wrap"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
 <!-- OVERALL PERFORMANCE (above map selector, all maps aggregated) -->
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 <section id="overall-perf-section" class="mb-6 hidden">
@@ -227,6 +239,53 @@
         <p id="overall-util-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
         <canvas id="overall-util-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PERFORMANCE TREND GRAPH -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="trend-graph-section" class="mb-6 hidden">
+  <div class="bg-surface-container rounded-xl overflow-hidden">
+    <div class="p-4 border-b border-white/5 flex items-start sm:items-center justify-between flex-wrap gap-3">
+      <div>
+        <h2 class="font-headline font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-lg">show_chart</span>
+          Performance Trend
+        </h2>
+        <p class="text-[10px] text-on-surface-variant mt-0.5">Match-by-match progression — all maps</p>
+      </div>
+      <div class="flex flex-col gap-2 items-end">
+        <!-- Timescale buttons -->
+        <div class="flex gap-1">
+          <button id="ts-all" onclick="setTrendTimescale('all')" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all">All</button>
+          <button id="ts-20" onclick="setTrendTimescale(20)" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">L20</button>
+          <button id="ts-10" onclick="setTrendTimescale(10)" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">L10</button>
+          <button id="ts-5"  onclick="setTrendTimescale(5)"  class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">L5</button>
+        </div>
+        <!-- Metric toggles -->
+        <div class="flex gap-1 flex-wrap justify-end">
+          <button id="tm-rating" onclick="toggleTrendMetric('rating')" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all">Rating</button>
+          <button id="tm-adr"    onclick="toggleTrendMetric('adr')"    class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">ADR</button>
+          <button id="tm-kd"     onclick="toggleTrendMetric('kd')"     class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all">K/D</button>
+          <button id="tm-kast"   onclick="toggleTrendMetric('kast')"   class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">KAST%</button>
+          <button id="tm-aim"    onclick="toggleTrendMetric('aim')"    class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">Aim</button>
+          <button id="tm-util"   onclick="toggleTrendMetric('util')"   class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">Utility</button>
+        </div>
+      </div>
+    </div>
+    <!-- Win/loss legend -->
+    <div class="flex items-center gap-4 px-4 pt-3 pb-0">
+      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Win</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Loss</span></div>
+      <div class="flex items-center gap-3 ml-2">
+        <div class="flex items-center gap-1.5"><span class="inline-block w-6 h-px bg-white/20"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Per match</span></div>
+        <div class="flex items-center gap-1.5"><span class="inline-block w-6 h-0.5 bg-white/60"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">5-match avg</span></div>
+      </div>
+    </div>
+    <div class="p-4 pt-2">
+      <canvas id="trend-chart" class="w-full" height="200" style="height:200px;display:block"></canvas>
     </div>
   </div>
 </section>
@@ -372,6 +431,31 @@
         <p id="map-perf-util-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
         <canvas id="map-perf-util-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MAP TREND GRAPH (col-span-12, only when map selected) -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="map-trend-section" class="md:col-span-12 hidden">
+  <div class="bg-surface-container rounded-xl overflow-hidden">
+    <div class="p-4 border-b border-white/5 flex items-center justify-between flex-wrap gap-2">
+      <div>
+        <h2 class="font-headline font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-lg">show_chart</span>
+          <span id="map-trend-label">Map Trend</span>
+        </h2>
+        <p class="text-[10px] text-on-surface-variant mt-0.5">Match-by-match progression on this map</p>
+      </div>
+      <p class="text-[9px] text-on-surface-variant/60 uppercase tracking-widest">Uses same metric &amp; timescale as the main trend chart above</p>
+    </div>
+    <div class="flex items-center gap-4 px-4 pt-3 pb-0">
+      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Win</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Loss</span></div>
+    </div>
+    <div class="p-4 pt-2">
+      <canvas id="map-trend-chart" class="w-full" height="180" style="height:180px;display:block"></canvas>
     </div>
   </div>
 </section>
@@ -871,7 +955,7 @@
 </div>
 <!-- Sync Folder Modal -->
 <div id="sync-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-2xl mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
     <div class="flex justify-between items-center mb-6">
       <h2 class="font-headline text-xl font-bold uppercase tracking-widest flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary">sync</span> Sync Folder
@@ -1379,11 +1463,17 @@ async function syncScan() {
     foundText.textContent = _syncDemos.length + ' new demo' + (_syncDemos.length > 1 ? 's' : '') + ' found (' + data.total_found + ' total in folder)';
     document.getElementById('sync-process-btn').classList.remove('hidden');
     fileList.innerHTML = _syncDemos.map((d, i) => `
-      <label class="flex items-center gap-3 p-2.5 rounded-lg bg-surface-container-highest hover:bg-white/5 cursor-pointer transition-colors">
-        <input type="checkbox" class="sync-file-cb accent-secondary" data-idx="${i}" checked />
-        <span class="material-symbols-outlined text-[14px] text-secondary">${d.has_info ? 'verified' : 'description'}</span>
-        <span class="text-xs text-on-surface font-medium truncate flex-1">${esc(d.filename)}</span>
-        <span class="text-[10px] text-on-surface-variant/50">${d.size_mb} MB</span>
+      <label class="flex items-start gap-3 p-2.5 rounded-lg bg-surface-container-highest hover:bg-white/5 cursor-pointer transition-colors">
+        <input type="checkbox" class="sync-file-cb accent-secondary mt-1" data-idx="${i}" checked />
+        <span class="material-symbols-outlined text-[14px] text-secondary mt-0.5">${d.has_info ? 'verified' : 'description'}</span>
+        <div class="flex-1 min-w-0">
+          <span class="text-xs text-on-surface font-medium block truncate">${esc(d.filename)}</span>
+          <div class="flex gap-3 mt-0.5">
+            ${d.match_date ? `<span class="text-[10px] text-on-surface-variant">${esc(d.match_date)}</span>` : ''}
+            ${d.map_name ? `<span class="text-[10px] text-primary font-semibold">${esc(d.map_name)}</span>` : ''}
+          </div>
+        </div>
+        <span class="text-[10px] text-on-surface-variant/50 mt-0.5 shrink-0">${d.size_mb} MB</span>
       </label>`).join('');
     resultsDiv.classList.remove('hidden');
   } catch(err) {
@@ -1459,6 +1549,221 @@ let activeMap = null;
 let _overallTrends = null;
 let _overallPerf = null;
 
+// --- Player filter state ---
+let _selectedPlayerIds = new Set(); // empty = show all
+
+// --- Trend chart state ---
+let _trendDataPoints = [];
+let _trendTimescale = 'all'; // 'all' | 5 | 10 | 20
+let _trendMetrics = new Set(['rating', 'kd']); // enabled metric keys
+
+const TREND_METRICS = [
+  { key: 'rating', label: 'Rating', color: () => TC.purple  || '#cc97ff', getValue: d => d.hltv_rating },
+  { key: 'adr',    label: 'ADR',    color: () => TC.cyan    || '#53ddfc', getValue: d => d.adr },
+  { key: 'kd',     label: 'K/D',    color: () => TC.onText  || '#dee5ff', getValue: d => (d.deaths || 0) > 0 ? (d.kills || 0) / d.deaths : (d.kills || 0) },
+  { key: 'kast',   label: 'KAST%',  color: () => TC.sky     || '#7dd3fc', getValue: d => d.kast },
+  { key: 'aim',    label: 'Aim',    color: () => TC.amber   || '#fbbf24', getValue: d => d.aim_rating },
+  { key: 'util',   label: 'Utility',color: () => TC.success || '#34d399', getValue: d => d.utility_rating },
+];
+
+// --- Build API query string helper ---
+function _buildParams(mapFilter) {
+  const p = new URLSearchParams();
+  if (mapFilter) p.set('maps', mapFilter);
+  if (_selectedPlayerIds.size > 0) p.set('steam_ids', [..._selectedPlayerIds].join(','));
+  const s = p.toString();
+  return s ? '?' + s : '';
+}
+
+// --- Player filter ---
+function togglePlayerFilter(steamId) {
+  if (steamId === null) {
+    _selectedPlayerIds.clear();
+  } else {
+    if (_selectedPlayerIds.has(steamId)) _selectedPlayerIds.delete(steamId);
+    else _selectedPlayerIds.add(steamId);
+  }
+  _renderPlayerFilterBar();
+  _overallTrends = null; _overallPerf = null;
+  loadPerformance(activeMap);
+}
+
+function _renderPlayerFilterBar() {
+  const allBtn = document.getElementById('pf-all');
+  const allActive = _selectedPlayerIds.size === 0;
+  allBtn.className = allActive
+    ? 'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all'
+    : 'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all';
+  document.querySelectorAll('.pf-chip').forEach(chip => {
+    const isActive = _selectedPlayerIds.has(chip.dataset.sid);
+    chip.className = (isActive
+      ? 'pf-chip px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-secondary/20 text-secondary border border-secondary/30 cursor-pointer transition-all'
+      : 'pf-chip px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-secondary/30 hover:text-secondary cursor-pointer transition-all');
+  });
+}
+
+async function loadPlayerFilter() {
+  try {
+    const res = await fetch(API + '/accounts');
+    const data = await res.json();
+    const accounts = Array.isArray(data) ? data : (data.accounts || []);
+    if (accounts.length < 2) return;
+    const bar = document.getElementById('player-filter-bar');
+    const chips = document.getElementById('pf-chips');
+    chips.innerHTML = accounts.map(a =>
+      `<button class="pf-chip px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-secondary/30 hover:text-secondary cursor-pointer transition-all" data-sid="${esc(a.steam_id)}" onclick="togglePlayerFilter('${esc(a.steam_id)}')">${esc(a.name)}</button>`
+    ).join('');
+    bar.classList.remove('hidden');
+  } catch(e) {}
+}
+
+// --- Trend chart ---
+function toggleTrendMetric(key) {
+  if (_trendMetrics.has(key) && _trendMetrics.size > 1) _trendMetrics.delete(key);
+  else _trendMetrics.add(key);
+  _renderTrendMetricToggles();
+  drawTrendChart(_trendDataPoints);
+}
+
+function setTrendTimescale(scale) {
+  _trendTimescale = scale;
+  _renderTrendTimescaleButtons();
+  drawTrendChart(_trendDataPoints);
+}
+
+function _renderTrendMetricToggles() {
+  TREND_METRICS.forEach(m => {
+    const btn = document.getElementById('tm-' + m.key);
+    if (!btn) return;
+    if (_trendMetrics.has(m.key)) {
+      const c = m.color();
+      btn.style.borderColor = c;
+      btn.style.color = c;
+      btn.style.background = c + '22';
+      btn.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all';
+    } else {
+      btn.style.borderColor = ''; btn.style.color = ''; btn.style.background = '';
+      btn.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all';
+    }
+  });
+}
+
+function _renderTrendTimescaleButtons() {
+  const scales = ['all', 5, 10, 20];
+  scales.forEach(s => {
+    const btn = document.getElementById('ts-' + s);
+    if (!btn) return;
+    btn.className = _trendTimescale === s
+      ? 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all'
+      : 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all';
+  });
+}
+
+function drawTrendChart(dataPoints, canvasId = 'trend-chart') {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  let pts = [...(dataPoints || [])];
+  if (_trendTimescale !== 'all' && typeof _trendTimescale === 'number') pts = pts.slice(-_trendTimescale);
+
+  const n = pts.length;
+  const dpr = window.devicePixelRatio || 2;
+  const w = canvas.offsetWidth || 600;
+  const h = 200;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  if (n < 2) {
+    ctx.fillStyle = TC.gridText || 'rgba(255,255,255,0.2)';
+    ctx.font = '11px Manrope, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Not enough data to show trend', w / 2, h / 2);
+    return;
+  }
+
+  const pad = { top: 18, right: 14, bottom: 26, left: 14 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+  const getX = i => pad.left + (n > 1 ? (i / (n - 1)) * cw : cw / 2);
+
+  // Grid lines
+  ctx.strokeStyle = TC.grid || 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const gy = pad.top + (ch / 4) * g;
+    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(pad.left + cw, gy); ctx.stroke();
+  }
+
+  // Win / loss markers above chart
+  pts.forEach((d, i) => {
+    const won = (d.match_result || '').toLowerCase() === 'win';
+    ctx.fillStyle = won ? '#34d39999' : '#f8717199';
+    ctx.beginPath(); ctx.arc(getX(i), pad.top - 6, 3, 0, Math.PI * 2); ctx.fill();
+  });
+
+  // Draw each enabled metric
+  for (const metric of TREND_METRICS) {
+    if (!_trendMetrics.has(metric.key)) continue;
+    const vals = pts.map(d => metric.getValue(d));
+    const valid = vals.filter(v => v != null && !isNaN(v));
+    if (!valid.length) continue;
+
+    const minV = Math.min(...valid);
+    const maxV = Math.max(...valid);
+    const range = maxV - minV || 1;
+    const color = metric.color();
+    const getY = v => v == null || isNaN(v) ? null : pad.top + ch * (1 - (v - minV) / range);
+
+    // Raw thin line
+    ctx.beginPath(); ctx.strokeStyle = color + '55'; ctx.lineWidth = 1;
+    let first = true;
+    for (let i = 0; i < n; i++) {
+      const y = getY(vals[i]);
+      if (y == null) { first = true; continue; }
+      first ? ctx.moveTo(getX(i), y) : ctx.lineTo(getX(i), y);
+      first = false;
+    }
+    ctx.stroke();
+
+    // 5-match rolling average — thick solid line
+    const win5 = vals.map((_, i) => {
+      const sl = vals.slice(Math.max(0, i - 4), i + 1).filter(v => v != null && !isNaN(v));
+      return sl.length ? sl.reduce((a, b) => a + b, 0) / sl.length : null;
+    });
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
+    first = true;
+    for (let i = 0; i < n; i++) {
+      const y = getY(win5[i]);
+      if (y == null) { first = true; continue; }
+      first ? ctx.moveTo(getX(i), y) : ctx.lineTo(getX(i), y);
+      first = false;
+    }
+    ctx.stroke();
+
+    // Dots at raw values
+    for (let i = 0; i < n; i++) {
+      const y = getY(vals[i]);
+      if (y == null) continue;
+      ctx.beginPath(); ctx.arc(getX(i), y, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill();
+    }
+  }
+
+  // X-axis date labels
+  ctx.fillStyle = TC.gridText || 'rgba(255,255,255,0.3)';
+  ctx.font = '8px Manrope, sans-serif';
+  const fmt = d => d ? d.slice(0, 10) : '';
+  ctx.textAlign = 'left';  ctx.fillText(fmt(pts[0].date), pad.left, h - 4);
+  ctx.textAlign = 'right'; ctx.fillText(fmt(pts[n - 1].date), pad.left + cw, h - 4);
+  if (n > 5) {
+    const mi = Math.floor(n / 2);
+    ctx.textAlign = 'center';
+    ctx.fillText(fmt(pts[mi].date), getX(mi), h - 4);
+  }
+}
+
 const ACTIVE_DUTY_MAPS = [
   { id: 'de_dust2',   name: 'Dust II',   icon: 'wb_sunny' },
   { id: 'de_inferno', name: 'Inferno',   icon: 'local_fire_department' },
@@ -1481,12 +1786,11 @@ function renderMapGrid(availableMaps) {
     const isActive = activeMap === m.id;
     const card = document.createElement('button');
     card.className = isActive
-      ? 'relative flex flex-col items-center justify-center p-5 rounded-xl border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(204,151,255,0.2)] transition-all duration-300 group'
+      ? 'relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(204,151,255,0.2)] transition-all duration-300 group'
       : hasData
-        ? 'relative flex flex-col items-center justify-center p-5 rounded-xl border border-white/10 bg-surface-container-highest hover:border-secondary/40 hover:bg-surface-container-high transition-all duration-300 cursor-pointer group'
-        : 'relative flex flex-col items-center justify-center p-5 rounded-xl border border-white/5 bg-surface-container-highest/50 opacity-40 cursor-not-allowed group';
+        ? 'relative flex flex-col items-center justify-center p-4 rounded-xl border border-white/10 bg-surface-container-highest hover:border-secondary/40 hover:bg-surface-container-high transition-all duration-300 cursor-pointer group'
+        : 'relative flex flex-col items-center justify-center p-4 rounded-xl border border-white/5 bg-surface-container-highest/50 opacity-40 cursor-not-allowed group';
     card.innerHTML = `
-      <span class="material-symbols-outlined text-3xl mb-2 ${isActive ? 'text-primary' : hasData ? 'text-on-surface-variant group-hover:text-secondary' : 'text-on-surface-variant/30'} transition-colors">${m.icon}</span>
       <span class="font-headline text-xs font-bold uppercase tracking-widest ${isActive ? 'text-primary' : 'text-on-surface'}">${esc(m.name)}</span>
       <span class="text-[9px] text-on-surface-variant/60 uppercase mt-0.5">${esc(m.id)}</span>
       ${hasData && !isActive ? '<span class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-secondary"></span>' : ''}
@@ -1664,21 +1968,22 @@ function renderMapPerformance(trends, perf, mapFilter) {
 
 async function loadPerformance(mapFilter) {
   try {
-    // Always fetch overall data (unfiltered) for the overall section
+    // Overall data — player-filtered but not map-filtered
     if (!_overallTrends || !_overallPerf) {
+      const overallParam = _buildParams(null);
       const [oTrendsRes, oPerfRes] = await Promise.all([
-        fetch(API + '/trends'),
-        fetch(API + '/performance'),
+        fetch(API + '/trends' + overallParam),
+        fetch(API + '/performance' + overallParam),
       ]);
       _overallTrends = await oTrendsRes.json();
       _overallPerf = await oPerfRes.json();
     }
     renderOverallPerformance(_overallTrends, _overallPerf);
 
-    // Fetch filtered data or reuse overall if no filter
+    // Fetch map-filtered data or reuse overall
     let trends, perf;
     if (mapFilter) {
-      const mapParam = '?maps=' + encodeURIComponent(mapFilter);
+      const mapParam = _buildParams(mapFilter);
       const [trendsRes, perfRes] = await Promise.all([
         fetch(API + '/trends' + mapParam),
         fetch(API + '/performance' + mapParam),
@@ -1689,6 +1994,30 @@ async function loadPerformance(mapFilter) {
       trends = _overallTrends;
       perf = _overallPerf;
     }
+
+    // Main trend chart — always overall (player-filtered, never map-filtered)
+    _trendDataPoints = _overallTrends.data_points || [];
+    const trendSection = document.getElementById('trend-graph-section');
+    if (_trendDataPoints.length >= 2) {
+      trendSection.classList.remove('hidden');
+      _renderTrendMetricToggles();
+      drawTrendChart(_trendDataPoints);
+    } else {
+      trendSection.classList.add('hidden');
+    }
+
+    // Map-specific trend chart — only shown when a map is selected
+    const mapTrendSection = document.getElementById('map-trend-section');
+    const mapTrendPts = mapFilter ? (trends.data_points || []) : [];
+    if (mapFilter && mapTrendPts.length >= 2) {
+      mapTrendSection.classList.remove('hidden');
+      const mapLabel = document.getElementById('map-trend-label');
+      if (mapLabel) mapLabel.textContent = mapFilter.replace('de_', '').replace('cs_', '').replace(/^./, c => c.toUpperCase()) + ' — Trend';
+      drawTrendChart(mapTrendPts, 'map-trend-chart');
+    } else {
+      mapTrendSection.classList.add('hidden');
+    }
+
     renderMapGrid(trends.available_maps || _overallTrends.available_maps || []);
     renderMechanics(perf, trends);
     renderMapPerformance(trends, perf, mapFilter);
@@ -1972,7 +2301,14 @@ async function doFactoryReset() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => { loadAccounts(); loadPerformance(); checkOnboarding(); });
+document.addEventListener('DOMContentLoaded', () => {
+  loadAccounts();
+  loadPlayerFilter();
+  _renderTrendMetricToggles();
+  _renderTrendTimescaleButtons();
+  loadPerformance();
+  checkOnboarding();
+});
 
 // ─── Onboarding ───
 let _obStep = 0;

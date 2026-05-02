@@ -9,6 +9,7 @@ Run with:
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -35,7 +36,7 @@ from src.database import (
     update_context_notes,
     save_match,
 )
-from src.parser import parse_demo, parse_info_file, extract_player_names
+from src.parser import parse_demo, parse_info_file, extract_player_names, read_demo_map
 from src.processor import calculate_match_stats, compute_benchmarks
 from src.callouts import get_radar_config, game_to_pixel, get_zone_center, get_all_zones_pixel, is_map_supported, get_callout
 from src.ai_service import (
@@ -866,19 +867,47 @@ def sync_scan(steam_id: str = ""):
         info_path = df.with_suffix(".dem.info")
         has_info = info_path.exists()
 
-        # Filter by player if requested
-        if filter_sid and has_info:
+        # Parse info file once — used for both filtering and metadata
+        info_data: dict[str, Any] = {}
+        if has_info:
             try:
                 info_data = parse_info_file(info_path.read_bytes())
-                if filter_sid not in info_data.get("account_ids", []):
-                    continue
             except Exception:
-                pass  # include on parse failure
+                pass
+
+        # Filter by player if requested
+        if filter_sid and has_info and info_data:
+            if filter_sid not in info_data.get("account_ids", []):
+                continue
+
+        # Prefer map name from .dem.info; fall back to filename pattern, then demo header
+        map_name = info_data.get("map_name") or None
+        if not map_name:
+            map_match = re.search(r'\b(de|cs|ar|gg|dm)_\w+', fname)
+            map_name = map_match.group(0) if map_match else None
+        if not map_name:
+            map_name = read_demo_map(df)
+
+        # Date: prefer .dem.info, fall back to timestamp embedded in filename
+        match_date = info_data.get("match_date")
+        if not match_date:
+            import datetime
+            ts_match = re.search(r'_(\d{10})_', fname)
+            if ts_match:
+                try:
+                    ts = int(ts_match.group(1))
+                    if 1_000_000_000 < ts < 2_000_000_000:
+                        dt = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
+                        match_date = dt.date().isoformat()
+                except Exception:
+                    pass
 
         new_demos.append({
             "filename": fname,
             "size_mb": round(df.stat().st_size / 1024 / 1024, 1),
             "has_info": has_info,
+            "map_name": map_name,
+            "match_date": match_date,
         })
 
     return {"folder": folder, "total_found": len(dem_files), "new": new_demos}
@@ -1637,10 +1666,11 @@ def clear_match_chat(match_id: str):
 # Trends
 # ---------------------------------------------------------------------------
 @app.get("/api/trends")
-def get_trends(maps: str = ""):
+def get_trends(maps: str = "", steam_ids: str = ""):
     """Return trend data for charts (rating, ADR, KAST, K/D/A over time).
 
     Optional ``maps`` query param: comma-separated map filter.
+    Optional ``steam_ids`` query param: comma-separated player filter.
     """
     conn = _db()
     matches = get_all_matches(conn)
@@ -1650,6 +1680,11 @@ def get_trends(maps: str = ""):
     if maps.strip():
         allowed = {m.strip().lower() for m in maps.split(",")}
         matches = [m for m in matches if m.get("map_name", "").lower() in allowed]
+
+    # Filter by player if provided
+    if steam_ids.strip():
+        allowed_sids = {s.strip() for s in steam_ids.split(",") if s.strip()}
+        matches = [m for m in matches if m.get("player_steam_id", "") in allowed_sids]
 
     # Sort chronologically (oldest first for charts)
     matches.sort(key=lambda m: m.get("date", ""))
@@ -1727,7 +1762,7 @@ def get_trends(maps: str = ""):
 # Performance analytics (powers the breakdown / stats page)
 # ---------------------------------------------------------------------------
 @app.get("/api/performance")
-def get_performance(maps: str = ""):
+def get_performance(maps: str = "", steam_ids: str = ""):
     """Aggregate enriched round data into role / mechanic / phase stats."""
     import json
 
@@ -1737,6 +1772,10 @@ def get_performance(maps: str = ""):
     if maps.strip():
         allowed = {m.strip().lower() for m in maps.split(",")}
         matches = [m for m in matches if m.get("map_name", "").lower() in allowed]
+
+    if steam_ids.strip():
+        allowed_sids = {s.strip() for s in steam_ids.split(",") if s.strip()}
+        matches = [m for m in matches if m.get("player_steam_id", "") in allowed_sids]
 
     if not matches:
         conn.close()
