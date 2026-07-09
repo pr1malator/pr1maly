@@ -517,10 +517,11 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
     encounters: list[dict[str, Any]] = []
 
     for r in enriched_rounds:
-        died_this_round = r.get("death_detail") is not None
-
         for k in r.get("kills_detail", []):
-            outcome = "death" if died_this_round else "kill"
+            # Every kills_detail entry is a kill the player secured, so the
+            # aim-scatter outcome is always "kill". (Dying later in the same
+            # round does not turn a won duel into a lost one.)
+            outcome = "kill"
             weapon = k.get("weapon", "")
             enc: dict[str, Any] = {"outcome": outcome}
 
@@ -568,23 +569,40 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
 
             encounters.append(enc)
 
-        # Damage-only encounters (hurt enemy but did not kill)
+        # Damage encounters (hurt an enemy but did not kill them). A duel is
+        # counted as lost ("death") when the player dies to that same enemy
+        # shortly after last hitting them; otherwise it stays "damage"
+        # (inconclusive — enemy disengaged, was traded, or round ended).
+        death = r.get("death_detail")
+        death_tick = death.get("tick") if death else None
+        killer_sid = death.get("killer_steamid") if death else None
+
         for d in r.get("damage_encounters", []):
-            enc = {"outcome": "damage"}
+            outcome = "damage"
+            if (
+                killer_sid
+                and d.get("victim_sid") == killer_sid
+                and death_tick is not None
+                and d.get("last_tick") is not None
+                and 0 <= death_tick - d["last_tick"] <= _LOST_DUEL_WINDOW
+            ):
+                outcome = "death"
+
+            enc = {"outcome": outcome}
 
             mv = d.get("movement")
             if mv:
                 shot_speeds.append(mv["shot_speed"])
                 movement_qualities.append(mv["movement_quality"])
                 kill_weapons.append(d.get("weapon", ""))
-                outcomes_mov.append("damage")
+                outcomes_mov.append(outcome)
                 enc["movement"] = mv["shot_speed"]
 
             pa = d.get("preaim")
             if pa:
                 preaim_errors.append(pa["crosshair_error"])
                 preaim_qualities.append(pa["preaim_quality"])
-                outcomes_preaim.append("damage")
+                outcomes_preaim.append(outcome)
                 enc["preaim"] = pa["crosshair_error"]
 
             encounters.append(enc)
@@ -1491,19 +1509,20 @@ _ROLE_ZONES: dict[str, dict[str, dict[str, list[str]]]] = {
     "de_inferno": {
         "CT": {
             "Pit / A Anchor": [
-                "Pit", "A Site", "Truck", "Graveyard", "Balcony",
+                "Pit", "A Site", "Truck", "Graveyard", "Balcony", "A Side",
             ],
             "A Short / Boiler": [
-                "Top Mid", "Boiler", "Second Mid",
+                "Top Mid", "Boiler", "Library", "Arch",
             ],
             "Arch / Speedway": [
-                "Arch", "Library", "Mid", "Alt Mid", "Underpass",
+                "Mid", "Alt Mid", "Underpass",
             ],
             "B Rotator (CT/Spools)": [
                 "CT", "New Box", "Construction",
             ],
             "B Anchor (Banana)": [
-                "B Site", "Banana", "Oranges", "Car", "Dark", "Coffins",
+                "B Site", "Banana", "Oranges", "Car", "Dark", "Coffins", "B Side",
+                "Apartments", "T Apartments", "Second Mid", "T Approach",
             ],
         },
         "T": {
@@ -1741,17 +1760,17 @@ def _classify_round_role(
             w = 3.0 if tick_offset <= _EARLY_CUTOFF else 1.0
             weighted.append((callout, w))
 
-    # Kill positions (weight 2)
+    # Kill positions (weight 4 — strongest signal of actual role)
     for k in enriched_round.get("kills_detail", []):
         p = k.get("attacker_position")
         if p and p != "unknown":
-            weighted.append((p, 2.0))
-    # Death position (weight 2)
+            weighted.append((p, 4.0))
+    # Death position (weight 4)
     death = enriched_round.get("death_detail")
     if death:
         p = death.get("victim_position")
         if p and p != "unknown":
-            weighted.append((p, 2.0))
+            weighted.append((p, 4.0))
 
     if not weighted:
         return {}
@@ -2911,6 +2930,10 @@ _AIM_ON_TARGET_DEG = 8.0
 # Ticks of the look-back window before the first shot for reaction analysis.
 _REACTION_WINDOW = 64  # ≈ 1 s at 64-tick
 
+# A damage encounter counts as a lost duel ("death" outcome) when the player
+# dies to that same enemy within this many ticks of last hitting them.
+_LOST_DUEL_WINDOW = 160  # ≈ 2.5 s at 64-tick
+
 
 def _analyze_reaction_time(
     velocities_df: pd.DataFrame,
@@ -3311,7 +3334,10 @@ def _get_round_death(
     row = deaths.iloc[0]
     info: dict[str, Any] = {
         "killer": str(row.get("attacker_name", "?")),
+        "killer_steamid": str(row.get("attacker_steamid", "")),
     }
+    if "tick" in death_df.columns and pd.notna(row.get("tick")):
+        info["tick"] = int(row["tick"])
     if "weapon" in death_df.columns:
         info["weapon"] = _weapon_display(str(row.get("weapon", "")))
     if "headshot" in death_df.columns:
@@ -3373,12 +3399,16 @@ def _get_round_damage_encounters(
         if victim_sid in killed_victims:
             continue  # Already counted as a kill
 
-        first_hit = group.sort_values("tick").iloc[0]
+        sorted_group = group.sort_values("tick")
+        first_hit = sorted_group.iloc[0]
         tick = int(first_hit["tick"])
+        last_tick = int(sorted_group.iloc[-1]["tick"])
         weapon = str(first_hit.get("weapon", ""))
 
         enc: dict[str, Any] = {
             "weapon": _weapon_display(weapon),
+            "victim_sid": victim_sid,
+            "last_tick": last_tick,
         }
 
         # Movement and preaim analysis at time of first hit

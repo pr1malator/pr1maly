@@ -9,6 +9,7 @@ Run with:
 from __future__ import annotations
 
 import json
+import logging
 import re
 import tempfile
 from pathlib import Path
@@ -477,7 +478,13 @@ def upload_demo(
         stats = calculate_match_stats(parsed, sid)
         _apply_parse_metadata(stats, parsed)
     except Exception as exc:
-        raise HTTPException(status_code=422, detail=f"Failed to parse demo: {exc}")
+        # Log the full traceback so the failing line is visible in server logs
+        # (the 422 body only carries the message, not the stack).
+        logging.getLogger("uvicorn.error").exception("Demo parse failed: %s", exc)
+        raise HTTPException(
+            status_code=422,
+            detail=f"Failed to parse demo: {type(exc).__name__}: {exc}",
+        )
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 
@@ -1499,7 +1506,11 @@ def reimport_match(
         _apply_parse_metadata(stats, parsed)
     except Exception as exc:
         conn.close()
-        raise HTTPException(status_code=422, detail=f"Failed to parse demo: {exc}")
+        logging.getLogger("uvicorn.error").exception("Demo parse failed: %s", exc)
+        raise HTTPException(
+            status_code=422,
+            detail=f"Failed to parse demo: {type(exc).__name__}: {exc}",
+        )
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 
