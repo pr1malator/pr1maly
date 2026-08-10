@@ -123,3 +123,29 @@ Python
 License: Python Software Foundation License (PSF)
 Website: https://docs.python.org/3/license.html
 Copyright (c) 2001-2026 Python Software Foundation. All rights reserved.
+
+
+Counter-Strike 2 game assets
+----------------------------
+License: Proprietary — property of Valve Corporation
+Website: https://www.counter-strike.net/
+Copyright (c) Valve Corporation. All rights reserved.
+
+frontend/img/radar/ and frontend/img/maps/ contain map radar images and map
+icons extracted from the Counter-Strike 2 game files. They are the property of
+Valve Corporation and are not covered by the pr1maly license. They are included
+only so the app can render maps a Counter-Strike 2 owner already has locally,
+and are not licensed for redistribution or any other use.
+
+The radar images in frontend/img/radar/ come from the game's own
+resource/overviews/ directory.
+
+The map icons in frontend/img/maps/ were obtained via cs2-map-icons
+(https://github.com/MurkyYT/cs2-map-icons), a project that automatically
+extracts these assets from Valve's public game depot. That project adds no
+license of its own over the artwork and states the assets remain Valve's
+property; it is credited here as the source they were retrieved from, not as a
+licensor.
+
+Counter-Strike and Valve are trademarks of Valve Corporation. pr1maly is not
+affiliated with, endorsed by, or sponsored by Valve Corporation.

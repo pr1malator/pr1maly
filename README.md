@@ -38,7 +38,14 @@ time — all stored locally with no external services required.
 - **Friends list**: friends highlighted on scoreboards
 - **Sync folder**: point at your CS2 replays directory, scan for new demos per
   player, selectively import
-- **Three upload methods**: single, bulk, and folder sync
+- **Storage management**: a demo costs ~280 MB on disk but ~1.3 MB once
+  analysed. Keep a rolling window of recent demos for re-analysis and reclaim
+  the rest — **Settings → Storage**, with a live preview of what each retention
+  number would free
+- **Three upload methods**: single and bulk (one modal, two modes), plus folder sync
+- **Map icons**: Valve's map badges in the Trend map picker, the match history
+  list, and the match detail banner. Missing icons fall back to a text
+  abbreviation, so an unrecognised map degrades rather than breaks
 - **Context tagging**: annotate matches with notes and tags
 - **Dark/light theme**: toggle on every page, respects system preference
 - **Fully local**: SQLite storage, no cloud services (AI features need your own
@@ -130,8 +137,8 @@ The SQLite database is persisted in `./data/` on your host via a Docker volume.
 3. **Upload demos** — three methods, all in the UI:
    - **Single upload**: click **Upload Demo** in the sidebar, pick your `.dem`
      file (and optionally a `.dem.info` for auto-dating), add notes/tags.
-   - **Bulk upload**: click **Bulk Upload** in the sidebar, select multiple
-     `.dem` and `.dem.info` files at once.
+   - **Bulk upload**: same **Upload Demo** modal, switched to **Bulk** — select
+     multiple `.dem` and `.dem.info` files at once.
    - **Sync folder**: click **Sync Folder** in the sidebar, point it at your
      CS2 replays directory (e.g.
      `C:\...\Counter-Strike Global Offensive\game\csgo\replays`), scan for new
@@ -412,6 +419,29 @@ Interactive Swagger docs are at **http://localhost:8000/docs**.
 | `GET` | `/api/sync/scan` | Scan for new `.dem` files; optional `?steam_id=` to filter by player |
 | `POST` | `/api/sync/process` | Process selected demo files (JSON body: `{"files": [...]}`) |
 
+### Storage
+
+Demos are only needed until they are analysed — every feature, including the 2D
+replay viewer, reads from the database afterwards. The one reason to keep a
+demo is re-analysing it after changing how metrics are calculated, which is why
+the default keeps a rolling window rather than deleting on import.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/storage/status` | Per-file classification: imported, kept, deletable, with sizes. Pass `keep_recent`, `per_account` or `fetched_only` to preview settings without saving them |
+| `GET` | `/api/storage/config` | Retention settings |
+| `PUT` | `/api/storage/config` | Update `keep_recent`, `per_account`, `fetched_only`, `auto_cleanup` |
+| `POST` | `/api/storage/cleanup` | Delete demos outside the window (`{"dry_run": true}` to preview) |
+
+A demo is only ever deleted when it is imported **and** its replay frames are
+stored **and** it falls outside the retention window. With `fetched_only` (the
+default) it must also be one this app downloaded, so demos you saved through CS2
+are never touched.
+
+`per_account` (default on) counts the window separately for each account, so a
+heavily-played account cannot push another account's demos out of it. Turn it
+off for a single global window, which bounds total disk use more tightly.
+
 ### Replay
 
 | Method | Endpoint | Description |
@@ -472,7 +502,8 @@ pr1mealazyer/
 │   ├── friends.json      # Friends list
 │   ├── ai_config.json    # AI provider keys & settings
 │   ├── ai_roles.json     # Persisted AI role assessments
-│   └── sync_config.json  # Sync folder path configuration
+│   ├── sync_config.json  # Sync folder path configuration
+│   └── storage_config.json    # Demo retention settings
 ├── frontend/
 │   ├── performance.html  # Main dashboard
 │   ├── breakdown.html    # Aggregated performance breakdown
@@ -481,6 +512,7 @@ pr1mealazyer/
 │   ├── calibrate.html    # Callout calibration tool
 │   ├── theme.css / theme.js  # Dark/light theme support
 │   ├── img/radar/        # Map radar images (1024×1024)
+│   ├── img/maps/         # Map icons (512×512), named as in the DB
 ├── src/
 │   ├── parser.py         # Demo parsing (Layer 1)
 │   ├── processor.py      # Metrics calculation (Layer 2)
@@ -492,3 +524,24 @@ pr1mealazyer/
     ├── test_processor.py
     └── test_database.py
 ```
+
+## Credits & Licensing
+
+pr1maly's own code is covered by `LICENSE`. Everything else it bundles is listed
+in `THIRD-PARTY-NOTICES`, which is the authoritative file — the summary below is
+just a pointer.
+
+**Counter-Strike 2 assets.** `frontend/img/radar/` and `frontend/img/maps/`
+contain map radar images and map icons that are the property of Valve
+Corporation. They are not covered by the pr1maly license and are not licensed
+for redistribution. The radars come from the game's own `resource/overviews/`
+directory; the icons were retrieved via
+[cs2-map-icons](https://github.com/MurkyYT/cs2-map-icons), which extracts them
+from Valve's public depot — credited as the source, not as a licensor.
+
+Counter-Strike and Valve are trademarks of Valve Corporation. pr1maly is not
+affiliated with, endorsed by, or sponsored by Valve Corporation.
+
+**Libraries.** demoparser2, pandas, FastAPI, uvicorn, Tailwind CSS, Chart.js,
+Material Symbols, SQLite and Python — each with its license in
+`THIRD-PARTY-NOTICES`.

@@ -7,7 +7,38 @@
 <link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
 <link rel="icon" type="image/png" href="img/logo-big.png"/>
 <link rel="stylesheet" href="theme.css"/>
-<script src="theme.js"></script>
+<script src="theme.js?v=2"></script>
+<script>
+/* Map-icon helpers come from theme.js. This page is served no-store but a
+   browser can still be holding an older theme.js than the HTML it is running
+   — that is exactly what happened when the helpers were first added, and it
+   blanked the map grid and the match list with a ReferenceError.
+
+   Whole sections should not hinge on one shared file being in step, so the
+   degraded forms are defined here when theme.js did not supply them. They
+   render the plain text tile the UI used before icons existed. */
+if (typeof mapIconUrl !== 'function') {
+  window.mapIconUrl = function () { return ''; };
+}
+if (typeof mapAbbrev !== 'function') {
+  window.mapAbbrev = function (n) {
+    return String(n || '').replace(/^(de|cs|ar|gg|dm)_/, '').substring(0, 3).toUpperCase();
+  };
+}
+if (typeof mapLabel !== 'function') {
+  window.mapLabel = function (n) {
+    var b = String(n || '').replace(/^(de|cs|ar|gg|dm)_/, '');
+    return b ? b.charAt(0).toUpperCase() + b.slice(1) : '';
+  };
+}
+if (typeof mapIconHtml !== 'function') {
+  window.mapIconHtml = function (n, sizeClass, extraClass) {
+    return '<div class="' + (sizeClass || 'w-10 h-10') + ' rounded bg-surface-container-highest ' +
+      'flex items-center justify-center font-bold text-[10px] text-on-surface-variant shrink-0 ' +
+      (extraClass || '') + '">' + mapAbbrev(n) + '</div>';
+  };
+}
+</script>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -122,16 +153,13 @@
             </a>
 <a class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="match-breakdown.html">
 <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="sports_esports">sports_esports</span>
-<span class="sidebar-label">Match Breakdown</span>
+<span class="sidebar-label">Matches</span>
             </a>
 </nav>
 <div class="sidebar-actions p-6 space-y-4">
 <button onclick="openUploadModal()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
                 Upload Demo
             </button>
-<button onclick="openBulkUploadModal()" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
-<span class="material-symbols-outlined text-sm">upload_file</span> <span class="sidebar-label">Bulk Upload</span>
-</button>
 <div class="space-y-1">
 <button onclick="openSettingsModal()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
 <span class="material-symbols-outlined text-sm">settings</span> <span class="sidebar-label">Settings</span>
@@ -370,11 +398,18 @@
 </nav>
 <!-- Upload Modal -->
 <div id="upload-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)]">
-    <div class="flex justify-between items-center mb-6">
+  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-2xl mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-4">
       <h2 class="font-headline text-xl font-bold uppercase tracking-widest">Upload Demo</h2>
       <button onclick="closeUploadModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
     </div>
+    <!-- One demo or many is the same task, so it is one modal with a mode
+         switch rather than two separate entries in the sidebar. -->
+    <div class="flex gap-2 mb-6">
+      <button id="upload-mode-single" onclick="switchUploadMode('single')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Single</button>
+      <button id="upload-mode-bulk" onclick="switchUploadMode('bulk')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Bulk</button>
+    </div>
+    <div id="upload-pane-single">
     <form id="upload-form" class="space-y-4">
       <div>
         <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Player</label>
@@ -408,18 +443,8 @@
       </button>
       <div id="upload-status" class="text-xs text-center hidden"></div>
     </form>
-  </div>
-</div>
-<!-- Bulk Upload Modal -->
-<div id="bulk-upload-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-2xl mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="font-headline text-xl font-bold uppercase tracking-widest flex items-center gap-3">
-        <span class="material-symbols-outlined text-primary">upload_file</span>
-        Bulk Upload
-      </h2>
-      <button onclick="closeBulkUploadModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
     </div>
+    <div id="upload-pane-bulk" class="hidden">
     <div class="space-y-4">
       <div>
         <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Fallback Player <span class="normal-case font-normal text-on-surface-variant/50">— used when .info file is missing or has no known account</span></label>
@@ -452,22 +477,26 @@
         <div id="bulk-results" class="space-y-1.5 max-h-60 overflow-y-auto"></div>
       </div>
     </div>
+    </div>
   </div>
 </div>
 <!-- Settings Modal (Accounts + AI) -->
-<div id="settings-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-  <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
-    <div class="flex justify-between items-center mb-6">
+<div id="settings-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4 sm:p-8">
+  <div class="bg-surface-container rounded-2xl w-full max-w-6xl h-full max-h-[92vh] border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] flex flex-col overflow-hidden">
+    <div class="flex justify-between items-center px-8 py-5 border-b border-white/5 shrink-0">
       <h2 class="font-headline text-xl font-bold uppercase tracking-widest">Settings</h2>
       <button onclick="closeSettingsModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
     </div>
-    <!-- Tabs -->
-    <div class="flex gap-2 mb-6">
-      <button id="settings-tab-accounts" onclick="switchSettingsTab('accounts')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Accounts</button>
-      <button id="settings-tab-friends" onclick="switchSettingsTab('friends')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Friends</button>
-      <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
-      <button id="settings-tab-reset" onclick="switchSettingsTab('reset')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Reset</button>
-    </div>
+    <div class="flex-1 flex min-h-0 flex-col sm:flex-row">
+    <!-- Tab rail. switchSettingsTab swaps the two colour class-strings by exact
+         text, so those must survive verbatim; layout classes sit around them. -->
+    <nav class="flex sm:flex-col gap-1 p-3 sm:p-4 sm:w-44 shrink-0 border-b sm:border-b-0 sm:border-r border-white/5 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto">
+      <button id="settings-tab-accounts" onclick="switchSettingsTab('accounts')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Accounts</button>
+      <button id="settings-tab-friends" onclick="switchSettingsTab('friends')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Friends</button>
+      <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
+      <button id="settings-tab-reset" onclick="switchSettingsTab('reset')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Reset</button>
+    </nav>
+    <div class="flex-1 min-w-0 overflow-y-auto p-6 sm:p-8">
     <!-- Accounts Tab -->
     <div id="settings-accounts-panel">
       <div id="accounts-list" class="space-y-2 mb-6"></div>
@@ -551,6 +580,8 @@
         </button>
         <div id="reset-status" class="text-xs text-center hidden"></div>
       </div>
+    </div>
+    </div>
     </div>
   </div>
 </div>
@@ -768,10 +799,43 @@ async function saveAISettings() {
   } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-center mt-3 text-error'; statusEl.classList.remove('hidden'); }
 }
 
-// --- Upload Modal ---
-function openUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); document.getElementById('upload-modal').classList.add('flex'); }
+// --- Upload Modal (single + bulk in one) ---
+function openUploadModal(mode) {
+  document.getElementById('upload-modal').classList.remove('hidden');
+  document.getElementById('upload-modal').classList.add('flex');
+  switchUploadMode(mode || 'single');
+}
 function closeUploadModal() { document.getElementById('upload-modal').classList.add('hidden'); document.getElementById('upload-modal').classList.remove('flex'); }
 document.getElementById('upload-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeUploadModal(); });
+
+const UPLOAD_MODE_ON = 'bg-primary text-on-primary-fixed';
+const UPLOAD_MODE_OFF = 'bg-surface-container-highest text-on-surface-variant hover:bg-white/10';
+
+function switchUploadMode(mode) {
+  const bulk = mode === 'bulk';
+  document.getElementById('upload-pane-single').classList.toggle('hidden', bulk);
+  document.getElementById('upload-pane-bulk').classList.toggle('hidden', !bulk);
+  ['single', 'bulk'].forEach(m => {
+    const btn = document.getElementById('upload-mode-' + m);
+    const base = 'px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ';
+    btn.className = base + (m === mode ? UPLOAD_MODE_ON : UPLOAD_MODE_OFF);
+  });
+  // The bulk pane keeps state between openings (queued files, progress), so
+  // reset it as it comes into view rather than on modal open.
+  if (bulk) resetBulkUpload();
+}
+
+// Kept as its own function: the bulk pane is reset both when switching into it
+// and by the "Bulk Upload" entry points elsewhere in the app.
+function resetBulkUpload() {
+  populateBulkAccountSelector();
+  document.getElementById('bulk-dem-files').value = '';
+  document.getElementById('bulk-info-files').value = '';
+  document.getElementById('bulk-file-preview').classList.add('hidden');
+  document.getElementById('bulk-progress').classList.add('hidden');
+  document.getElementById('bulk-upload-btn').disabled = false;
+  document.getElementById('bulk-upload-btn').textContent = 'Process All Demos';
+}
 
 // --- Auto-detect player from .info file ---
 document.getElementById('upload-info-file').addEventListener('change', async function() {
@@ -838,20 +902,10 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
   } finally { btn.disabled = false; btn.textContent = 'Process Demo'; }
 });
 
-// --- Bulk Upload Modal ---
-function openBulkUploadModal() {
-  const m = document.getElementById('bulk-upload-modal');
-  m.classList.remove('hidden'); m.classList.add('flex');
-  populateBulkAccountSelector();
-  document.getElementById('bulk-dem-files').value = '';
-  document.getElementById('bulk-info-files').value = '';
-  document.getElementById('bulk-file-preview').classList.add('hidden');
-  document.getElementById('bulk-progress').classList.add('hidden');
-  document.getElementById('bulk-upload-btn').disabled = false;
-  document.getElementById('bulk-upload-btn').textContent = 'Process All Demos';
-}
-function closeBulkUploadModal() { const m = document.getElementById('bulk-upload-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
-document.getElementById('bulk-upload-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeBulkUploadModal(); });
+// --- Bulk upload — now the "bulk" mode of the upload modal above.
+// These two survive as aliases so existing call sites keep working.
+function openBulkUploadModal() { openUploadModal('bulk'); }
+function closeBulkUploadModal() { closeUploadModal(); }
 
 async function populateBulkAccountSelector() {
   const sel = document.getElementById('bulk-steam-id');
@@ -1018,12 +1072,6 @@ function renderChart(trends) {
 function renderRecentMatches(matches) {
   const container = document.querySelector('.space-y-2');
   if (!container || !matches.length) return;
-  const mapAbbrev = name => {
-    const n = (name || '').replace('de_','').toLowerCase();
-    const map = { mirage:'MIR', inferno:'INF', dust2:'D2', ancient:'ANC', anubis:'ANB', nuke:'NUK', vertigo:'VRT', overpass:'OVP' };
-    return map[n] || n.substring(0,3).toUpperCase();
-  };
-  const mapFull = name => (name || '').replace('de_','').charAt(0).toUpperCase() + (name || '').replace('de_','').slice(1);
   let html = '';
   const recent = matches.slice(0, 10);
   for (const m of recent) {
@@ -1042,9 +1090,9 @@ function renderRecentMatches(matches) {
       : '';
     html += `<div class="grid grid-cols-4 md:grid-cols-12 items-center bg-surface-container hover:bg-surface-container-high transition-all p-4 rounded-xl border-l-4 ${borderColor} group cursor-pointer" onclick="window.location.href='match-breakdown.html?id=${m.match_id}'">
       <div class="md:col-span-2 flex items-center gap-3">
-        <div class="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center font-bold text-xs text-on-surface-variant">${mapAbbrev(m.map_name)}</div>
+        ${mapIconHtml(m.map_name)}
         <div>
-          <div class="font-bold text-xs uppercase tracking-widest">${mapFull(m.map_name)}</div>
+          <div class="font-bold text-xs uppercase tracking-widest">${mapLabel(m.map_name)}</div>
           ${partialBadge}
         </div>
       </div>

@@ -14,8 +14,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+# Falls back to data/, matching both the README and the DB_PATH that
+# docker-compose sets. Without the data/ segment a local `uvicorn api:app` run
+# would use a different database from the containerised one.
 _DEFAULT_DB_PATH = Path(
-    os.environ.get("DB_PATH") or str(Path(__file__).parent.parent / "pr1mealazyer.db")
+    os.environ.get("DB_PATH")
+    or str(Path(__file__).parent.parent / "data" / "pr1mealazyer.db")
 )
 
 _DDL = """
@@ -114,6 +118,16 @@ CREATE TABLE IF NOT EXISTS ai_chats (
     created_at TEXT,
     FOREIGN KEY (match_id) REFERENCES matches(match_id)
 );
+
+-- Every child table is read by match_id, and none of them had an index, so
+-- each lookup was a full scan. That is cheap on context_tags and brutal on
+-- round_stats, where the replay frames make the table two orders of magnitude
+-- larger than every other table combined.
+CREATE INDEX IF NOT EXISTS idx_round_stats_match  ON round_stats(match_id);
+CREATE INDEX IF NOT EXISTS idx_match_players_match ON match_players(match_id);
+CREATE INDEX IF NOT EXISTS idx_context_tags_match ON context_tags(match_id);
+CREATE INDEX IF NOT EXISTS idx_ai_chats_match     ON ai_chats(match_id);
+CREATE INDEX IF NOT EXISTS idx_matches_player     ON matches(player_steam_id);
 """
 
 
@@ -129,6 +143,10 @@ def get_connection(db_path: str | Path = _DEFAULT_DB_PATH) -> sqlite3.Connection
 
 def _ensure_schema(conn: sqlite3.Connection) -> None:
     """Create tables if they don't already exist."""
+    global _ROUND_COLUMNS_CACHE
+    # The migrations below can change round_stats, so drop the cached column
+    # list rather than let a later ALTER go unnoticed.
+    _ROUND_COLUMNS_CACHE = None
     conn.executescript(_DDL)
     conn.commit()
     # Migrate: add enriched_json to round_stats if missing
@@ -391,12 +409,37 @@ def get_match(conn: sqlite3.Connection, match_id: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
+def _round_stats_columns(conn: sqlite3.Connection) -> str:
+    """Column list for round_stats with replay_json left out.
+
+    Read from the schema rather than hardcoded so a future column is included
+    automatically — the point is to exclude one known-huge column, not to pin
+    the shape of the table.
+    """
+    global _ROUND_COLUMNS_CACHE
+    if _ROUND_COLUMNS_CACHE is None:
+        names = [row["name"] for row in conn.execute("PRAGMA table_info(round_stats)")]
+        _ROUND_COLUMNS_CACHE = ", ".join(n for n in names if n != "replay_json") or "*"
+    return _ROUND_COLUMNS_CACHE
+
+
+_ROUND_COLUMNS_CACHE: str | None = None
+
+
 def get_round_stats(
-    conn: sqlite3.Connection, match_id: str
+    conn: sqlite3.Connection, match_id: str, include_replay: bool = False
 ) -> list[dict[str, Any]]:
-    """Return per-round stats for *match_id*, ordered by round number."""
+    """Return per-round stats for *match_id*, ordered by round number.
+
+    ``replay_json`` holds the 2D replay frames — roughly 40 KB a round, and
+    about 95% of the database. Only the replay viewer reads it, so it is
+    excluded unless *include_replay* is set. Every other caller walks rounds to
+    total up kills or damage and would otherwise pay to fetch and discard
+    megabytes per request.
+    """
+    columns = "*" if include_replay else _round_stats_columns(conn)
     cursor = conn.execute(
-        "SELECT * FROM round_stats WHERE match_id = ? ORDER BY round_number",
+        f"SELECT {columns} FROM round_stats WHERE match_id = ? ORDER BY round_number",
         (match_id,),
     )
     return [dict(row) for row in cursor.fetchall()]

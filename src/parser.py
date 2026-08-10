@@ -540,7 +540,7 @@ def extract_player_names(demo_path: str | Path) -> dict[str, str]:
     """Quickly extract a mapping of steamid64 → in-game name from a .dem file.
 
     Parses only a single tick, making this far cheaper than a full parse.
-    Returns a dict like ``{"76561198207768576": "pr1me", ...}``.
+    Returns a dict like ``{"<steamid64>": "<in-game name>", ...}``.
     """
     try:
         from demoparser2 import DemoParser  # type: ignore[import-untyped]

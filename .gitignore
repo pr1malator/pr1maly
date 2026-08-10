@@ -18,6 +18,9 @@ env/
 *.db
 data/
 
+# Node dependencies for the demo fetcher
+node_modules/
+
 # Streamlit (ignore secrets, keep config)
 .streamlit/secrets.toml
 

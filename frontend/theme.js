@@ -77,3 +77,82 @@ document.addEventListener('DOMContentLoaded', function() {
   updateThemeIcon();
   _refreshTC();
 });
+
+/* ─── Map icons ───────────────────────────────────────────────────────────
+   Valve's map badges, in frontend/img/maps/, named exactly as the map is in
+   the database (de_mirage.png). Shared here rather than copied into each page
+   so there is one naming rule and one fallback.
+
+   Coverage is not guaranteed: a Premier pool rotates and a demo can be from
+   any map, so every caller gets a text abbreviation underneath that shows
+   through when the icon 404s. */
+
+var MAP_ABBREV = {
+  de_dust2: 'D2', de_mirage: 'MIR', de_inferno: 'INF', de_ancient: 'ANC',
+  de_anubis: 'ANB', de_nuke: 'NUK', de_vertigo: 'VRT', de_overpass: 'OVP',
+  de_cache: 'CCH', de_train: 'TRN', cs_office: 'OFF', de_cbble: 'CBL',
+  de_dust: 'DST', cs_italy: 'ITA'
+};
+
+/* Normalise whatever a caller has: "de_mirage", "mirage", "Mirage".
+
+   The map name reaches us from a demo header, so it is attacker-controlled by
+   whoever produced the file — and people trade demos. Everything here ends up
+   in innerHTML or an img src, so the key is reduced to the characters a real
+   map name uses and anything else is rejected outright. */
+function mapKey(mapName) {
+  var n = String(mapName || '').trim().toLowerCase();
+  if (!n || !/^[a-z0-9_]+$/.test(n)) return '';
+  if (/^(de|cs|ar|gg|dm)_/.test(n)) return n;
+  // Bare names come from the older UI paths that strip the prefix.
+  return (n === 'office' || n === 'italy' || n === 'agency' ? 'cs_' : 'de_') + n;
+}
+
+/* Text shown to the user, from the same untrusted source. Stripped rather than
+   HTML-escaped: these results go into innerHTML in some places and into an alt
+   attribute in others, and escaping would render entities literally in the
+   second. Stripping leaves a plain string that is safe in both. A workshop map
+   with unusual punctuation loses the punctuation and still reads. */
+function mapText(mapName) {
+  return String(mapName == null ? '' : mapName).trim().replace(/[^\w \-]/g, '');
+}
+
+function mapIconUrl(mapName) {
+  var key = mapKey(mapName);
+  return key ? 'img/maps/' + key + '.png' : '';
+}
+
+function mapAbbrev(mapName) {
+  var key = mapKey(mapName);
+  if (MAP_ABBREV[key]) return MAP_ABBREV[key];
+  return mapText(mapName).replace(/^(de|cs|ar|gg|dm)_/i, '').substring(0, 3).toUpperCase();
+}
+
+function mapLabel(mapName) {
+  var bare = mapText(mapName).replace(/^(de|cs|ar|gg|dm)_/i, '');
+  if (!bare) return '';
+  if (bare.toLowerCase() === 'dust2') return 'Dust II';
+  return bare.charAt(0).toUpperCase() + bare.slice(1);
+}
+
+/* An <img> over the abbreviation: the text is the placeholder, and the icon
+   replaces it once it loads. onerror removes the image so a missing file falls
+   back to text rather than a broken-image glyph.
+
+   The badges have transparent corners, so the text is hidden on load rather
+   than merely covered — otherwise it shows through around the artwork. */
+function mapIconHtml(mapName, sizeClass, extraClass) {
+  var url = mapIconUrl(mapName);
+  var abbr = mapAbbrev(mapName);
+  var box = sizeClass || 'w-10 h-10';
+  return '<div class="' + box + ' relative rounded bg-surface-container-highest overflow-hidden shrink-0 ' +
+    (extraClass || '') + '">' +
+    '<span class="absolute inset-0 flex items-center justify-center font-bold text-[10px] text-on-surface-variant">' +
+    abbr + '</span>' +
+    (url
+      ? '<img src="' + url + '" alt="" loading="lazy" class="relative w-full h-full object-contain" ' +
+        'onload="this.previousElementSibling.classList.add(\'hidden\')" ' +
+        'onerror="this.remove()"/>'
+      : '') +
+    '</div>';
+}

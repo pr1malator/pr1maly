@@ -10,8 +10,13 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
+import shutil
+import subprocess
 import tempfile
+import threading
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
@@ -119,15 +124,35 @@ def _save_friends(friends: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    # Auto-Sync is meant to survive a restart: if it was left on, a docker
+    # restart should not silently stop it. Defined in the Steam fetcher section.
+    _resume_auto_sync()
+    yield
+
+
 app = FastAPI(
     title="pr1mealazyer API",
     description="CS2 demo analysis and match statistics",
     version="1.0.0",
+    lifespan=_lifespan,
 )
+
+# The frontend is served from this same origin, so cross-origin access is only
+# ever needed when someone runs the UI separately on another local port.
+#
+# It used to be allow_origins=["*"] with credentials, which Starlette turns into
+# echoing whatever Origin asked. That let any website you happened to be
+# visiting read this API while the app was running: your match history, the
+# Steam IDs of everyone you have played with, your account list. Restricting it
+# to loopback means the browser refuses to hand those responses to a page from
+# anywhere else.
+_LOCAL_ORIGIN_RE = r"^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=_LOCAL_ORIGIN_RE,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -139,10 +164,20 @@ app.add_middleware(
 _FRONTEND_DIR = Path(__file__).parent / "frontend"
 
 
+# Scripts and stylesheets are covered as well as pages. They used to be served
+# with only an ETag, which leaves the browser free to apply heuristic freshness
+# — so a page could load fresh HTML against a cached script from days earlier.
+# That is not a cosmetic skew: the HTML calls into theme.js, and an older copy
+# without the function it wants takes the whole section down with a
+# ReferenceError. Images are left cacheable; they are content-addressed by name
+# and only ever added.
+_NO_CACHE_SUFFIXES = (".html", ".js", ".css")
+
+
 @app.middleware("http")
-async def no_cache_html(request: Request, call_next):
+async def no_cache_frontend(request: Request, call_next):
     response = await call_next(request)
-    if request.url.path.endswith(".html"):
+    if request.url.path.endswith(_NO_CACHE_SUFFIXES):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     return response
 
@@ -948,10 +983,23 @@ def sync_process(body: dict):
     accounts = _load_accounts()
     account_ids = {a["steam_id"] for a in accounts}
 
+    base = p.resolve()
     results: list[dict[str, Any]] = []
     for fname in filenames:
         entry: dict[str, Any] = {"filename": fname}
         dem_path = p / fname
+        # The name comes from the request, so "../.." would otherwise reach any
+        # .dem on the host. Same rule the cleanup pass uses: the file has to sit
+        # directly in the configured folder.
+        try:
+            resolved = dem_path.resolve()
+        except OSError:
+            resolved = None
+        if resolved is None or resolved.parent != base:
+            entry["status"] = "error"
+            entry["detail"] = "Refused: outside the sync folder"
+            results.append(entry)
+            continue
         if not dem_path.exists() or not fname.endswith(".dem"):
             entry["status"] = "error"
             entry["detail"] = "File not found or not a .dem"
@@ -1009,21 +1057,1321 @@ def sync_process(body: dict):
         results.append(entry)
 
     ok_count = sum(1 for r in results if r["status"] == "ok")
-    return {"processed": ok_count, "total": len(results), "results": results}
+    response: dict[str, Any] = {
+        "processed": ok_count,
+        "total": len(results),
+        "results": results,
+    }
+
+    # Opt-in: reclaim disk space now that these demos are safely in the database.
+    if ok_count and _load_storage_config().get("auto_cleanup"):
+        try:
+            response["cleanup"] = _run_demo_cleanup(dry_run=False)
+        except Exception as exc:  # cleanup must never fail an otherwise good import
+            response["cleanup"] = {"error": str(exc)}
+
+    return response
+
+
+# ---------------------------------------------------------------------------
+# Demo storage
+#
+# A parsed demo costs ~280 MB on disk but ~1.3 MB in the database, and nothing
+# reads the .dem again afterwards — replay frames are stored as replay_json on
+# round_stats. So imported demos are disposable.
+#
+# They are not worthless, though: the only reason to keep one is to re-parse it
+# after the metrics change. That is why the default is a rolling window rather
+# than deleting on import — recent matches stay reparseable, old ones stop
+# accumulating.
+# ---------------------------------------------------------------------------
+_STORAGE_CONFIG_FILE = Path(__file__).parent / "data" / "storage_config.json"
+_STORAGE_DEFAULTS: dict[str, Any] = {
+    "keep_recent": 30,      # newest N demos are never deleted
+    "per_account": True,    # count that N per account rather than overall
+    "auto_cleanup": False,  # run cleanup automatically after a successful sync
+    "fetched_only": True,   # only touch demos this app downloaded (pr1maly_*)
+}
+_FETCHED_PREFIX = "pr1maly_"
+
+
+def _load_storage_config() -> dict:
+    cfg = dict(_STORAGE_DEFAULTS)
+    cfg.update(_read_json_file(_STORAGE_CONFIG_FILE))
+    return cfg
+
+
+def _save_storage_config(cfg: dict) -> None:
+    _STORAGE_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _STORAGE_CONFIG_FILE.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+
+
+def _analyse_demo_folder(overrides: dict[str, Any] | None = None) -> dict:
+    """Classify every .dem in the sync folder as protected, deletable, or neither.
+
+    ``overrides`` applies settings for this calculation only, without saving
+    them, so the UI can preview what a retention number would free before the
+    user commits to it.
+    """
+    cfg = _load_storage_config()
+    # Only keys actually supplied count as an override — a dict of all-None
+    # values means the caller passed no query parameters at all.
+    applied = {k: v for k, v in (overrides or {}).items() if v is not None}
+    cfg.update(applied)
+    folder = _load_sync_config().get("folder")
+    if not folder:
+        raise HTTPException(status_code=400, detail="No sync folder configured")
+
+    base = Path(folder)
+    if not base.is_dir():
+        raise HTTPException(status_code=400, detail=f"Folder does not exist: {folder}")
+
+    # A demo is only safe to delete once its replay frames are in the database,
+    # otherwise the 2D viewer could never be populated for that match.
+    conn = _db()
+    rows = conn.execute(
+        """
+        SELECT m.filename, m.date, m.player_steam_id,
+               COUNT(rs.replay_json) AS replay_rounds
+        FROM matches m
+        LEFT JOIN round_stats rs ON rs.match_id = m.match_id
+        WHERE m.filename IS NOT NULL
+        GROUP BY m.filename, m.date, m.player_steam_id
+        """
+    ).fetchall()
+    conn.close()
+    imported = {r["filename"]: r for r in rows}
+
+    names_by_steam_id = {a["steam_id"]: a.get("name") for a in _load_accounts()}
+
+    entries: list[dict[str, Any]] = []
+    for path in base.glob("*.dem"):
+        try:
+            size = path.stat().st_size
+            mtime = path.stat().st_mtime
+        except OSError:
+            continue
+
+        sidecar = Path(f"{path}.info")
+        if sidecar.exists():
+            size += sidecar.stat().st_size
+
+        record = imported.get(path.name)
+        owner = record["player_steam_id"] if record else None
+        entries.append(
+            {
+                "filename": path.name,
+                "bytes": size,
+                "mtime": mtime,
+                "match_date": record["date"] if record else None,
+                "imported": record is not None,
+                "has_replay": bool(record and record["replay_rounds"]),
+                "fetched": path.name.startswith(_FETCHED_PREFIX),
+                "owner_steam_id": owner,
+                "owner": names_by_steam_id.get(owner) or owner,
+            }
+        )
+
+    # Newest first, then protect by recency.
+    entries.sort(key=lambda e: (e["match_date"] or "", e["mtime"]), reverse=True)
+    keep_recent = max(0, int(cfg.get("keep_recent", 30)))
+    per_account = bool(cfg.get("per_account", True))
+
+    # Counting per account stops a heavily-played account from pushing every
+    # other account's demos out of the window.
+    seen: dict[Any, int] = {}
+    for entry in entries:
+        group = entry["owner_steam_id"] if per_account else "__all__"
+        rank = seen.get(group, 0)
+        seen[group] = rank + 1
+        entry["protected"] = rank < keep_recent
+
+        if entry["protected"]:
+            entry["reason"] = (
+                f"within the newest {keep_recent} for {entry['owner'] or 'this account'}"
+                if per_account
+                else f"within the newest {keep_recent}"
+            )
+        elif not entry["imported"]:
+            entry["reason"] = "not imported yet"
+        elif not entry["has_replay"]:
+            entry["reason"] = "no replay data stored"
+        elif cfg["fetched_only"] and not entry["fetched"]:
+            entry["reason"] = "not downloaded by this app"
+        else:
+            entry["reason"] = "safe to delete"
+
+        entry["deletable"] = entry["reason"] == "safe to delete"
+
+    total = sum(e["bytes"] for e in entries)
+    deletable = [e for e in entries if e["deletable"]]
+    protected_bytes = sum(e["bytes"] for e in entries if e["protected"])
+    return {
+        "folder": str(base),
+        "config": cfg,
+        "preview": bool(applied),
+        "protected_bytes": protected_bytes,
+        "files": entries,
+        "total_files": len(entries),
+        "total_bytes": total,
+        "imported_files": sum(1 for e in entries if e["imported"]),
+        "protected_files": sum(1 for e in entries if e["protected"]),
+        "deletable_files": len(deletable),
+        "deletable_bytes": sum(e["bytes"] for e in deletable),
+    }
+
+
+def _run_demo_cleanup(dry_run: bool = False) -> dict:
+    """Delete demos the analysis marked deletable, plus their sidecars."""
+    analysis = _analyse_demo_folder()
+    base = Path(analysis["folder"]).resolve()
+
+    deleted: list[str] = []
+    errors: list[str] = []
+    freed = 0
+
+    for entry in analysis["files"]:
+        if not entry["deletable"]:
+            continue
+
+        target = (base / entry["filename"]).resolve()
+        # Never step outside the configured folder, and never touch non-demos.
+        if target.parent != base or target.suffix != ".dem":
+            errors.append(f"{entry['filename']}: refused, outside the demo folder")
+            continue
+
+        if dry_run:
+            deleted.append(entry["filename"])
+            freed += entry["bytes"]
+            continue
+
+        try:
+            sidecar = Path(f"{target}.info")
+            target.unlink()
+            if sidecar.exists():
+                sidecar.unlink()
+            deleted.append(entry["filename"])
+            freed += entry["bytes"]
+        except OSError as exc:
+            errors.append(f"{entry['filename']}: {exc}")
+
+    return {
+        "dry_run": dry_run,
+        "deleted": deleted,
+        "deleted_count": len(deleted),
+        "freed_bytes": freed,
+        "errors": errors,
+    }
+
+
+@app.get("/api/storage/status")
+def storage_status(
+    keep_recent: int | None = None,
+    per_account: bool | None = None,
+    fetched_only: bool | None = None,
+):
+    """What demos cost on disk, and which are safe to remove.
+
+    Passing any setting previews it without saving, so the retention number can
+    be tuned against real figures before committing.
+    """
+    if keep_recent is not None and keep_recent < 0:
+        raise HTTPException(status_code=400, detail="keep_recent cannot be negative")
+
+    return _analyse_demo_folder(
+        {
+            "keep_recent": keep_recent,
+            "per_account": per_account,
+            "fetched_only": fetched_only,
+        }
+    )
+
+
+@app.get("/api/storage/config")
+def get_storage_config():
+    return _load_storage_config()
+
+
+@app.put("/api/storage/config")
+def set_storage_config(body: dict):
+    cfg = _load_storage_config()
+
+    if "keep_recent" in body:
+        try:
+            keep = int(body["keep_recent"])
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="keep_recent must be a whole number")
+        if keep < 0:
+            raise HTTPException(status_code=400, detail="keep_recent cannot be negative")
+        cfg["keep_recent"] = keep
+
+    if "per_account" in body:
+        cfg["per_account"] = bool(body["per_account"])
+    if "auto_cleanup" in body:
+        cfg["auto_cleanup"] = bool(body["auto_cleanup"])
+    if "fetched_only" in body:
+        cfg["fetched_only"] = bool(body["fetched_only"])
+
+    _save_storage_config(cfg)
+    return cfg
+
+
+@app.post("/api/storage/cleanup")
+def storage_cleanup(body: dict | None = None):
+    """Delete imported demos outside the retention window.
+
+    Pass ``{"dry_run": true}`` to see what would go without touching anything.
+    """
+    return _run_demo_cleanup(dry_run=bool((body or {}).get("dry_run")))
+
+
+# ---------------------------------------------------------------------------
+# Steam fetcher — optional Node companion in fetcher/
+#
+# Deliberately separate from the Sync Folder path above. Sync Folder imports
+# .dem files that are already on disk; the fetcher downloads them from Valve
+# first. The two meet at the demo folder: the fetcher writes there, Sync Folder
+# reads from there. Neither depends on the other.
+#
+# Authentication is not exposed here on purpose — it is interactive (QR scan or
+# Steam Guard) and would mean handling Steam passwords in a web form. It stays
+# a one-off terminal step; this API only reports whether it has been done.
+# ---------------------------------------------------------------------------
+_FETCHER_DIR = Path(__file__).parent / "fetcher"
+_STEAM_TOKENS_FILE = Path(__file__).parent / "data" / "steam_tokens.json"
+_STEAM_LEDGER_FILE = Path(__file__).parent / "data" / "steam_sharecodes.json"
+
+_AUTH_CODE_RE = re.compile(r"^[A-Za-z0-9]{4}-[A-Za-z0-9]{5}-[A-Za-z0-9]{4}$")
+_SHARE_CODE_RE = re.compile(
+    r"^CSGO(-[ABCDEFGHJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789]{5}){5}$"
+)
+
+# One fetcher job at a time. The UI polls /api/steam/job for its output.
+# "events" carries structured messages (currently the QR sign-in handshake);
+# "lines" is the human-readable log shown in the modal.
+#
+# "auto" marks a job started by the auto-sync loop rather than by a button.
+# Auto-sync yields the slot to anything the user starts by hand, so the flag is
+# what tells the two apart.
+_steam_job: dict[str, Any] = {
+    "running": False,
+    "type": None,
+    "auto": False,
+    "lines": [],
+    "events": [],
+    "exit_code": None,
+    "cancelled": False,
+    "started_at": None,
+    "finished_at": None,
+}
+# Handle on the running child so it can be stopped on request. Kept out of the
+# job dict because that gets serialised to JSON.
+_steam_proc: subprocess.Popen | None = None
+_steam_job_lock = threading.Lock()
+_MAX_JOB_LINES = 500
+_STEAM_EVENT_PREFIX = "STEAM_EVENT "
+
+
+def _utc_now() -> str:
+    import datetime
+
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def _read_json_file(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _write_steam_ledger(data: dict) -> None:
+    """Persist the ledger. Contains an API key and auth codes, so keep it tight."""
+    _STEAM_LEDGER_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _STEAM_LEDGER_FILE.write_text(
+        json.dumps(data, indent=2) + "\n", encoding="utf-8"
+    )
+    try:
+        os.chmod(_STEAM_LEDGER_FILE, 0o600)
+    except OSError:
+        pass  # not supported on this filesystem
+
+
+def _node_path() -> str | None:
+    return shutil.which("node")
+
+
+def _job_snapshot() -> dict:
+    with _steam_job_lock:
+        return dict(
+            _steam_job,
+            lines=list(_steam_job["lines"]),
+            events=list(_steam_job["events"]),
+        )
+
+
+def _job_log(text: str) -> None:
+    """Append one line to the visible job log, trimming the oldest."""
+    with _steam_job_lock:
+        _steam_job["lines"].append(text)
+        if len(_steam_job["lines"]) > _MAX_JOB_LINES:
+            del _steam_job["lines"][:-_MAX_JOB_LINES]
+
+
+def _require_fetcher() -> None:
+    """Everything the Node companion needs before a job can start."""
+    if not _node_path():
+        raise HTTPException(
+            status_code=400,
+            detail="Node.js was not found on this machine. The Steam fetcher needs Node 18+.",
+        )
+    if not (_FETCHER_DIR / "node_modules").is_dir():
+        raise HTTPException(
+            status_code=400,
+            detail="Fetcher dependencies are not installed. Run: cd fetcher && npm install",
+        )
+
+
+def _job_claim(job_type: str, auto: bool = False) -> None:
+    """Take the single job slot, or raise 409 if something else holds it.
+
+    Auto-sync relies on this being the only way in: a user pressing a button
+    while the loop is mid-download gets a clean 409 rather than two fetchers
+    writing into the same demo folder.
+    """
+    with _steam_job_lock:
+        if _steam_job["running"]:
+            raise HTTPException(
+                status_code=409,
+                detail=f"A {_steam_job['type']} job is already running.",
+            )
+        _steam_job.update(
+            running=True,
+            type=job_type,
+            auto=auto,
+            lines=[],
+            events=[],
+            exit_code=None,
+            cancelled=False,
+            started_at=_utc_now(),
+            finished_at=None,
+        )
+
+
+def _job_release(exit_code: int) -> None:
+    global _steam_proc
+    with _steam_job_lock:
+        _steam_proc = None
+        _steam_job["running"] = False
+        _steam_job["exit_code"] = exit_code
+        _steam_job["finished_at"] = _utc_now()
+
+
+def _run_steam_job(args: list[str]) -> int:
+    """Run a fetcher script, streaming stdout into the job record.
+
+    Assumes the caller already claimed the job slot. Releases it on the way
+    out, and returns the exit code so a synchronous caller can act on it.
+    """
+    global _steam_proc
+
+    node = _node_path()
+    exit_code = -1
+    try:
+        proc = subprocess.Popen(
+            [node, *args],
+            cwd=str(_FETCHER_DIR),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+        )
+        with _steam_job_lock:
+            _steam_proc = proc
+
+        for line in proc.stdout:
+            text = line.rstrip("\n")
+
+            # Structured events are routed away from the visible log.
+            if text.startswith(_STEAM_EVENT_PREFIX):
+                try:
+                    event = json.loads(text[len(_STEAM_EVENT_PREFIX):])
+                except ValueError:
+                    event = None
+                if event is not None:
+                    with _steam_job_lock:
+                        _steam_job["events"].append(event)
+                    continue
+
+            _job_log(text)
+        proc.wait()
+        exit_code = proc.returncode
+    except Exception as exc:
+        _job_log(f"Failed to run the fetcher: {exc}")
+    finally:
+        _job_release(exit_code)
+    return exit_code
+
+
+def _start_steam_job(job_type: str, args: list[str]) -> dict:
+    _require_fetcher()
+    _job_claim(job_type)
+    threading.Thread(target=_run_steam_job, args=(args,), daemon=True).start()
+    return _job_snapshot()
+
+
+def _run_steam_job_sync(job_type: str, args: list[str]) -> int:
+    """Same job, run to completion on the calling thread. Used by auto-sync."""
+    _require_fetcher()
+    _job_claim(job_type, auto=True)
+    return _run_steam_job(args)
+
+
+def _steam_account_rows() -> tuple[list[dict[str, Any]], int]:
+    """Per-account fetcher state, and how many matches are outstanding overall.
+
+    Shared by /api/steam/status and the auto-sync loop so both agree on what
+    "outstanding" means.
+    """
+    accounts = _load_accounts()
+    stored_tokens = _read_json_file(_STEAM_TOKENS_FILE)
+    ledger = _read_json_file(_STEAM_LEDGER_FILE)
+    ledger_accounts = ledger.get("accounts", {}) or {}
+
+    rows: list[dict[str, Any]] = []
+    pending_total = 0
+    for account in accounts:
+        name = account.get("name")
+        entry = ledger_accounts.get(name, {}) or {}
+        matches = entry.get("matches", {}) or {}
+
+        tally = {"total": len(matches), "pending": 0, "downloaded": 0, "expired": 0, "failed": 0}
+        for match in matches.values():
+            status = match.get("status")
+            if status in tally:
+                tally[status] += 1
+
+        # Absent means enabled, so ledgers written before the flags existed
+        # keep behaving the way they did.
+        walk_enabled = entry.get("walkEnabled") is not False
+        download_enabled = entry.get("downloadEnabled") is not False
+
+        # "failed" is retryable, so it counts as outstanding work alongside
+        # pending — but only for accounts we are actually downloading.
+        outstanding = tally["pending"] + tally["failed"]
+        if download_enabled:
+            pending_total += outstanding
+
+        rows.append(
+            {
+                "name": name,
+                "steam_id": account.get("steam_id"),
+                "authenticated": name in stored_tokens,
+                "configured": bool(entry.get("authCode")),
+                "walk_enabled": walk_enabled,
+                "download_enabled": download_enabled,
+                "outstanding": outstanding,
+                **tally,
+            }
+        )
+
+    return rows, pending_total
+
+
+@app.get("/api/steam/status")
+def steam_status():
+    """Setup state for the fetcher path: what is installed, authenticated, configured."""
+    ledger = _read_json_file(_STEAM_LEDGER_FILE)
+    rows, pending_total = _steam_account_rows()
+
+    node = _node_path()
+    deps_installed = (_FETCHER_DIR / "node_modules").is_dir()
+
+    # The fetcher prefers STEAM_API_KEY over the stored one, so say which is
+    # actually in play — otherwise "issued by pr1me" would be a lie whenever
+    # the environment overrides it.
+    env_key = os.environ.get("STEAM_API_KEY")
+    stored_key = ledger.get("apiKey")
+    key_in_use = env_key or stored_key
+
+    return {
+        "available": bool(node) and deps_installed,
+        "node_installed": bool(node),
+        "deps_installed": deps_installed,
+        "fetcher_present": _FETCHER_DIR.is_dir(),
+        "api_key_set": bool(key_in_use),
+        "api_key_source": "environment" if env_key else ("stored" if stored_key else None),
+        "api_key_account": None if env_key else ledger.get("apiKeyAccount"),
+        # Last 4 characters only — enough to tell one key from another without
+        # putting the credential back on the wire.
+        "api_key_tail": key_in_use[-4:] if key_in_use else None,
+        "authenticated_count": sum(1 for r in rows if r["authenticated"]),
+        "accounts": rows,
+        "pending_total": pending_total,
+        "job": _job_snapshot(),
+        # Folded in so the modal's single poll covers the auto-sync panel too.
+        "auto_sync": _auto_sync_snapshot(),
+    }
+
+
+class SteamApiKeyIn(BaseModel):
+    api_key: str
+    account: str | None = None
+
+
+@app.put("/api/steam/api-key")
+def set_steam_api_key(body: SteamApiKeyIn):
+    """Store the Steam Web API key.
+
+    One key covers every account — it is an API credential, not per-account
+    authentication (that is the steamidkey). But a key is *issued* by one
+    specific Steam account, and nothing in the key itself says which. That
+    matters when it stops working: you have to know whose profile to go and
+    regenerate it from. So the issuing account is recorded alongside it.
+    """
+    key = body.api_key.strip()
+    if not re.fullmatch(r"[A-Fa-f0-9]{32}", key):
+        raise HTTPException(
+            status_code=400,
+            detail="That does not look like a Steam Web API key (32 hexadecimal characters).",
+        )
+
+    owner = (body.account or "").strip() or None
+    if owner and not any(a.get("name") == owner for a in _load_accounts()):
+        raise HTTPException(status_code=404, detail=f"No account named '{owner}'.")
+
+    ledger = _read_json_file(_STEAM_LEDGER_FILE)
+    ledger.setdefault("accounts", {})
+    ledger["apiKey"] = key
+    ledger["apiKeyAccount"] = owner
+    _write_steam_ledger(ledger)
+    return {"ok": True, "account": owner, "tail": key[-4:]}
+
+
+class SteamCodesIn(BaseModel):
+    auth_code: str
+    share_code: str
+
+
+@app.put("/api/steam/accounts/{name}")
+def set_steam_account_codes(name: str, body: SteamCodesIn):
+    """Store an account's match-sharing auth code and its starting share code."""
+    auth_code = body.auth_code.strip()
+    share_code = body.share_code.strip()
+
+    if not _AUTH_CODE_RE.fullmatch(auth_code):
+        raise HTTPException(
+            status_code=400, detail="Auth code should look like XXXX-XXXXX-XXXX."
+        )
+    if not _SHARE_CODE_RE.fullmatch(share_code):
+        raise HTTPException(
+            status_code=400,
+            detail="Share code should look like CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx.",
+        )
+    if not any(a.get("name") == name for a in _load_accounts()):
+        raise HTTPException(status_code=404, detail=f"No account named '{name}'.")
+
+    ledger = _read_json_file(_STEAM_LEDGER_FILE)
+    accounts = ledger.setdefault("accounts", {})
+    entry = accounts.setdefault(
+        name, {"authCode": None, "seedShareCode": None, "cursor": None, "matches": {}}
+    )
+
+    entry["authCode"] = auth_code
+    entry["seedShareCode"] = share_code
+    if not entry.get("cursor"):
+        entry["cursor"] = share_code
+
+    # The seed is itself a real match, so record it as work to do.
+    entry.setdefault("matches", {})
+    entry["matches"].setdefault(
+        share_code, {"discoveredAt": _utc_now(), "status": "pending", "filename": None}
+    )
+
+    _write_steam_ledger(ledger)
+    return {"ok": True}
+
+
+class SteamTogglesIn(BaseModel):
+    walk_enabled: bool | None = None
+    download_enabled: bool | None = None
+
+
+@app.put("/api/steam/accounts/{name}/toggles")
+def set_steam_account_toggles(name: str, body: SteamTogglesIn):
+    """Choose which accounts are tracked, and which have their demos downloaded.
+
+    The two are independent: an account can stay in the ledger — so you always
+    know what it played — without its demos being fetched.
+    """
+    if not any(a.get("name") == name for a in _load_accounts()):
+        raise HTTPException(status_code=404, detail=f"No account named '{name}'.")
+
+    ledger = _read_json_file(_STEAM_LEDGER_FILE)
+    accounts = ledger.setdefault("accounts", {})
+    entry = accounts.setdefault(
+        name,
+        {
+            "authCode": None,
+            "seedShareCode": None,
+            "cursor": None,
+            "walkEnabled": True,
+            "downloadEnabled": True,
+            "matches": {},
+        },
+    )
+
+    if body.walk_enabled is not None:
+        entry["walkEnabled"] = body.walk_enabled
+    if body.download_enabled is not None:
+        entry["downloadEnabled"] = body.download_enabled
+
+    _write_steam_ledger(ledger)
+    return {
+        "name": name,
+        "walk_enabled": entry.get("walkEnabled") is not False,
+        "download_enabled": entry.get("downloadEnabled") is not False,
+    }
+
+
+@app.post("/api/steam/auth/{name}")
+def steam_auth(name: str):
+    """Start a QR sign-in for one account.
+
+    Only the QR flow is exposed here. QR is a device authorisation — no
+    password is involved — so it is safe in a browser. The credential flow
+    would mean a Steam password in a web form, and stays a terminal command.
+    """
+    if not any(a.get("name") == name for a in _load_accounts()):
+        raise HTTPException(status_code=404, detail=f"No account named '{name}'.")
+    return _start_steam_job("auth", ["auth-qr.js", name])
+
+
+@app.post("/api/steam/check")
+def steam_check_for_new():
+    """Ask Steam which matches have been played since the stored cursor.
+
+    Needs no Steam client session, so it is safe to run while Steam is open.
+    """
+    return _start_steam_job("check", ["sharecodes.js", "--walk"])
+
+
+class SteamDownloadIn(BaseModel):
+    limit: int | None = None
+
+
+@app.post("/api/steam/download")
+def steam_download(body: SteamDownloadIn | None = None):
+    """Download outstanding demos.
+
+    ``limit`` takes only the newest N, which keeps a first run over a large
+    backlog to a sensible size. Older matches are likelier to have expired
+    anyway, so newest-first is the useful order.
+    """
+    args = ["fetch.js"]
+
+    if body and body.limit is not None:
+        if body.limit < 1:
+            raise HTTPException(status_code=400, detail="limit must be at least 1")
+        args += ["--limit", str(body.limit)]
+
+    return _start_steam_job("download", args)
+
+
+@app.get("/api/steam/job")
+def steam_job():
+    """Poll the running (or last) fetcher job."""
+    return _job_snapshot()
+
+
+@app.post("/api/steam/job/cancel")
+def steam_job_cancel():
+    """Stop the running job.
+
+    Mainly for QR sign-in: dismissing the code should end the attempt straight
+    away rather than leaving it pending until Steam's own timeout.
+    """
+    with _steam_job_lock:
+        proc = _steam_proc
+        running = _steam_job["running"]
+        if running:
+            _steam_job["cancelled"] = True
+
+    if not running or proc is None:
+        return {"cancelled": False, "detail": "No job is running."}
+
+    try:
+        proc.terminate()
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"Could not stop the job: {exc}")
+
+    return {"cancelled": True}
+
+
+# ---------------------------------------------------------------------------
+# Auto-Sync — one match at a time, unattended
+#
+# The manual path is a burst: check, then download the whole backlog, then
+# import it. That is the wrong shape for something left running. A single demo
+# is ~280 MB and parsing one costs real CPU, so doing thirty back to back
+# saturates the link and pins a core for as long as it takes.
+#
+# Auto-sync inverts that. One match per cycle, downloaded then imported, with a
+# configurable gap in between (default 5 minutes, 0 allowed for "as fast as it
+# will go"). Nothing is batched, so the loop can be stopped at any point
+# without leaving half a backlog in an unknown state.
+#
+# It never competes with the buttons: every step goes through the same single
+# job slot, and a 409 from _job_claim simply means "the user is doing something,
+# come back shortly".
+# ---------------------------------------------------------------------------
+_AUTO_SYNC_CONFIG_FILE = Path(__file__).parent / "data" / "auto_sync.json"
+_AUTO_SYNC_DEFAULTS: dict[str, Any] = {
+    "enabled": False,
+    "interval_minutes": 5,       # gap between finished matches; 0 = no gap
+    "idle_check_minutes": 30,    # how often to ask Steam for new matches when idle
+    "pause_when_playing": True,  # hold off while a tracked account is in CS2
+}
+_AUTO_SYNC_MAX_ACTIVITY = 40
+
+# Waits, in seconds, for the situations that are not the configured interval.
+_AUTO_BUSY_WAIT = 20            # a manual job holds the slot
+_AUTO_PLAYING_WAIT = 120        # someone is in a match
+_AUTO_BACKOFF_BASE = 60         # first retry after a failed step
+_AUTO_BACKOFF_MAX = 1800        # ceiling on the exponential backoff
+
+_auto_sync: dict[str, Any] = {
+    "phase": "off",          # off|waiting|checking|downloading|importing|paused|blocked|error
+    "detail": "",
+    "next_action_at": None,
+    "started_at": None,
+    "last_error": None,
+    "failure_streak": 0,
+    "totals": {"downloaded": 0, "imported": 0, "failed": 0},
+    "activity": [],
+    # Demos that refused to parse. Without this one corrupt file would be
+    # retried forever and no other match would ever be reached.
+    "skipped": {},
+}
+_AUTO_SKIP_AFTER = 3  # consecutive import failures before a demo is set aside
+_auto_sync_lock = threading.Lock()
+_auto_sync_stop = threading.Event()
+_auto_sync_thread: threading.Thread | None = None
+
+# CS2 presence is polled from the Steam Web API, which is rate limited and
+# rarely changes between cycles, so the last answer is reused for a while.
+_PRESENCE_TTL_SECONDS = 45
+_presence_cache: dict[str, Any] = {"at": 0.0, "value": None}
+
+
+def _load_auto_sync_config() -> dict:
+    cfg = dict(_AUTO_SYNC_DEFAULTS)
+    cfg.update(_read_json_file(_AUTO_SYNC_CONFIG_FILE))
+    return cfg
+
+
+def _save_auto_sync_config(cfg: dict) -> None:
+    _AUTO_SYNC_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _AUTO_SYNC_CONFIG_FILE.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+
+
+def _auto_note(text: str) -> None:
+    """Record a line in the auto-sync activity feed shown in the UI."""
+    with _auto_sync_lock:
+        _auto_sync["activity"].append({"at": _utc_now(), "text": text})
+        if len(_auto_sync["activity"]) > _AUTO_SYNC_MAX_ACTIVITY:
+            del _auto_sync["activity"][:-_AUTO_SYNC_MAX_ACTIVITY]
+
+
+def _auto_phase(phase: str, detail: str = "", wait_seconds: float | None = None) -> None:
+    import datetime
+
+    next_at = None
+    if wait_seconds is not None:
+        next_at = (
+            datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(seconds=wait_seconds)
+        ).isoformat()
+
+    with _auto_sync_lock:
+        _auto_sync["phase"] = phase
+        _auto_sync["detail"] = detail
+        _auto_sync["next_action_at"] = next_at
+
+
+def _auto_sync_snapshot() -> dict:
+    cfg = _load_auto_sync_config()
+    with _auto_sync_lock:
+        state = dict(
+            _auto_sync,
+            totals=dict(_auto_sync["totals"]),
+            activity=list(_auto_sync["activity"]),
+            skipped=dict(_auto_sync["skipped"]),
+        )
+    state["config"] = cfg
+    state["enabled"] = bool(cfg["enabled"])
+    state["running"] = _auto_sync_thread is not None and _auto_sync_thread.is_alive()
+    state["presence"] = _presence_cache["value"]
+    return state
+
+
+# ─── CS2 presence ───────────────────────────────────────────────────────────
+def _steam_api_key() -> str | None:
+    """The Web API key, from the environment or the ledger."""
+    return os.environ.get("STEAM_API_KEY") or _read_json_file(_STEAM_LEDGER_FILE).get("apiKey")
+
+
+def _check_cs2_presence(force: bool = False) -> dict:
+    """Is any tracked account in CS2 right now?
+
+    The app runs in a container and cannot see host processes, so this asks
+    Steam instead: GetPlayerSummaries reports ``gameid`` for accounts whose
+    "game details" privacy is public. When it is not public the field is simply
+    absent, which is indistinguishable from "not playing" — so an unknown
+    answer is reported as unknown rather than guessed at, and the loop carries
+    on. Half a signal is still worth having; most people leave it public.
+
+    Returns ``playing``: True, False, or None when it could not be determined.
+    """
+    import time
+
+    now = time.monotonic()
+    if not force and _presence_cache["value"] and now - _presence_cache["at"] < _PRESENCE_TTL_SECONDS:
+        return _presence_cache["value"]
+
+    result: dict[str, Any] = {
+        "playing": None,
+        "in_game": [],
+        "checked_at": _utc_now(),
+        "detail": "",
+    }
+
+    accounts = _load_accounts()
+    key = _steam_api_key()
+    steam_ids = [a["steam_id"] for a in accounts if a.get("steam_id")]
+    if not key:
+        result["detail"] = "No Steam Web API key stored, so CS2 cannot be detected."
+    elif not steam_ids:
+        result["detail"] = "No accounts to check."
+    else:
+        try:
+            import httpx
+
+            response = httpx.get(
+                "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/",
+                params={"key": key, "steamids": ",".join(steam_ids[:100])},
+                timeout=10.0,
+            )
+            response.raise_for_status()
+            players = (response.json().get("response") or {}).get("players") or []
+
+            names = {a["steam_id"]: a.get("name") for a in accounts}
+            visible = 0
+            for player in players:
+                # communityvisibilitystate 3 == public. Anything less and the
+                # game field is withheld, so this account tells us nothing.
+                if player.get("communityvisibilitystate") == 3:
+                    visible += 1
+                if str(player.get("gameid") or "") == "730":
+                    sid = str(player.get("steamid"))
+                    result["in_game"].append(names.get(sid) or sid)
+
+            if result["in_game"]:
+                result["playing"] = True
+                result["detail"] = ", ".join(result["in_game"]) + " in CS2"
+            elif visible:
+                result["playing"] = False
+                result["detail"] = "No tracked account is in CS2."
+            else:
+                result["detail"] = (
+                    "Steam did not report game details for any account — set "
+                    "\"Game details\" to Public on the Steam profile to enable detection."
+                )
+        except Exception as exc:
+            result["detail"] = f"Could not reach the Steam Web API: {exc}"
+
+    _presence_cache.update(at=now, value=result)
+    return result
+
+
+# ─── work selection ─────────────────────────────────────────────────────────
+def _next_unimported_demo() -> str | None:
+    """The newest demo this app downloaded that is not yet in the database.
+
+    Restricted to fetched demos (``pr1maly_*``): auto-sync imports what it
+    downloaded, and silently importing whatever else the user happens to have
+    dropped in the folder would be a surprise. Sync Folder still covers those.
+
+    Raises HTTPException if the demo folder is unusable — swallowing that would
+    leave auto-sync downloading match after match it can never import.
+    """
+    analysis = _analyse_demo_folder()
+    with _auto_sync_lock:
+        set_aside = {
+            name for name, n in _auto_sync["skipped"].items() if n >= _AUTO_SKIP_AFTER
+        }
+
+    candidates = [
+        e for e in analysis["files"]
+        if e["fetched"] and not e["imported"] and e["filename"] not in set_aside
+    ]
+    if not candidates:
+        return None
+    # Newest first, so a long backlog produces useful matches straight away.
+    candidates.sort(key=lambda e: e["mtime"], reverse=True)
+    return candidates[0]["filename"]
+
+
+def _auto_import_one(filename: str) -> bool:
+    """Parse and store a single demo, mirroring what Sync Folder does.
+
+    Runs on the auto-sync thread and writes into the job log, so the modal
+    shows the import in the same place as the download that preceded it.
+    """
+    _job_claim("import", auto=True)
+    _job_log(f"Importing {filename}")
+    ok = False
+    try:
+        outcome = sync_process({"filenames": [filename]})
+        entry = (outcome.get("results") or [{}])[0]
+        if entry.get("status") == "ok":
+            ok = True
+            summary = " ".join(
+                part for part in (entry.get("map_name"), entry.get("player_name")) if part
+            )
+            _job_log(f"Imported {filename}{' — ' + summary if summary else ''}")
+            _auto_note(f"Imported {summary or filename}")
+            if entry.get("parse_warning"):
+                _job_log(f"Warning: {entry['parse_warning']}")
+            cleanup = outcome.get("cleanup") or {}
+            if cleanup.get("deleted_count"):
+                freed = cleanup["freed_bytes"] / 1024 / 1024 / 1024
+                _job_log(f"Cleanup removed {cleanup['deleted_count']} demo(s), {freed:.1f} GB freed")
+        else:
+            detail = entry.get("detail") or "import failed"
+            _job_log(f"Failed: {detail}")
+            _auto_note(f"Import failed for {filename}: {detail}")
+    except HTTPException as exc:
+        _job_log(f"Failed: {exc.detail}")
+        _auto_note(f"Import failed: {exc.detail}")
+    except Exception as exc:
+        _job_log(f"Failed: {exc}")
+        _auto_note(f"Import failed: {exc}")
+    finally:
+        _job_release(0 if ok else 1)
+    return ok
+
+
+# ─── the loop ───────────────────────────────────────────────────────────────
+def _auto_sync_step(cfg: dict) -> float:
+    """Do one unit of work. Returns how long to wait before the next one.
+
+    A "unit" is deliberately small — one download, or one import, or one check
+    — so disabling auto-sync never has to interrupt more than a single demo.
+    The configured interval is only applied after a match is fully imported;
+    the download and the import of the same match run back to back.
+    """
+    interval = max(0, int(cfg["interval_minutes"])) * 60
+
+    # Someone is playing. Downloading 280 MB mid-match costs them ping, and the
+    # fetcher's own Game Coordinator login can drop them out of the game.
+    if cfg["pause_when_playing"]:
+        presence = _check_cs2_presence()
+        if presence["playing"]:
+            _auto_phase("paused", presence["detail"], _AUTO_PLAYING_WAIT)
+            return _AUTO_PLAYING_WAIT
+
+    # A demo already on disk but not yet analysed is the cheapest useful work,
+    # and clears the way before another 280 MB lands. This also validates the
+    # demo folder before anything is downloaded into it — an unusable folder
+    # would otherwise fetch match after match that could never be imported.
+    try:
+        pending_import = _next_unimported_demo()
+    except HTTPException as exc:
+        _auto_phase("error", str(exc.detail), _AUTO_BACKOFF_MAX)
+        with _auto_sync_lock:
+            _auto_sync["last_error"] = str(exc.detail)
+        return _AUTO_BACKOFF_MAX
+
+    if pending_import:
+        _auto_phase("importing", pending_import)
+        try:
+            ok = _auto_import_one(pending_import)
+        except HTTPException:
+            _auto_phase("blocked", "waiting for the job you started", _AUTO_BUSY_WAIT)
+            return _AUTO_BUSY_WAIT
+
+        with _auto_sync_lock:
+            _auto_sync["totals"]["imported" if ok else "failed"] += 1
+            _auto_sync["failure_streak"] = 0 if ok else _auto_sync["failure_streak"] + 1
+            streak = _auto_sync["failure_streak"]
+            if ok:
+                _auto_sync["skipped"].pop(pending_import, None)
+                attempts = 0
+            else:
+                attempts = _auto_sync["skipped"].get(pending_import, 0) + 1
+                _auto_sync["skipped"][pending_import] = attempts
+                _auto_sync["last_error"] = f"Could not import {pending_import}"
+
+        # A demo that will not parse is set aside after a few tries. Retrying it
+        # forever would block every other match behind one corrupt file, and
+        # nothing about a re-read is going to make it parse.
+        if attempts >= _AUTO_SKIP_AFTER:
+            _auto_note(f"Set aside {pending_import} after {attempts} failed attempts")
+            _auto_phase("waiting", "skipping a demo that will not parse", 5)
+            return 5
+
+        # Back off rather than looping straight back onto the same file.
+        wait = interval if ok else _auto_backoff(streak)
+        _auto_phase("waiting", "next match" if ok else "retrying after a failure", wait)
+        return wait
+
+    # Nothing to import — fetch exactly one match.
+    _, outstanding = _steam_account_rows()
+    if outstanding > 0:
+        _auto_phase("downloading", f"1 of {outstanding} outstanding")
+        try:
+            code = _run_steam_job_sync("download", ["fetch.js", "--limit", "1"])
+        except HTTPException as exc:
+            phase = "blocked" if exc.status_code == 409 else "error"
+            wait = _AUTO_BUSY_WAIT if exc.status_code == 409 else _AUTO_BACKOFF_MAX
+            _auto_phase(phase, str(exc.detail), wait)
+            return wait
+
+        if _auto_sync_stop.is_set():
+            return 0
+
+        if code == 0 and _next_unimported_demo():
+            with _auto_sync_lock:
+                _auto_sync["totals"]["downloaded"] += 1
+                _auto_sync["failure_streak"] = 0
+                _auto_sync["last_error"] = None
+            _auto_note("Downloaded a demo")
+            return 0  # straight on to the import, no gap within one match
+
+        # Exit 0 with nothing new means the match was expired or already held —
+        # progress in the ledger, but no demo. Move on without a long backoff.
+        if code == 0:
+            _auto_phase("waiting", "nothing new from that match", min(interval, 60) or 5)
+            return min(interval, 60) or 5
+
+        problem = _last_job_error() or f"fetch.js exited {code}"
+        with _auto_sync_lock:
+            _auto_sync["failure_streak"] += 1
+            _auto_sync["last_error"] = problem
+            _auto_sync["totals"]["failed"] += 1
+            streak = _auto_sync["failure_streak"]
+        wait = _auto_backoff(streak)
+        _auto_phase("error", problem, wait)
+        return wait
+
+    # Nothing outstanding — ask Steam whether anything new has been played.
+    _auto_phase("checking", "asking Steam for new matches")
+    try:
+        code = _run_steam_job_sync("check", ["sharecodes.js", "--walk"])
+    except HTTPException as exc:
+        phase = "blocked" if exc.status_code == 409 else "error"
+        wait = _AUTO_BUSY_WAIT if exc.status_code == 409 else _AUTO_BACKOFF_MAX
+        _auto_phase(phase, str(exc.detail), wait)
+        return wait
+
+    if _auto_sync_stop.is_set():
+        return 0
+
+    _, outstanding = _steam_account_rows()
+    if code == 0 and outstanding > 0:
+        _auto_note(f"Found {outstanding} match(es) to fetch")
+        with _auto_sync_lock:
+            _auto_sync["failure_streak"] = 0
+            _auto_sync["last_error"] = None
+        return 0  # start on it immediately
+
+    if code != 0:
+        problem = _last_job_error() or f"sharecodes.js exited {code}"
+        with _auto_sync_lock:
+            _auto_sync["failure_streak"] += 1
+            _auto_sync["last_error"] = problem
+            streak = _auto_sync["failure_streak"]
+        wait = _auto_backoff(streak)
+        _auto_phase("error", problem, wait)
+        return wait
+
+    idle = max(1, int(cfg["idle_check_minutes"])) * 60
+    _auto_phase("waiting", "up to date — will check again", idle)
+    return idle
+
+
+def _auto_backoff(streak: int) -> float:
+    """Exponential backoff, capped. Auto-sync never disables itself over an
+    error: a Steam outage or one unparseable demo should not silently end a
+    background job the user expects to still be running when they come back."""
+    return min(_AUTO_BACKOFF_BASE * (2 ** max(0, streak - 1)), _AUTO_BACKOFF_MAX)
+
+
+def _last_job_error() -> str | None:
+    """The most useful-looking line from the job that just failed."""
+    with _steam_job_lock:
+        lines = [ln.strip() for ln in _steam_job["lines"] if ln.strip()]
+    return lines[-1][:300] if lines else None
+
+
+def _auto_sync_loop() -> None:
+    _auto_note("Auto-Sync started")
+    while not _auto_sync_stop.is_set():
+        cfg = _load_auto_sync_config()
+        if not cfg["enabled"]:
+            break
+        try:
+            wait = _auto_sync_step(cfg)
+        except Exception as exc:  # a bug here must not kill the loop silently
+            logging.exception("auto-sync step failed")
+            with _auto_sync_lock:
+                _auto_sync["failure_streak"] += 1
+                _auto_sync["last_error"] = str(exc)
+                streak = _auto_sync["failure_streak"]
+            wait = _auto_backoff(streak)
+            _auto_phase("error", str(exc), wait)
+
+        if wait > 0:
+            _auto_sync_stop.wait(wait)
+
+    _auto_phase("off", "")
+    _auto_note("Auto-Sync stopped")
+
+
+def _start_auto_sync() -> None:
+    global _auto_sync_thread
+    if _auto_sync_thread is not None and _auto_sync_thread.is_alive():
+        return
+    _auto_sync_stop.clear()
+    with _auto_sync_lock:
+        _auto_sync["started_at"] = _utc_now()
+        _auto_sync["last_error"] = None
+        _auto_sync["failure_streak"] = 0
+    _auto_sync_thread = threading.Thread(target=_auto_sync_loop, daemon=True)
+    _auto_sync_thread.start()
+
+
+def _stop_auto_sync() -> None:
+    """Signal the loop to end, and stop its child process if one is mid-run.
+
+    Without the terminate, switching off during a download would appear to do
+    nothing until the demo finished — potentially several minutes.
+    """
+    _auto_sync_stop.set()
+    with _steam_job_lock:
+        proc = _steam_proc if _steam_job.get("auto") and _steam_job["running"] else None
+        if proc is not None:
+            _steam_job["cancelled"] = True
+    if proc is not None:
+        try:
+            proc.terminate()
+        except OSError:
+            pass
+    _auto_phase("off", "")
+
+
+class AutoSyncIn(BaseModel):
+    enabled: bool | None = None
+    interval_minutes: int | None = None
+    idle_check_minutes: int | None = None
+    pause_when_playing: bool | None = None
+
+
+@app.get("/api/steam/auto-sync")
+def get_auto_sync():
+    return _auto_sync_snapshot()
+
+
+@app.put("/api/steam/auto-sync")
+def set_auto_sync(body: AutoSyncIn):
+    """Change auto-sync settings, and start or stop the loop to match.
+
+    Settings can be changed while it runs; the loop re-reads them every cycle,
+    so a new interval takes effect from the next match rather than needing a
+    restart.
+    """
+    cfg = _load_auto_sync_config()
+
+    if body.interval_minutes is not None:
+        if not 0 <= body.interval_minutes <= 1440:
+            raise HTTPException(
+                status_code=400, detail="Interval must be between 0 and 1440 minutes."
+            )
+        cfg["interval_minutes"] = body.interval_minutes
+    if body.idle_check_minutes is not None:
+        if not 1 <= body.idle_check_minutes <= 1440:
+            raise HTTPException(
+                status_code=400, detail="Check interval must be between 1 and 1440 minutes."
+            )
+        cfg["idle_check_minutes"] = body.idle_check_minutes
+    if body.pause_when_playing is not None:
+        cfg["pause_when_playing"] = bool(body.pause_when_playing)
+
+    if body.enabled is not None:
+        if body.enabled and not cfg["enabled"]:
+            _require_fetcher()  # fail loudly now rather than in a background thread
+        cfg["enabled"] = bool(body.enabled)
+
+    _save_auto_sync_config(cfg)
+
+    if cfg["enabled"]:
+        _start_auto_sync()
+    else:
+        _stop_auto_sync()
+
+    return _auto_sync_snapshot()
+
+
+@app.get("/api/steam/presence")
+def steam_presence(force: bool = False):
+    """Whether a tracked account is in CS2, as far as Steam will say."""
+    return _check_cs2_presence(force=force)
+
+
+def _resume_auto_sync() -> None:
+    """Pick auto-sync back up after a restart if it was left on.
+
+    Called from the app lifespan handler at the top of this file.
+    """
+    try:
+        if _load_auto_sync_config().get("enabled") and _node_path():
+            _start_auto_sync()
+    except Exception:
+        logging.exception("could not resume auto-sync")
 
 
 # ---------------------------------------------------------------------------
 # Match list
 # ---------------------------------------------------------------------------
+# Per-match analysis blobs. They belong to the detail view; a list row shows
+# map, date, score, K/D/A and rating. Carrying them made the list response
+# about twenty times bigger than the data it actually renders.
+_MATCH_DETAIL_ONLY_FIELDS = ("utility_data", "aim_stats", "role_data")
+
+
 @app.get("/api/matches")
 def list_matches(player_steam_id: str = None):
-    """Return all matches ordered by date descending, optionally filtered by player."""
+    """Return all matches ordered by date descending, optionally filtered by player.
+
+    Detail-only blobs are stripped: this feeds match lists, and every consumer
+    fetches /api/matches/{id} for anything beyond the summary row.
+    """
     conn = _db()
     matches = get_all_matches(conn, player_steam_id=player_steam_id)
-    # Attach tags to each match
-    for m in matches:
-        m["tags"] = get_tags(conn, m["match_id"])
+
+    # One query for every tag rather than one per match.
+    tags_by_match: dict[str, list[str]] = {}
+    for row in conn.execute("SELECT match_id, tag FROM context_tags"):
+        tags_by_match.setdefault(row["match_id"], []).append(row["tag"])
     conn.close()
+
+    for m in matches:
+        m["tags"] = tags_by_match.get(m["match_id"], [])
+        for field in _MATCH_DETAIL_ONLY_FIELDS:
+            m.pop(field, None)
     return matches
 
 
@@ -1242,7 +2590,8 @@ def get_replay_data(match_id: str, round_number: int = 0):
         conn.close()
         raise HTTPException(status_code=400, detail=f"No radar data for {map_name}")
 
-    rounds = get_round_stats(conn, match_id)
+    # The one caller that genuinely wants the frames.
+    rounds = get_round_stats(conn, match_id, include_replay=True)
     conn.close()
 
     # Check if replay data exists at all
