@@ -52,10 +52,12 @@ CREATE TABLE IF NOT EXISTS matches (
     aim_stats     TEXT,
     role_data     TEXT,
     utility_data  TEXT,
+    impact_stats  TEXT,
     partial_import INTEGER DEFAULT 0,
     parse_mode    TEXT,
     parse_warning TEXT,
     source_patch_version INTEGER,
+    analyzer_version INTEGER DEFAULT 0,
     context_notes TEXT,
     uploaded_at   TEXT
 );
@@ -186,11 +188,17 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
     if "utility_data" not in columns:
         conn.execute("ALTER TABLE matches ADD COLUMN utility_data TEXT")
         conn.commit()
+    if "impact_stats" not in columns:
+        conn.execute("ALTER TABLE matches ADD COLUMN impact_stats TEXT")
+        conn.commit()
     for col, definition in [
         ("partial_import", "INTEGER DEFAULT 0"),
         ("parse_mode", "TEXT"),
         ("parse_warning", "TEXT"),
         ("source_patch_version", "INTEGER"),
+        # Rows that predate versioning default to 0, which reads as "older
+        # than anything current" and so shows up as stale.
+        ("analyzer_version", "INTEGER DEFAULT 0"),
     ]:
         if col not in columns:
             conn.execute(f"ALTER TABLE matches ADD COLUMN {col} {definition}")
@@ -243,18 +251,18 @@ def save_match(
             kast, adr, kpr, dpr, impact, hltv_rating,
             kd_ratio, rounds_2k, rounds_3k, rounds_4k, rounds_5k,
             team_score, enemy_score, match_result,
-            aim_stats, role_data, utility_data,
+            aim_stats, role_data, utility_data, impact_stats,
             partial_import, parse_mode, parse_warning, source_patch_version,
-            context_notes, uploaded_at
+            analyzer_version, context_notes, uploaded_at
         ) VALUES (
             :match_id, :filename, :date, :map_name, :player_steam_id,
             :player_name, :total_rounds, :kills, :deaths, :assists,
             :kast, :adr, :kpr, :dpr, :impact, :hltv_rating,
             :kd_ratio, :rounds_2k, :rounds_3k, :rounds_4k, :rounds_5k,
             :team_score, :enemy_score, :match_result,
-            :aim_stats, :role_data, :utility_data,
+            :aim_stats, :role_data, :utility_data, :impact_stats,
             :partial_import, :parse_mode, :parse_warning, :source_patch_version,
-            :context_notes, :uploaded_at
+            :analyzer_version, :context_notes, :uploaded_at
         )
         """,
         {
@@ -285,10 +293,12 @@ def save_match(
             "aim_stats": json.dumps(stats.get("aim_stats")) if stats.get("aim_stats") else None,
             "role_data": json.dumps(stats.get("role_data")) if stats.get("role_data") else None,
             "utility_data": json.dumps(stats.get("utility_data")) if stats.get("utility_data") else None,
+            "impact_stats": json.dumps(stats.get("impact_stats")) if stats.get("impact_stats") else None,
             "partial_import": int(bool(stats.get("partial_import", False))),
             "parse_mode": stats.get("parse_mode"),
             "parse_warning": stats.get("parse_warning"),
             "source_patch_version": stats.get("source_patch_version"),
+            "analyzer_version": int(stats.get("analyzer_version") or 0),
             "context_notes": context_notes,
             "uploaded_at": uploaded_at,
         },
@@ -502,6 +512,25 @@ def clear_chat_history(conn: sqlite3.Connection, match_id: str) -> None:
     """Delete all chat messages for a match."""
     conn.execute("DELETE FROM ai_chats WHERE match_id = ?", (match_id,))
     conn.commit()
+
+
+def move_chat_history(
+    conn: sqlite3.Connection, old_match_id: str, new_match_id: str
+) -> int:
+    """Re-point a match's chat history at a new match_id, returning the count.
+
+    Re-analysis writes a new match row and deletes the old one, and
+    :func:`delete_match` takes the chat history with it.  Re-pointing the rows
+    keeps the original ``created_at`` values and ordering, which re-inserting
+    them through :func:`save_chat_message` would not.  Must run before the old
+    match is deleted.
+    """
+    cursor = conn.execute(
+        "UPDATE ai_chats SET match_id = ? WHERE match_id = ?",
+        (new_match_id, old_match_id),
+    )
+    conn.commit()
+    return cursor.rowcount or 0
 
 
 def get_match_players(

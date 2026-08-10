@@ -241,3 +241,51 @@ def test_partial_import_metadata_persisted(conn):
     assert match["parse_mode"] == "header_only_fallback"
     assert "new schema" in (match["parse_warning"] or "")
     assert match["source_patch_version"] == 14152
+
+
+def test_analyzer_version_persisted(conn):
+    """The version that produced a match is stored alongside it."""
+    stats = {**_STATS, "analyzer_version": 7}
+    mid = save_match(conn, stats, "versioned.dem", "76561198000000001")
+    match = get_match(conn, mid)
+
+    assert match is not None
+    assert match["analyzer_version"] == 7
+
+
+def test_analyzer_version_defaults_to_zero_when_absent(conn):
+    """Stats from before versioning read back as 0, which counts as stale.
+
+    Anything below the current ANALYZER_VERSION is treated as outdated, so an
+    unstamped match is offered for re-analysis rather than silently trusted.
+    """
+    stats = {k: v for k, v in _STATS.items() if k != "analyzer_version"}
+    mid = save_match(conn, stats, "legacy.dem", "76561198000000001")
+    match = get_match(conn, mid)
+
+    assert match is not None
+    assert match["analyzer_version"] == 0
+
+
+def test_move_chat_history_preserves_messages_and_timestamps(conn):
+    """Re-analysis must not cost the user their AI conversations.
+
+    A re-analyzed match gets a new match_id and the old row is deleted, and
+    delete_match drops ai_chats with it. The history is re-pointed first.
+    """
+    from src.database import get_chat_history, move_chat_history, save_chat_message
+
+    old_id = save_match(conn, _STATS, "before.dem", "76561198000000001")
+    save_chat_message(conn, old_id, "user", "why did I lose round 12?")
+    save_chat_message(conn, old_id, "assistant", "you were caught out of position")
+    original = get_chat_history(conn, old_id)
+
+    new_id = save_match(conn, _STATS, "after.dem", "76561198000000001")
+    moved = move_chat_history(conn, old_id, new_id)
+    delete_match(conn, old_id)
+
+    carried = get_chat_history(conn, new_id)
+    assert moved == 2
+    assert [m["content"] for m in carried] == [m["content"] for m in original]
+    assert [m["created_at"] for m in carried] == [m["created_at"] for m in original]
+    assert get_chat_history(conn, old_id) == []

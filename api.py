@@ -38,12 +38,13 @@ from src.database import (
     get_match_players,
     get_round_stats,
     get_tags,
+    move_chat_history,
     save_chat_message,
     update_context_notes,
     save_match,
 )
 from src.parser import parse_demo, parse_info_file, extract_player_names, read_demo_map
-from src.processor import calculate_match_stats, compute_benchmarks
+from src.processor import ANALYZER_VERSION, calculate_match_stats, compute_benchmarks
 from src.callouts import get_radar_config, game_to_pixel, get_zone_center, get_all_zones_pixel, is_map_supported, get_callout
 from src.ai_service import (
     PROVIDERS as AI_PROVIDERS,
@@ -2349,7 +2350,7 @@ def _resume_auto_sync() -> None:
 # Per-match analysis blobs. They belong to the detail view; a list row shows
 # map, date, score, K/D/A and rating. Carrying them made the list response
 # about twenty times bigger than the data it actually renders.
-_MATCH_DETAIL_ONLY_FIELDS = ("utility_data", "aim_stats", "role_data")
+_MATCH_DETAIL_ONLY_FIELDS = ("utility_data", "aim_stats", "role_data", "impact_stats")
 
 
 @app.get("/api/matches")
@@ -2368,8 +2369,15 @@ def list_matches(player_steam_id: str = None):
         tags_by_match.setdefault(row["match_id"], []).append(row["tag"])
     conn.close()
 
+    # One directory listing for the whole page rather than a stat per row.
+    on_disk = _available_demo_names()
+
     for m in matches:
         m["tags"] = tags_by_match.get(m["match_id"], [])
+        version = int(m.get("analyzer_version") or 0)
+        m["analyzer_version"] = version
+        m["analysis_stale"] = version < ANALYZER_VERSION
+        m["demo_available"] = bool(m.get("filename")) and m["filename"] in on_disk
         for field in _MATCH_DETAIL_ONLY_FIELDS:
             m.pop(field, None)
     return matches
@@ -2431,18 +2439,23 @@ def get_career_averages():
                 ar = aim_obj.get("aim_rating")
                 if ar is not None:
                     aim_ratings.append(ar)
-                mov = aim_obj.get("movement", {})
-                if mov.get("avg") is not None:
-                    movement_avgs.append(mov["avg"])
-                ttk_o = aim_obj.get("ttk", {})
-                if ttk_o.get("avg") is not None:
-                    ttk_avgs.append(ttk_o["avg"])
-                pa = aim_obj.get("preaim", {})
-                if pa.get("avg") is not None:
-                    preaim_avgs.append(pa["avg"])
-                rxn = aim_obj.get("reaction", {})
-                if rxn.get("avg") is not None:
-                    reaction_avgs.append(rxn["avg"])
+                # Prefer the median, which is what the match page shows and
+                # what the benchmarks grade.  Matches analysed before medians
+                # existed only carry "avg", so fall back rather than drop them
+                # out of the career line entirely.
+                def _headline(block: dict) -> float | None:
+                    v = block.get("median")
+                    return v if v is not None else block.get("avg")
+
+                for block_key, sink in (
+                    ("movement", movement_avgs),
+                    ("ttk", ttk_avgs),
+                    ("preaim", preaim_avgs),
+                    ("reaction", reaction_avgs),
+                ):
+                    value = _headline(aim_obj.get(block_key, {}))
+                    if value is not None:
+                        sink.append(value)
             except Exception:
                 pass
 
@@ -2726,6 +2739,13 @@ def get_match_detail(match_id: str):
     for p in my_team + enemy_team:
         p["is_friend"] = p.get("steam_id", "") in friend_ids
 
+    # Deserialize impact_stats JSON
+    if match.get("impact_stats"):
+        try:
+            match["impact_stats"] = json.loads(match["impact_stats"])
+        except (json.JSONDecodeError, TypeError):
+            match["impact_stats"] = None
+
     # Deserialize aim_stats JSON
     aim_stats = None
     if match.get("aim_stats"):
@@ -2811,6 +2831,220 @@ def remove_match(match_id: str):
     return {"deleted": match_id}
 
 
+# ---------------------------------------------------------------------------
+# Re-analysis — re-run the current analyzer over a demo already on disk
+# ---------------------------------------------------------------------------
+
+
+# Where CS2 puts demos you download in-game.  Mirrors DEFAULT_REPLAY_DIRS in
+# fetcher/lib/paths.js — the fetcher falls back to these when nothing is
+# configured, so anything it downloaded on a default Steam install lands here
+# rather than in data/.
+_DEFAULT_REPLAY_DIRS = (
+    "C:/Program Files (x86)/Steam/steamapps/common/Counter-Strike Global Offensive/game/csgo/replays",
+    str(Path.home() / ".steam/steam/steamapps/common/Counter-Strike Global Offensive/game/csgo/replays"),
+)
+
+
+def _demo_search_dirs() -> list[Path]:
+    """Directories a stored demo may live in, most specific first.
+
+    Deliberately the same resolution order the fetcher uses to *write* demos
+    (DEMO_DIR, then sync_config.json, then the default CS2 replays folder),
+    plus data/ for demos the app downloaded itself.  Unlike the fetcher this
+    keeps every directory that exists rather than stopping at the first —
+    a library built up over time can be spread across more than one of them.
+
+    sync_config.json holds the container path (/demos) under Docker, which is
+    why entries that do not resolve on this machine are skipped rather than
+    treated as an error.  Drag-and-drop uploads parse from a temp file that is
+    deleted immediately, so those matches have nothing to re-read anywhere.
+    """
+    candidates: list[Path] = []
+    env_dir = os.environ.get("DEMO_DIR")
+    if env_dir:
+        candidates.append(Path(env_dir))
+    folder = _load_sync_config().get("folder")
+    if folder:
+        candidates.append(Path(folder))
+    candidates.extend(Path(d) for d in _DEFAULT_REPLAY_DIRS if d)
+    candidates.append(Path(__file__).parent / "data")
+
+    seen: set[Path] = set()
+    dirs: list[Path] = []
+    for d in candidates:
+        try:
+            if not d.is_dir():
+                continue
+            key = d.resolve()
+        except OSError:
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        dirs.append(d)
+    return dirs
+
+
+def _resolve_demo(filename: str | None) -> Path | None:
+    """Locate a stored .dem by name, or None when it is not on disk.
+
+    ``filename`` comes from the database but originated as user input, so it is
+    treated as untrusted: only a bare filename is accepted, and the resolved
+    path has to sit directly inside one of the search directories.  This is the
+    same rule /api/sync/process applies to the names it is handed.
+    """
+    if not filename or not filename.endswith(".dem"):
+        return None
+    if Path(filename).name != filename:
+        return None  # rejects separators and traversal segments
+
+    for d in _demo_search_dirs():
+        try:
+            base = d.resolve()
+            resolved = (d / filename).resolve()
+        except OSError:
+            continue
+        if resolved.parent != base:
+            continue
+        if resolved.is_file():
+            return resolved
+    return None
+
+
+def _available_demo_names() -> set[str]:
+    """Every .dem filename currently on disk, for bulk availability checks.
+
+    One glob per search directory beats one stat per match row.
+    """
+    names: set[str] = set()
+    for d in _demo_search_dirs():
+        try:
+            names.update(p.name for p in d.glob("*.dem") if p.is_file())
+        except OSError:
+            continue
+    return names
+
+
+def _replace_match_from_demo(
+    conn,
+    existing: dict[str, Any],
+    dem_path: str,
+    sid: str,
+    *,
+    filename: str,
+    match_date: str | None,
+) -> tuple[str, dict[str, Any]]:
+    """Re-parse *dem_path* and swap it in for an existing match row.
+
+    Tags, context notes, the match date and the AI chat history all carry over;
+    the old row is deleted only once the new one is safely written.  Shared by
+    /reimport (which parses an uploaded file) and /reanalyze (which parses one
+    already on disk).
+
+    The chat history has to be re-pointed *before* the delete, because
+    delete_match drops a match's ai_chats along with it — without this a bulk
+    re-analysis would quietly wipe every conversation the user had about their
+    matches.
+    """
+    old_match_id = existing["match_id"]
+    old_tags = get_tags(conn, old_match_id)
+    old_notes = existing.get("context_notes", "") or ""
+
+    parsed = parse_demo(dem_path)
+    stats = calculate_match_stats(parsed, sid)
+    _apply_parse_metadata(stats, parsed)
+
+    new_match_id = save_match(
+        conn,
+        stats,
+        filename=filename,
+        steam_id=sid,
+        context_notes=old_notes,
+        match_date=match_date,
+    )
+    for tag in old_tags:
+        add_tag(conn, new_match_id, tag)
+    move_chat_history(conn, old_match_id, new_match_id)
+    delete_match(conn, old_match_id)
+    return new_match_id, stats
+
+
+@app.get("/api/analyzer/version")
+def get_analyzer_version():
+    """Current analyzer version, and how many stored matches predate it."""
+    conn = _db()
+    rows = conn.execute(
+        "SELECT COALESCE(analyzer_version, 0) AS v FROM matches"
+    ).fetchall()
+    conn.close()
+    stale = sum(1 for r in rows if int(r["v"] or 0) < ANALYZER_VERSION)
+    return {
+        "analyzer_version": ANALYZER_VERSION,
+        "total_matches": len(rows),
+        "stale_matches": stale,
+    }
+
+
+@app.post("/api/matches/{match_id}/reanalyze")
+def reanalyze_match(match_id: str):
+    """Re-run the current analyzer over a match, reading the demo from disk.
+
+    Unlike /reimport this takes no upload: the demo is found by the filename
+    recorded on the match.  Returns 409 when the file is gone, which is the
+    normal outcome for matches that were originally drag-and-dropped.
+    """
+    conn = _db()
+    existing = get_match(conn, match_id)
+    if not existing:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    filename = str(existing.get("filename") or "")
+    dem_path = _resolve_demo(filename)
+    if dem_path is None:
+        conn.close()
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"No demo on disk for '{filename or 'this match'}'. Uploaded "
+                "demos are not kept, so this match can only be refreshed by "
+                "re-importing the file."
+            ),
+        )
+
+    sid = str(existing.get("player_steam_id") or "")
+    if not sid:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Match has no player Steam ID")
+
+    try:
+        new_match_id, stats = _replace_match_from_demo(
+            conn, existing, str(dem_path), sid,
+            filename=filename, match_date=existing.get("date"),
+        )
+    except Exception as exc:
+        conn.close()
+        logging.getLogger("uvicorn.error").exception("Re-analysis failed: %s", exc)
+        raise HTTPException(
+            status_code=422,
+            detail=f"Failed to parse demo: {type(exc).__name__}: {exc}",
+        )
+    conn.close()
+
+    response: dict[str, Any] = {
+        "reanalyzed_from": match_id,
+        "match_id": new_match_id,
+        "analyzer_version": stats.get("analyzer_version"),
+        "stats": _match_summary(stats),
+    }
+    if stats.get("partial_import"):
+        response["partial_import"] = True
+    if stats.get("parse_warning"):
+        response["parse_warning"] = stats["parse_warning"]
+    return response
+
+
 @app.post("/api/matches/{match_id}/reimport")
 def reimport_match(
     match_id: str,
@@ -2827,9 +3061,6 @@ def reimport_match(
     if not existing:
         conn.close()
         raise HTTPException(status_code=404, detail="Match not found")
-
-    old_tags = get_tags(conn, match_id)
-    old_notes = existing.get("context_notes", "")
 
     sid = steam_id.strip() or str(existing.get("player_steam_id") or "")
     if not sid:
@@ -2850,9 +3081,11 @@ def reimport_match(
         tmp_path = tmp.name
 
     try:
-        parsed = parse_demo(tmp_path)
-        stats = calculate_match_stats(parsed, sid)
-        _apply_parse_metadata(stats, parsed)
+        new_match_id, stats = _replace_match_from_demo(
+            conn, existing, tmp_path, sid,
+            filename=file.filename or str(existing.get("filename") or "reimport.dem"),
+            match_date=resolved_date,
+        )
     except Exception as exc:
         conn.close()
         logging.getLogger("uvicorn.error").exception("Demo parse failed: %s", exc)
@@ -2863,19 +3096,6 @@ def reimport_match(
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 
-    new_match_id = save_match(
-        conn,
-        stats,
-        filename=file.filename or str(existing.get("filename") or "reimport.dem"),
-        steam_id=sid,
-        context_notes=old_notes,
-        match_date=resolved_date,
-    )
-
-    for tag in old_tags:
-        add_tag(conn, new_match_id, tag)
-
-    delete_match(conn, match_id)
     conn.close()
 
     response: dict[str, Any] = {

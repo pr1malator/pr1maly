@@ -114,3 +114,79 @@ def test_trends_empty():
 def test_trends_with_map_filter():
     resp = client.get("/api/trends?maps=de_dust2")
     assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Re-analysis
+# ---------------------------------------------------------------------------
+
+
+def test_analyzer_version_endpoint():
+    from src.processor import ANALYZER_VERSION
+
+    resp = client.get("/api/analyzer/version")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["analyzer_version"] == ANALYZER_VERSION
+    assert "total_matches" in body
+    assert "stale_matches" in body
+
+
+def test_reanalyze_unknown_match_returns_404():
+    resp = client.post("/api/matches/nonexistent-uuid/reanalyze")
+    assert resp.status_code == 404
+
+
+def test_resolve_demo_finds_file_in_search_dir(tmp_path, monkeypatch):
+    from api import _resolve_demo
+
+    monkeypatch.setenv("DEMO_DIR", str(tmp_path))
+    dem = tmp_path / "match730_example.dem"
+    dem.write_bytes(b"fake demo")
+
+    assert _resolve_demo("match730_example.dem") == dem.resolve()
+
+
+def test_resolve_demo_rejects_path_traversal(tmp_path, monkeypatch):
+    """The filename comes from the DB but originated as user input.
+
+    A name carrying a separator would otherwise reach any .dem on the host, so
+    only bare filenames resolving directly inside a search dir are accepted.
+    """
+    from api import _resolve_demo
+
+    search_dir = tmp_path / "demos"
+    search_dir.mkdir()
+    monkeypatch.setenv("DEMO_DIR", str(search_dir))
+
+    escaped = tmp_path / "escaped.dem"
+    escaped.write_bytes(b"fake demo")
+
+    assert _resolve_demo("../escaped.dem") is None
+    assert _resolve_demo("sub/escaped.dem") is None
+    assert _resolve_demo("/etc/passwd.dem") is None
+
+
+def test_resolve_demo_rejects_non_dem_and_missing(tmp_path, monkeypatch):
+    from api import _resolve_demo
+
+    monkeypatch.setenv("DEMO_DIR", str(tmp_path))
+    (tmp_path / "notes.txt").write_bytes(b"x")
+
+    assert _resolve_demo("notes.txt") is None
+    assert _resolve_demo("absent.dem") is None
+    assert _resolve_demo("") is None
+    assert _resolve_demo(None) is None
+
+
+def test_available_demo_names_lists_only_demos(tmp_path, monkeypatch):
+    from api import _available_demo_names
+
+    monkeypatch.setenv("DEMO_DIR", str(tmp_path))
+    (tmp_path / "a.dem").write_bytes(b"x")
+    (tmp_path / "b.dem").write_bytes(b"x")
+    (tmp_path / "notes.txt").write_bytes(b"x")
+
+    names = _available_demo_names()
+    assert {"a.dem", "b.dem"} <= names
+    assert "notes.txt" not in names

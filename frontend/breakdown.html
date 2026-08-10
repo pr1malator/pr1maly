@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" href="img/logo-big.png"/>
 <link rel="stylesheet" href="theme.css"/>
 <script src="theme.js?v=2"></script>
+<script src="reanalyze.js?v=1"></script>
 <script>
 /* Map-icon helpers come from theme.js. This page is served no-store but a
    browser can still be holding an older theme.js than the HTML it is running
@@ -903,6 +904,7 @@ if (typeof mapIconHtml !== 'function') {
       <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
       <button id="settings-tab-steam" onclick="switchSettingsTab('steam')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Steam</button>
       <button id="settings-tab-storage" onclick="switchSettingsTab('storage')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Storage</button>
+      <button id="settings-tab-reanalyze" onclick="switchSettingsTab('reanalyze')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Re-analyze</button>
       <button id="settings-tab-reset" onclick="switchSettingsTab('reset')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Reset</button>
     </nav>
     <div class="flex-1 min-w-0 overflow-y-auto p-6 sm:p-8">
@@ -1063,6 +1065,8 @@ if (typeof mapIconHtml !== 'function') {
       <p id="storage-result" class="text-[9px] text-on-surface-variant mt-2 leading-relaxed"></p>
     </div>
     </div>
+    <div id="settings-reanalyze-panel" class="hidden"></div>
+
     <div id="settings-reset-panel" class="hidden">
       <div class="text-center mb-6">
         <span class="material-symbols-outlined text-4xl text-error mb-3 block">warning</span>
@@ -1201,7 +1205,7 @@ function closeSettingsModal() {
 document.getElementById('settings-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettingsModal(); });
 
 function switchSettingsTab(tab) {
-  const tabs = ['accounts', 'friends', 'ai', 'steam', 'storage', 'reset'];
+  const tabs = ['accounts', 'friends', 'ai', 'steam', 'storage', 'reanalyze', 'reset'];
   tabs.forEach(t => {
     const btn = document.getElementById('settings-tab-' + t);
     const panel = document.getElementById('settings-' + t + '-panel');
@@ -1216,7 +1220,11 @@ function switchSettingsTab(tab) {
   });
   if (tab === 'friends') loadFriends();
   if (tab === 'steam') loadSteamStatus();
+  if (tab === 'reanalyze') loadReanalyzeList();
 }
+
+// Re-analyze panel lives in reanalyze.js, shared with the other pages that
+// host this modal.
 
 function renderAccountsList(accounts) {
   const list = document.getElementById('accounts-list');

@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" href="img/logo-big.png"/>
 <link rel="stylesheet" href="theme.css"/>
 <script src="theme.js?v=2"></script>
+<script src="reanalyze.js?v=1"></script>
 <script>
 /* Map-icon helpers come from theme.js. This page is served no-store but a
    browser can still be holding an older theme.js than the HTML it is running
@@ -311,6 +312,7 @@ if (typeof mapIconHtml !== 'function') {
 <h2 class="font-headline text-xl font-bold uppercase tracking-widest">RECENT_ENCOUNTERS</h2>
 <a href="match-breakdown.html" class="text-[10px] font-bold uppercase tracking-widest text-secondary hover:underline">View All Matches</a>
 </div>
+<div id="stale-banner" class="hidden mb-4"></div>
 <div class="space-y-2">
 <!-- Match Row 1 -->
 <div class="grid grid-cols-4 md:grid-cols-12 items-center bg-surface-container hover:bg-surface-container-high transition-all p-4 rounded-xl border-l-4 border-secondary group cursor-pointer">
@@ -494,6 +496,7 @@ if (typeof mapIconHtml !== 'function') {
       <button id="settings-tab-accounts" onclick="switchSettingsTab('accounts')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Accounts</button>
       <button id="settings-tab-friends" onclick="switchSettingsTab('friends')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Friends</button>
       <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
+      <button id="settings-tab-reanalyze" onclick="switchSettingsTab('reanalyze')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Re-analyze</button>
       <button id="settings-tab-reset" onclick="switchSettingsTab('reset')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Reset</button>
     </nav>
     <div class="flex-1 min-w-0 overflow-y-auto p-6 sm:p-8">
@@ -553,6 +556,7 @@ if (typeof mapIconHtml !== 'function') {
       <div id="ai-settings-status" class="text-xs text-center mt-3 hidden"></div>
     </div>
     <!-- Factory Reset Tab -->
+    <div id="settings-reanalyze-panel" class="hidden"></div>
     <div id="settings-reset-panel" class="hidden">
       <div class="text-center mb-6">
         <span class="material-symbols-outlined text-4xl text-error mb-3 block">warning</span>
@@ -632,7 +636,7 @@ function closeSettingsModal() {
 document.getElementById('settings-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettingsModal(); });
 
 function switchSettingsTab(tab) {
-  const tabs = ['accounts', 'friends', 'ai', 'reset'];
+  const tabs = ['accounts', 'friends', 'ai', 'reanalyze', 'reset'];
   tabs.forEach(t => {
     const btn = document.getElementById('settings-tab-' + t);
     const panel = document.getElementById('settings-' + t + '-panel');
@@ -646,6 +650,7 @@ function switchSettingsTab(tab) {
     }
   });
   if (tab === 'friends') loadFriends();
+  if (tab === 'reanalyze') loadReanalyzeList();
 }
 
 function renderAccountsList(accounts) {
@@ -998,6 +1003,7 @@ async function loadDashboard() {
     renderKPIs(trends, matches);
     renderChart(trends);
     renderRecentMatches(matches);
+    renderStaleBanner('stale-banner');
   } catch (err) { console.error('Failed to load dashboard:', err); }
 }
 
@@ -1088,12 +1094,17 @@ function renderRecentMatches(matches) {
     const partialBadge = isPartial
       ? '<div class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-400/15 text-amber-300 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"><span class="material-symbols-outlined text-[10px]">warning</span>Partial Import</div>'
       : '';
+    // Say so when a row's numbers came from an older analyzer, otherwise two
+    // matches side by side can be measured differently with nothing to show it.
+    const staleBadge = m.analysis_stale
+      ? '<div class="mt-1 inline-flex items-center gap-1 rounded-full bg-white/5 text-on-surface-variant px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest" title="Analysed by an older version — re-analyze to update"><span class="material-symbols-outlined text-[10px]">update</span>v' + (m.analyzer_version || 0) + '</div>'
+      : '';
     html += `<div class="grid grid-cols-4 md:grid-cols-12 items-center bg-surface-container hover:bg-surface-container-high transition-all p-4 rounded-xl border-l-4 ${borderColor} group cursor-pointer" onclick="window.location.href='match-breakdown.html?id=${m.match_id}'">
       <div class="md:col-span-2 flex items-center gap-3">
         ${mapIconHtml(m.map_name)}
         <div>
           <div class="font-bold text-xs uppercase tracking-widest">${mapLabel(m.map_name)}</div>
-          ${partialBadge}
+          ${partialBadge}${staleBadge}
         </div>
       </div>
       <div class="md:col-span-2 font-headline text-xl font-bold ${scoreColor}">${score}</div>

@@ -120,7 +120,10 @@ def parse_demo(demo_path: str | Path) -> dict[str, Any]:
     replay_positions_df = _extract_replay_positions(parser, round_end_df, round_freeze_end_df)
 
     # Player velocity data around kill ticks (for movement analysis)
-    velocities_df = _extract_kill_velocities(parser, death_df)
+    velocities_df = _extract_kill_velocities(parser, death_df, hurt_df)
+
+    # Visibility at trigger-pull time, for separating duels from spray
+    spotted_df = _extract_spotted(parser, weapon_fire_df)
 
     # Player ranks (competitive skill group)
     ranks_df = _extract_player_ranks(parser)
@@ -131,22 +134,26 @@ def parse_demo(demo_path: str | Path) -> dict[str, Any]:
     # End-of-match player stats (comp_wins, mvps, score)
     end_stats_df = _extract_end_of_match_stats(parser)
 
+    # Warmup shares the demo with the match; everything before this tick is
+    # pre-match and must not be attributed to round 1.
+    match_start_tick = _find_match_start_tick(parser)
+
     # Per-round economy snapshots (balance at round start/end)
-    economy_df = _extract_round_economy(parser, round_end_df)
+    economy_df = _extract_round_economy(parser, round_end_df, match_start_tick)
 
     # Assign round numbers to all event DataFrames
-    death_df = _assign_rounds(death_df, round_end_df)
-    hurt_df = _assign_rounds(hurt_df, round_end_df)
-    item_purchase_df = _assign_rounds(item_purchase_df, round_end_df)
-    player_blind_df = _assign_rounds(player_blind_df, round_end_df)
-    bomb_planted_df = _assign_rounds(bomb_planted_df, round_end_df)
-    bomb_defused_df = _assign_rounds(bomb_defused_df, round_end_df)
-    bomb_exploded_df = _assign_rounds(bomb_exploded_df, round_end_df)
-    flash_detonate_df = _assign_rounds(flash_detonate_df, round_end_df)
-    he_detonate_df = _assign_rounds(he_detonate_df, round_end_df)
-    smoke_detonate_df = _assign_rounds(smoke_detonate_df, round_end_df)
-    molotov_detonate_df = _assign_rounds(molotov_detonate_df, round_end_df)
-    weapon_fire_df = _assign_rounds(weapon_fire_df, round_end_df)
+    death_df = _assign_rounds(death_df, round_end_df, match_start_tick)
+    hurt_df = _assign_rounds(hurt_df, round_end_df, match_start_tick)
+    item_purchase_df = _assign_rounds(item_purchase_df, round_end_df, match_start_tick)
+    player_blind_df = _assign_rounds(player_blind_df, round_end_df, match_start_tick)
+    bomb_planted_df = _assign_rounds(bomb_planted_df, round_end_df, match_start_tick)
+    bomb_defused_df = _assign_rounds(bomb_defused_df, round_end_df, match_start_tick)
+    bomb_exploded_df = _assign_rounds(bomb_exploded_df, round_end_df, match_start_tick)
+    flash_detonate_df = _assign_rounds(flash_detonate_df, round_end_df, match_start_tick)
+    he_detonate_df = _assign_rounds(he_detonate_df, round_end_df, match_start_tick)
+    smoke_detonate_df = _assign_rounds(smoke_detonate_df, round_end_df, match_start_tick)
+    molotov_detonate_df = _assign_rounds(molotov_detonate_df, round_end_df, match_start_tick)
+    weapon_fire_df = _assign_rounds(weapon_fire_df, round_end_df, match_start_tick)
 
     return {
         "player_death": death_df,
@@ -154,6 +161,7 @@ def parse_demo(demo_path: str | Path) -> dict[str, Any]:
         "round_end": round_end_df,
         "item_purchase": item_purchase_df,
         "player_blind": player_blind_df,
+        "spotted": spotted_df,
         "bomb_planted": bomb_planted_df,
         "bomb_defused": bomb_defused_df,
         "bomb_exploded": bomb_exploded_df,
@@ -382,35 +390,82 @@ def _extract_replay_positions(
         return pd.DataFrame()
 
 
-def _extract_kill_velocities(
-    parser: Any, death_df: pd.DataFrame, window: int = 64
-) -> pd.DataFrame:
-    """Fetch player velocity and yaw around each kill tick.
+# Ticks of player velocity/view-angle history sampled before each kill.
+#
+# The mechanical metrics in processor.py are anchored to the tick the
+# engagement *started* on, not the kill tick, so the window has to cover
+# both the engagement itself and the lookback taken from its first shot:
+#
+#   engagement length (up to ~1 s)  +  reaction lookback (64 ticks)  = 128
+#
+# Sampling only 64 ticks left the reaction lookback running off the end of
+# the data on any engagement longer than an instant.
+_VELOCITY_WINDOW = 128
 
-    For each unique death tick, extracts velocity_X, velocity_Y, and yaw
-    for all players across a window of ticks before and including the kill
-    tick (default 64 ticks ≈ 1s at 64-tick, enough for reaction-time analysis).
+
+def _extract_kill_velocities(
+    parser: Any,
+    death_df: pd.DataFrame,
+    hurt_df: pd.DataFrame | None = None,
+    window: int = _VELOCITY_WINDOW,
+) -> pd.DataFrame:
+    """Fetch player velocity and yaw around every engagement.
+
+    Sampling was originally anchored on kills alone, which left roughly 40% of
+    a player's duels — the ones where they damaged an enemy without finishing
+    them — with no movement, crosshair or reaction data at all.  Damage ticks
+    are included as well so those engagements can be measured; the windows
+    overlap heavily, so the extra cost is far below the extra event count.
+
+    See ``_VELOCITY_WINDOW`` for why the window is sized the way it is.
 
     Returns a DataFrame with columns: ``steamid`` (int), ``tick``,
     ``velocity_X``, ``velocity_Y``, ``yaw``.
     """
-    if death_df.empty or "tick" not in death_df.columns:
+    anchors: list[int] = []
+    if not death_df.empty and "tick" in death_df.columns:
+        anchors.extend(int(t) for t in death_df["tick"].dropna().unique())
+    if hurt_df is not None and not hurt_df.empty and "tick" in hurt_df.columns:
+        anchors.extend(int(t) for t in hurt_df["tick"].dropna().unique())
+    if not anchors:
         return pd.DataFrame()
-    kill_ticks = death_df["tick"].dropna().unique().tolist()
-    if not kill_ticks:
-        return pd.DataFrame()
-    # Build expanded tick list: [kill_tick - window .. kill_tick] for each kill
+
     all_ticks: set[int] = set()
-    for t in kill_ticks:
-        t = int(t)
+    for t in anchors:
         for offset in range(window + 1):
             all_ticks.add(t - offset)
     try:
         df = parser.parse_ticks(
-            ["velocity_X", "velocity_Y", "X", "Y", "Z", "yaw", "pitch"],
+            # ``ducked`` rides along on the same call: crouching caps speed
+            # below the accuracy threshold without any counter-strafe, so the
+            # movement classifier has to be able to tell the two apart.
+            ["velocity_X", "velocity_Y", "X", "Y", "Z", "yaw", "pitch", "ducked"],
             ticks=sorted(all_ticks),
         )
         return df
+    except Exception:
+        return pd.DataFrame()
+
+
+
+def _extract_spotted(parser: Any, weapon_fire_df: pd.DataFrame) -> pd.DataFrame:
+    """Per-player visibility at every tick somebody pulled a trigger.
+
+    Needed to tell a duel from spray: a burst fired with no enemy visible is
+    smoke spam, a wallbang or a pre-fire, and counting it against aim accuracy
+    would punish deliberate utility usage. Cheap — one prop over the fire ticks
+    costs a fraction of a second even on a long match.
+
+    Returns a DataFrame with ``tick``, ``steamid``, ``spotted``, ``team_num``,
+    or an empty frame when there is nothing to sample.
+    """
+    if weapon_fire_df.empty or "tick" not in weapon_fire_df.columns:
+        return pd.DataFrame()
+    ticks = sorted({int(t) for t in weapon_fire_df["tick"].dropna()})
+    if not ticks:
+        return pd.DataFrame()
+    try:
+        return parser.parse_ticks(["spotted", "team_num"], ticks=ticks)
     except Exception:
         return pd.DataFrame()
 
@@ -462,7 +517,7 @@ def _extract_end_of_match_stats(parser: Any) -> pd.DataFrame:
 
 
 def _extract_round_economy(
-    parser: Any, round_end_df: pd.DataFrame,
+    parser: Any, round_end_df: pd.DataFrame, match_start_tick: int = 1,
 ) -> pd.DataFrame:
     """Extract player balance at the start and end of each round.
 
@@ -476,7 +531,11 @@ def _extract_round_economy(
     end_ticks = re_sorted["tick"].values.tolist()
     # Candidate start ticks: a small window after each round end to find
     # the nearest valid tick recorded in the demo.
-    start_candidates: list[list[int]] = [[1]]
+    # Round 1 starts where the match does, not at tick 1: the balance only
+    # resets from the warmup figure to $800 on that tick.
+    start_candidates: list[list[int]] = [
+        [match_start_tick + off for off in range(0, 200, 2)]
+    ]
     for t in end_ticks[:-1]:
         base = int(t)
         start_candidates.append([base + off for off in range(1, 200, 2)])
@@ -748,6 +807,7 @@ def _empty_parsed_result(header: dict[str, Any]) -> dict[str, Any]:
         "round_end": empty.copy(),
         "item_purchase": empty.copy(),
         "player_blind": empty.copy(),
+        "spotted": empty.copy(),
         "bomb_planted": empty.copy(),
         "bomb_defused": empty.copy(),
         "bomb_exploded": empty.copy(),
@@ -769,15 +829,43 @@ def _empty_parsed_result(header: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+
+def _find_match_start_tick(parser: Any) -> int:
+    """First tick that belongs to the match rather than to warmup.
+
+    Warmup shares the demo with the match: players hold $16,000, buy freely,
+    and kill each other, and the first round_end is far enough away that all of
+    it fell into round 1. That is where a pistol round with a $14,300 balance
+    and an unaffordable buy came from.
+
+    ``round_start`` marks it precisely — the balance resets to $800 on that
+    exact tick.  ``begin_new_match`` is the fallback for demos without it.
+    """
+    for event, reducer in (("round_start", min), ("begin_new_match", min)):
+        try:
+            df = parser.parse_event(event)
+        except Exception:
+            continue
+        if hasattr(df, "empty") and not df.empty and "tick" in df.columns:
+            ticks = [int(t) for t in df["tick"].dropna()]
+            if ticks:
+                return reducer(ticks)
+    return 1
+
+
 def _assign_rounds(
-    event_df: pd.DataFrame, round_end_df: pd.DataFrame
+    event_df: pd.DataFrame, round_end_df: pd.DataFrame,
+    match_start_tick: int = 1,
 ) -> pd.DataFrame:
     """Add a ``round`` column to *event_df* based on tick boundaries.
 
     Each event is placed in the round whose ``round_end`` tick is the first
     one >= the event tick.  Events after the last round keep the last round
-    number.
+    number.  Anything before *match_start_tick* is warmup and is dropped —
+    left in, it all landed in round 1.
     """
+    if not event_df.empty and "tick" in event_df.columns and match_start_tick > 1:
+        event_df = event_df[event_df["tick"] >= match_start_tick]
     if event_df.empty or round_end_df.empty:
         if not event_df.empty and "round" not in event_df.columns:
             event_df = event_df.copy()

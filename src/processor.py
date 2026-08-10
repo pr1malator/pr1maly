@@ -17,6 +17,78 @@ from src.parser import _build_freeze_end_map
 
 
 # ---------------------------------------------------------------------------
+# Analyzer version
+#
+# Bump this whenever a change here alters the numbers a stored match would
+# produce.  Every saved match records the version that produced it, so the
+# matches list can flag rows that predate the current analysis and offer to
+# re-run them against the demo on disk.  Matches saved before versioning
+# existed read back as 0 and therefore count as stale.
+#
+# History:
+#   1  Baseline — the first version to be stamped.
+#   2  Aim metrics anchored to the first shot of the engagement rather than
+#      the kill tick; counter-strafes separated from standing still and from
+#      coasting to a halt; reaction time no longer invented on a truncated
+#      velocity sample.
+#   3  Standing/stopped split moved onto the accuracy threshold instead of a
+#      separate constant, and round-restart teleport artifacts (all ten players
+#      reading tens of thousands of u/s on the same tick) excluded from the
+#      movement window.
+#   4  Aim metrics summarised by median rather than mean, engagements over 1 s
+#      excluded from the time-to-kill aggregate, aim rating weighted by sample
+#      size instead of substituting 50 for anything unmeasured, and reaction
+#      time demoted to a diagnostic that no longer feeds the rating.
+#   5  Crouch state read from the demo, and the counter-strafe rate restricted
+#      to rifle engagements that were not crouched — the technique only
+#      decides the shot on weapons with the full movement penalty.
+#   6  Benchmarks carry their sample size and a "heuristic" calibration marker,
+#      and the tier bands stopped claiming to be pro/amateur comparisons.
+#      No metric changed value; this is a labelling and metadata release.
+#   7  Utility: smoke "coverage" dropped from the rating (it scored callout-map
+#      completeness, not smoke quality), flashes scored on blind seconds
+#      delivered rather than heads counted, own molotovs no longer counted as
+#      smoke extinguishes, and the rating weighted by evidence instead of
+#      substituting 50 for anything unmeasured.
+#   8  Impact: kills and deaths priced by how far they moved the round, against
+#      a win-probability table measured from the local demo corpus.
+#  17  Self-flashes excluded from the per-round flash instances too, not
+#      just the totals — they were putting the player on their own
+#      friendly-flash chart and inflating per-round enemy blind time.
+#  16  Warmup excluded from the match. Players hold ~$16k and buy freely
+#      during it, and every warmup event fell into round 1 — which is how
+#      a pistol round showed a five-figure balance and a buy nobody could
+#      afford. Round 1's balance is now read where the match starts.
+#  15  Utility: flashing yourself no longer counts as a team flash, and the
+#      weapon-drop detector stopped reading the game's periodic inventory
+#      re-emissions (and refunds) as second purchases.
+#  14  Grenade and molotov damage excluded from aim accuracy. player_hurt
+#      reports them with a 'generic' hitgroup, and counting them as hits
+#      credited fire damage to the player's gun while the grenade was never
+#      counted as a shot. They remain in ADR and the utility metrics.
+#  13  One-tap kills restored to engagement time: requiring a non-zero
+#      duration silently dropped the fastest kills in every match.
+#  12  Bursts that hit nothing now count against accuracy, gated on an enemy
+#      actually being visible so smoke spray and wallbangs are not charged
+#      to aim. Shots are counted over the whole burst rather than stopping
+#      at the last bullet that connected.
+#  11  Accuracy pooled across every bullet instead of averaging per-engagement
+#      percentages, which let one-bullet exchanges outvote full sprays.
+#  10  Damage-only engagements now measured, not discarded: hits against one
+#      enemy are split into separate fights on a silence gap, and accuracy
+#      and reaction are computed for duels that did not end in a kill —
+#      roughly 40% of a player's shooting that previously went unmeasured.
+#      Velocity sampling extended to damage ticks so those engagements have
+#      movement and crosshair data at all.
+#   9  One set of bands per aim metric, shared by the per-kill buckets, the
+#      benchmark tiers and the scatter plot, which had drifted onto three
+#      different sets. Scatter data now excludes the same outliers the
+#      aggregates do, and carries stop_ticks so counter-strafe is plottable.
+# ---------------------------------------------------------------------------
+ANALYZER_VERSION = 17
+
+
+# ---------------------------------------------------------------------------
 # HLTV 2.0 Rating formula coefficients (publicly documented approximation).
 # Source: https://www.hltv.org/news/20695/introducing-rating-20
 # ---------------------------------------------------------------------------
@@ -141,6 +213,14 @@ def calculate_match_stats(
     role_data = _calculate_roles(enriched_rounds, map_name, round_positions_df, steam_id)
 
     # ------------------------------------------------------------------ #
+    # Impact — how much each kill and death moved the round                #
+    # ------------------------------------------------------------------ #
+    impact_stats = _calculate_impact_stats(
+        parsed_data, steam_id, total_rounds,
+        _build_round_team_map(death_df, steam_id, round_end_df),
+    )
+
+    # ------------------------------------------------------------------ #
     # Benchmark tier classifications                                       #
     # ------------------------------------------------------------------ #
     benchmarks = compute_benchmarks(aim_stats, utility_data, total_rounds, map_name)
@@ -154,6 +234,8 @@ def calculate_match_stats(
     )
 
     return {
+        "analyzer_version": ANALYZER_VERSION,
+        "impact_stats": impact_stats,
         "player_name": player_name,
         "map_name": map_name,
         "total_rounds": total_rounds,
@@ -477,19 +559,178 @@ _LOW_PENALTY_WEAPONS: set[str] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Aim metric bands — the single source of truth
+#
+# These bounds were previously written down three times: once as the per-kill
+# quality buckets, once as the benchmark tiers, and once again in the scatter
+# plot's JavaScript.  They had drifted apart — crosshair placement was bucketed
+# at 5/10/20 but graded at 3/10/25, and the scatter drew bands at yet another
+# set — so the same number could be called "good" on one card and "fair" three
+# inches to the right.  Everything now reads from here, and the table is
+# shipped to the frontend in ``aim_stats["thresholds"]`` so nothing has to
+# duplicate it.
+#
+# ``range`` fixes the axis a chart draws on. Scaling to each match's own
+# spread meant an identical distribution looked different from game to
+# game, and a good match and a bad one drew the same picture — the only
+# cue left was colour. A fixed span makes the shape itself comparable.
+#
+# The values remain hand-set heuristics; see the note on compute_benchmarks.
+# ---------------------------------------------------------------------------
+_AIM_THRESHOLDS: dict[str, dict[str, Any]] = {
+    "movement": {
+        "label": "Shot Speed", "unit": "u/s",
+        "bounds": [15, 40, 100], "lower_better": True,
+        "range": [0, 250],
+    },
+    # The middle bound must stay equal to _COUNTERSTRAFE_MAX_TICKS, which is
+    # defined further down and so cannot be referenced at import time.  A test
+    # pins the two together.
+    "stop_ticks": {
+        "label": "Counter-strafe", "unit": "ticks",
+        "bounds": [3, 7, 15], "lower_better": True,
+        "range": [0, 32],
+    },
+    "preaim": {
+        "label": "Crosshair Placement", "unit": "°",
+        "bounds": [5, 10, 20], "lower_better": True,
+        "range": [0, 45],
+    },
+    "ttk": {
+        "label": "Engagement Time", "unit": "s",
+        "bounds": [0.4, 0.65, 1.1], "lower_better": True,
+        "range": [0, 1.0],
+    },
+    "reaction": {
+        "label": "Reaction Time", "unit": "ms",
+        "bounds": [150, 200, 300], "lower_better": True,
+        "range": [0, 800],
+    },
+    "accuracy": {
+        "label": "Accuracy", "unit": "%",
+        "bounds": [75, 50, 30], "lower_better": False,
+        "range": [0, 100],
+    },
+}
+
+
+def _aim_bounds(metric: str) -> list[float]:
+    return _AIM_THRESHOLDS[metric]["bounds"]
+
+
+# Engagement times at or beyond this are not telling us about aim any more —
+# they are a fight that broke off and resumed, a reload, or a repositioning.
+# Leetify draws the same line on their Time to Damage stat.
+_TTK_OUTLIER_SECONDS = 1.0
+
+# Shrinkage constant for confidence weighting: a metric measured n times
+# carries n / (n + k) of its nominal weight, so a two-sample estimate barely
+# moves the rating while a twenty-sample one counts almost fully.  Standard
+# empirical-Bayes shrinkage; k ≈ 12 puts the half-way point at a dozen
+# engagements, which is roughly what a normal match produces per metric.
+_CONFIDENCE_K = 12
+
+# Relative weights of the components that feed the aim rating.
+#
+# Two measured metrics are deliberately absent.
+#
+# Reaction time: at 2-20 samples per match, and with no way to tell a flick
+# from an enemy walking into a held crosshair, it is a diagnostic rather than a
+# rating input.  Leetify reached the same conclusion and publishes Time to
+# Damage instead, explicitly captioned as *not* reaction time.
+#
+# Counter-strafe rate: it is the best-measured technique stat here, but it
+# answers a different question than the rating asks.  The movement component
+# already scores the *outcome* — was the shot taken from an accurate state —
+# and coasting to a halt produces just as accurate a shot as counter-strafing,
+# only slower and more telegraphed.  Feeding both in would score movement
+# twice and break the independence the per-dimension weighting depends on, so
+# counter-strafe rate is reported and graded on its own instead.
+_AIM_RATING_WEIGHTS = {
+    "preaim": 0.40,
+    "movement": 0.30,
+    "ttk": 0.30,
+}
+
+
+# Weapons where counter-strafing is the technique that decides the shot.
+# Rifles have a hard accuracy penalty above ~34% of max speed and no way to
+# shoot through it, so stopping properly is the whole skill.  SMGs, shotguns
+# and pistols carry a far smaller penalty and are routinely fired on the move
+# by design, and snipers are a different mechanic again — grading any of them
+# on counter-strafe quality measures the weapon, not the player.  Leetify
+# restricts the same stat to rifles.
+_COUNTERSTRAFE_WEAPONS: set[str] = {
+    "AK-47", "M4A4", "M4A1-S", "Galil AR", "FAMAS", "SG 553", "AUG",
+}
+
+
+def _median(values: list[float]) -> float | None:
+    """Median of *values*, or None when empty.
+
+    Used instead of the mean throughout the aim aggregates: these samples are
+    few and have a long right tail, so one bad engagement drags a mean well
+    away from typical behaviour.
+    """
+    if not values:
+        return None
+    ordered = sorted(values)
+    mid = len(ordered) // 2
+    if len(ordered) % 2:
+        return float(ordered[mid])
+    return (ordered[mid - 1] + ordered[mid]) / 2.0
+
+
+def _confidence(n: int) -> str:
+    """Coarse label for how much a sample of *n* engagements can carry."""
+    if n >= 20:
+        return "high"
+    if n >= 8:
+        return "medium"
+    return "low"
+
+
+def _summarise(values: list[float], digits: int) -> dict[str, Any]:
+    """Central-tendency block shared by every aim metric.
+
+    ``median`` is the headline figure and what the rating and benchmarks read;
+    ``avg`` is kept alongside it because it is what earlier versions reported
+    and it is still useful for spotting a skewed distribution at a glance.
+    """
+    n = len(values)
+    return {
+        "n": n,
+        "confidence": _confidence(n),
+        "median": round(_median(values), digits),
+        "avg": round(sum(values) / n, digits),
+        "min": round(min(values), digits),
+        "max": round(max(values), digits),
+    }
+
+
 def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate per-kill movement, pre-aim, and TTK data into match-level stats.
 
+    Every metric block carries ``median`` (the headline figure), ``avg``,
+    ``min``, ``max``, ``n`` and a coarse ``confidence`` label.  The median
+    leads because these samples are small and right-skewed.
+
     Returns a dict with:
-      - movement: {speeds: [...], weapons: [...], avg, min, max, standing_pct,
-                   counterstrafed_pct, running_pct, low_penalty_weapons: [...]}
-      - preaim: {errors: [...], avg, min, max, excellent_pct, good_pct, moderate_pct, poor_pct}
-      - ttk: {values: [...], avg, min, max}  (seconds)
-      - aim_rating: 0-100 approximate overall aim quality
+      - movement: {speeds: [...], weapons: [...], median, avg, min, max, n,
+                   confidence, standing_pct, counterstrafed_pct, stopped_pct,
+                   running_pct, low_penalty_weapons: [...]}
+      - preaim: {errors: [...], median, avg, ..., excellent_pct, good_pct,
+                 moderate_pct, poor_pct}
+      - ttk: {values: [...], median, avg, ..., excluded_outliers}  (seconds)
+      - reaction: diagnostic only, never an input to aim_rating
+      - aim_rating: 0-100, or None when nothing measurable was found
+      - aim_rating_inputs: per-component score, n and the weight it earned
     """
     shot_speeds: list[float] = []
     kill_weapons: list[str] = []
     movement_qualities: list[str] = []
+    movement_crouched: list[bool] = []
     preaim_errors: list[float] = []
     preaim_qualities: list[str] = []
     ttk_values: list[float] = []
@@ -500,6 +741,8 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
 
     # Accuracy per-encounter
     accuracy_values: list[float] = []    # hit_pct per engagement
+    accuracy_hits: list[int] = []
+    accuracy_shots: list[int] = []
     first_bullet_hits: list[bool] = []
     hitgroup_head: int = 0
     hitgroup_upper: int = 0
@@ -529,9 +772,12 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
             if mv:
                 shot_speeds.append(mv["shot_speed"])
                 movement_qualities.append(mv["movement_quality"])
+                movement_crouched.append(bool(mv.get("crouched")))
                 kill_weapons.append(weapon)
                 outcomes_mov.append(outcome)
                 enc["movement"] = mv["shot_speed"]
+                if mv.get("stop_ticks") is not None:
+                    enc["stop_ticks"] = mv["stop_ticks"]
 
             pa = k.get("preaim")
             if pa:
@@ -541,12 +787,18 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
                 enc["preaim"] = pa["crosshair_error"]
 
             ttd = k.get("ttd")
-            if ttd and ttd.get("ttk_seconds", 0) > 0:
+            # A one-tap registers first_shot_tick == kill_tick, so its
+            # engagement time is legitimately 0.  Requiring > 0 dropped exactly
+            # the fastest kills a player has, pulling the median upward.
+            if ttd and ttd.get("ttk_seconds") is not None:
                 ttk_values.append(ttd["ttk_seconds"])
                 ttk_shots.append(ttd.get("shots_fired", ttd.get("hits", 1)))
                 ttk_hits.append(ttd.get("hits", 1))
                 outcomes_ttk.append(outcome)
-                enc["ttk"] = ttd["ttk_seconds"]
+                # Same exclusion the aggregate applies, or the scatter would
+                # plot engagements the median beside it has thrown away.
+                if ttd["ttk_seconds"] < _TTK_OUTLIER_SECONDS:
+                    enc["ttk"] = ttd["ttk_seconds"]
 
             rxn = k.get("reaction")
             if rxn and rxn.get("reaction_ms") is not None:
@@ -564,6 +816,8 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
                 hitgroup_upper += acc.get("upper", 0)
                 hitgroup_lower += acc.get("lower", 0)
                 hitgroup_total += acc.get("head", 0) + acc.get("upper", 0) + acc.get("lower", 0)
+                accuracy_hits.append(int(ttd.get("hits", 0)))
+                accuracy_shots.append(int(ttd.get("shots_fired", 0)))
                 outcomes_acc.append(outcome)
                 enc["accuracy"] = acc["hit_pct"]
 
@@ -594,9 +848,12 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
             if mv:
                 shot_speeds.append(mv["shot_speed"])
                 movement_qualities.append(mv["movement_quality"])
+                movement_crouched.append(bool(mv.get("crouched")))
                 kill_weapons.append(d.get("weapon", ""))
                 outcomes_mov.append(outcome)
                 enc["movement"] = mv["shot_speed"]
+                if mv.get("stop_ticks") is not None:
+                    enc["stop_ticks"] = mv["stop_ticks"]
 
             pa = d.get("preaim")
             if pa:
@@ -605,7 +862,44 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
                 outcomes_preaim.append(outcome)
                 enc["preaim"] = pa["crosshair_error"]
 
+            # Reaction and accuracy do not depend on the duel being won, and
+            # these engagements are roughly 40% of a player's shooting.
+            # Excluding them measured only the fights that went well.
+            rxn = d.get("reaction")
+            if rxn and rxn.get("reaction_ms") is not None:
+                reaction_values.append(rxn["reaction_ms"])
+                reaction_categories.append(rxn["category"])
+                outcomes_rxn.append(outcome)
+                enc["reaction"] = rxn["reaction_ms"]
+
+            acc = d.get("accuracy")
+            if acc and acc.get("hit_pct") is not None:
+                accuracy_values.append(acc["hit_pct"])
+                first_bullet_hits.append(acc["first_bullet_hit"])
+                hitgroup_head += acc.get("head", 0)
+                hitgroup_upper += acc.get("upper", 0)
+                hitgroup_lower += acc.get("lower", 0)
+                hitgroup_total += acc.get("head", 0) + acc.get("upper", 0) + acc.get("lower", 0)
+                accuracy_hits.append(int(d.get("hits", 0)))
+                accuracy_shots.append(int(d.get("shots_fired", 0)))
+                outcomes_acc.append(outcome)
+                enc["accuracy"] = acc["hit_pct"]
+
             encounters.append(enc)
+
+        # Bursts that landed nothing. They carry no movement or crosshair data
+        # (there is no victim to measure against), but their bullets belong in
+        # the accuracy denominator — they are the engagements that went worst.
+        for w in r.get("whiffed_engagements", []):
+            shots = int(w.get("shots_fired", 0))
+            if shots <= 0:
+                continue
+            accuracy_values.append(0.0)
+            accuracy_hits.append(0)
+            accuracy_shots.append(shots)
+            first_bullet_hits.append(False)
+            outcomes_acc.append("whiff")
+            encounters.append({"outcome": "whiff", "accuracy": 0.0})
 
     n_mov = len(movement_qualities)
     n_aim = len(preaim_qualities)
@@ -614,6 +908,7 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
     if shot_speeds:
         standing = sum(1 for q in movement_qualities if q == "standing")
         cs = sum(1 for q in movement_qualities if q == "counter-strafed")
+        stopped = sum(1 for q in movement_qualities if q == "stopped")
         running = sum(1 for q in movement_qualities if q == "running")
         # Identify which kills used low-penalty weapons
         low_penalty_flags = [
@@ -623,16 +918,38 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
             1 for q, lp in zip(movement_qualities, low_penalty_flags)
             if q == "running" and lp
         )
+        # Counter-strafe rate, scored only where the technique decides the
+        # shot: rifles, not crouched, and only engagements that actually
+        # needed a stop.  Reporting counter-strafes as a share of *all*
+        # engagements buried the signal — running and standing shots, which
+        # say nothing about stopping ability, made up most of the denominator.
+        cs_attempts = 0
+        cs_good = 0
+        for q, w, crouch in zip(movement_qualities, kill_weapons, movement_crouched):
+            if crouch or w not in _COUNTERSTRAFE_WEAPONS:
+                continue
+            if q == "counter-strafed":
+                cs_attempts += 1
+                cs_good += 1
+            elif q == "stopped":
+                cs_attempts += 1
+
         movement = {
+            **_summarise(shot_speeds, 1),
             "speeds": [round(s, 1) for s in shot_speeds],
             "weapons": kill_weapons,
             "low_penalty": low_penalty_flags,
+            "crouched": movement_crouched,
             "outcomes": outcomes_mov,
-            "avg": round(sum(shot_speeds) / len(shot_speeds), 1),
-            "min": round(min(shot_speeds), 1),
-            "max": round(max(shot_speeds), 1),
+            "crouched_pct": round(
+                sum(1 for c in movement_crouched if c) / n_mov * 100, 1
+            ) if n_mov else 0,
+            "counterstrafe_attempts": cs_attempts,
+            "counterstrafe_good": cs_good,
+            "counterstrafe_rate": round(cs_good / cs_attempts * 100, 1) if cs_attempts else None,
             "standing_pct": round(standing / n_mov * 100, 1) if n_mov else 0,
             "counterstrafed_pct": round(cs / n_mov * 100, 1) if n_mov else 0,
+            "stopped_pct": round(stopped / n_mov * 100, 1) if n_mov else 0,
             "running_pct": round(running / n_mov * 100, 1) if n_mov else 0,
             "running_total": running,
             "running_low_penalty": running_low,
@@ -645,11 +962,9 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
         mod = sum(1 for q in preaim_qualities if q == "moderate")
         poor = sum(1 for q in preaim_qualities if q == "poor")
         preaim = {
+            **_summarise(preaim_errors, 1),
             "errors": [round(e, 1) for e in preaim_errors],
             "outcomes": outcomes_preaim,
-            "avg": round(sum(preaim_errors) / len(preaim_errors), 1),
-            "min": round(min(preaim_errors), 1),
-            "max": round(max(preaim_errors), 1),
             "excellent_pct": round(exc / n_aim * 100, 1) if n_aim else 0,
             "good_pct": round(good / n_aim * 100, 1) if n_aim else 0,
             "moderate_pct": round(mod / n_aim * 100, 1) if n_aim else 0,
@@ -658,18 +973,28 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
 
     ttk = {}
     if ttk_values:
-        total_shots = sum(ttk_shots)
-        total_hits = sum(ttk_hits)
-        ttk = {
-            "values": [round(v, 3) for v in ttk_values],
-            "outcomes": outcomes_ttk,
-            "avg": round(sum(ttk_values) / len(ttk_values), 3),
-            "min": round(min(ttk_values), 3),
-            "max": round(max(ttk_values), 3),
-            "total_shots": total_shots,
-            "total_hits": total_hits,
-            "accuracy_pct": round(total_hits / total_shots * 100, 1) if total_shots else 0,
-        }
+        # Drop engagements long enough that they stopped being about aim.  The
+        # outcomes list runs parallel to the values, so it has to be filtered
+        # in lockstep or the scatter plot mislabels every point after the first
+        # exclusion.
+        kept = [
+            (v, o) for v, o in zip(ttk_values, outcomes_ttk)
+            if v < _TTK_OUTLIER_SECONDS
+        ]
+        excluded = len(ttk_values) - len(kept)
+        if kept:
+            kept_values = [v for v, _ in kept]
+            total_shots = sum(ttk_shots)
+            total_hits = sum(ttk_hits)
+            ttk = {
+                **_summarise(kept_values, 3),
+                "values": [round(v, 3) for v in kept_values],
+                "outcomes": [o for _, o in kept],
+                "excluded_outliers": excluded,
+                "total_shots": total_shots,
+                "total_hits": total_hits,
+                "accuracy_pct": round(total_hits / total_shots * 100, 1) if total_shots else 0,
+            }
 
     reaction = {}
     if reaction_values:
@@ -679,11 +1004,12 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
         average = sum(1 for c in reaction_categories if c == "average")
         slow = sum(1 for c in reaction_categories if c == "slow")
         reaction = {
+            **_summarise(reaction_values, 1),
+            # Reported for inspection only — see _AIM_RATING_WEIGHTS for why it
+            # does not feed the rating.
+            "diagnostic_only": True,
             "values": [round(v, 1) for v in reaction_values],
             "outcomes": outcomes_rxn,
-            "avg": round(sum(reaction_values) / n_rxn, 1),
-            "min": round(min(reaction_values), 1),
-            "max": round(max(reaction_values), 1),
             "lightning_pct": round(lightning / n_rxn * 100, 1),
             "fast_pct": round(fast / n_rxn * 100, 1),
             "average_pct": round(average / n_rxn * 100, 1),
@@ -694,12 +1020,21 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
     if accuracy_values:
         n_acc = len(accuracy_values)
         fb_hit = sum(1 for fb in first_bullet_hits if fb)
+        total_acc_hits = sum(accuracy_hits)
+        total_acc_shots = sum(accuracy_shots)
         accuracy = {
+            **_summarise(accuracy_values, 1),
+            # Accuracy is a rate, so the headline pools every bullet rather
+            # than averaging per-engagement percentages.  A one-bullet exchange
+            # scores 100% and a thirty-round spray that lands ten scores 33%;
+            # treating those as two equal observations put the median 20 points
+            # above the rate the player actually shot at.
+            "pooled_pct": round(total_acc_hits / total_acc_shots * 100, 1)
+            if total_acc_shots else None,
+            "total_hits": total_acc_hits,
+            "total_shots": total_acc_shots,
             "values": [round(v, 1) for v in accuracy_values],
             "outcomes": outcomes_acc,
-            "avg": round(sum(accuracy_values) / n_acc, 1),
-            "min": round(min(accuracy_values), 1),
-            "max": round(max(accuracy_values), 1),
             "first_bullet_pct": round(fb_hit / n_acc * 100, 1) if n_acc else 0,
             "head_pct": round(hitgroup_head / hitgroup_total * 100, 1) if hitgroup_total else 0,
             "upper_pct": round(hitgroup_upper / hitgroup_total * 100, 1) if hitgroup_total else 0,
@@ -709,42 +1044,64 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
             "lower_count": hitgroup_lower,
         }
 
-    # Approximate aim rating (0-100)
-    # Weighted: 30% crosshair placement, 25% movement, 25% TTK, 20% reaction
-    aim_rating = 50.0  # baseline
-    if preaim_errors or movement_qualities or ttk_values or reaction_values:
-        aim_rating = 0.0
-        # 30% crosshair placement: 0° = 100, 20°+ = 0
-        if preaim_errors:
-            avg_err = sum(preaim_errors) / len(preaim_errors)
-            cp_score = max(0.0, min(100.0, 100.0 - avg_err * 5.0))
-        else:
-            cp_score = 50.0
-        aim_rating += cp_score * 0.30
-        # 25% movement discipline: non-running %
-        if n_mov:
-            good_mov = sum(1 for q in movement_qualities if q != "running")
-            mv_score = (good_mov / n_mov) * 100.0
-        else:
-            mv_score = 50.0
-        aim_rating += mv_score * 0.25
-        # 25% TTK efficiency: 0.15s = 100, 0.8s+ = 0
-        if ttk_values:
-            avg_ttk = sum(ttk_values) / len(ttk_values)
-            ttk_score = max(0.0, min(100.0, (0.8 - avg_ttk) / 0.65 * 100.0))
-        else:
-            ttk_score = 50.0
-        aim_rating += ttk_score * 0.25
-        # 20% reaction time: 150ms = 100, 500ms+ = 0
-        if reaction_values:
-            avg_rxn = sum(reaction_values) / len(reaction_values)
-            rxn_score = max(0.0, min(100.0, (500.0 - avg_rxn) / 350.0 * 100.0))
-        else:
-            rxn_score = 50.0
-        aim_rating += rxn_score * 0.20
-    aim_rating = round(min(100, max(0, aim_rating)), 1)
+    # ------------------------------------------------------------------ #
+    # Aim rating (0-100)                                                   #
+    #                                                                      #
+    # Each component scores off the *median* of its samples, then carries  #
+    # weight proportional to how much evidence stands behind it.  Absent   #
+    # components are dropped and the remaining weights renormalised —      #
+    # previously they were filled in at 50, which meant a match where a    #
+    # metric could not be measured was rated partly on a constant.  That   #
+    # is untenable once these weights become user-adjustable: someone who  #
+    # cares mostly about one metric would be scored on a placeholder.      #
+    # ------------------------------------------------------------------ #
+    components: list[tuple[str, float, int]] = []
+
+    preaim_median = _median(preaim_errors)
+    if preaim_median is not None:
+        # 0° = 100, 20°+ = 0
+        components.append((
+            "preaim",
+            max(0.0, min(100.0, 100.0 - preaim_median * 5.0)),
+            len(preaim_errors),
+        ))
+
+    if n_mov:
+        good_mov = sum(1 for q in movement_qualities if q != "running")
+        components.append(("movement", good_mov / n_mov * 100.0, n_mov))
+
+    ttk_median = _median([v for v in ttk_values if v < _TTK_OUTLIER_SECONDS])
+    if ttk_median is not None:
+        # 0.15s = 100, 0.8s+ = 0
+        components.append((
+            "ttk",
+            max(0.0, min(100.0, (0.8 - ttk_median) / 0.65 * 100.0)),
+            len([v for v in ttk_values if v < _TTK_OUTLIER_SECONDS]),
+        ))
+
+    aim_rating: float | None = None
+    rating_inputs: list[dict[str, Any]] = []
+    if components:
+        weighted_sum = 0.0
+        total_weight = 0.0
+        for name, score, n in components:
+            weight = _AIM_RATING_WEIGHTS[name] * (n / (n + _CONFIDENCE_K))
+            weighted_sum += score * weight
+            total_weight += weight
+            rating_inputs.append({
+                "metric": name,
+                "score": round(score, 1),
+                "n": n,
+                "weight": round(weight, 4),
+            })
+        if total_weight > 0:
+            aim_rating = round(min(100.0, max(0.0, weighted_sum / total_weight)), 1)
+            for item in rating_inputs:
+                item["weight_share"] = round(item["weight"] / total_weight, 3)
 
     return {
+        "thresholds": _AIM_THRESHOLDS,
+        "aim_rating_inputs": rating_inputs,
         "movement": movement,
         "preaim": preaim,
         "ttk": ttk,
@@ -756,6 +1113,101 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
 
 
 # ---------------------------------------------------------------------------
+# Round win probability
+#
+# P(CT wins the round | ct_alive, t_alive, bomb_planted), measured from this
+# installation's own demo corpus: 40 demos, ~800 rounds, 6045 observed states.
+# Every state below has at least 8 observations behind it.
+#
+# The table validates against known truths, which is the main reason to trust
+# it: 5v5 with no bomb comes out at 0.501 on 793 observations, the even states
+# (4v4, 3v3, 2v2) all sit within a couple of points of 0.500, man advantage is
+# monotone in both directions, and planting the bomb moves every state toward
+# the T side. None of that was imposed — it fell out of the data.
+#
+# It is one player's matchmaking pool, so it encodes that pool's tendencies.
+# Recalibrate with scripts/calibrate_winprob.py as the corpus grows.
+# ---------------------------------------------------------------------------
+_WIN_PROB: dict[tuple[int, int, int], float] = {
+    (1, 1, 0): 0.667,       # n=51
+    (1, 1, 1): 0.299,       # n=107
+    (1, 2, 0): 0.298,       # n=57
+    (1, 2, 1): 0.099,       # n=142
+    (1, 3, 0): 0.039,       # n=51
+    (1, 3, 1): 0.056,       # n=108
+    (1, 4, 0): 0.000,       # n=40
+    (1, 4, 1): 0.027,       # n=74
+    (1, 5, 0): 0.000,       # n=26
+    (1, 5, 1): 0.000,       # n=27
+    (2, 1, 0): 0.828,       # n=122
+    (2, 1, 1): 0.683,       # n=79
+    (2, 2, 0): 0.513,       # n=148
+    (2, 2, 1): 0.387,       # n=119
+    (2, 3, 0): 0.290,       # n=145
+    (2, 3, 1): 0.137,       # n=95
+    (2, 4, 0): 0.123,       # n=114
+    (2, 4, 1): 0.077,       # n=78
+    (2, 5, 0): 0.068,       # n=74
+    (2, 5, 1): 0.030,       # n=33
+    (3, 1, 0): 0.956,       # n=137
+    (3, 1, 1): 0.939,       # n=33
+    (3, 2, 0): 0.738,       # n=210
+    (3, 2, 1): 0.727,       # n=66
+    (3, 3, 0): 0.498,       # n=257
+    (3, 3, 1): 0.456,       # n=68
+    (3, 4, 0): 0.315,       # n=232
+    (3, 4, 1): 0.238,       # n=63
+    (3, 5, 0): 0.141,       # n=170
+    (3, 5, 1): 0.038,       # n=26
+    (4, 1, 0): 0.991,       # n=109
+    (4, 1, 1): 1.000,       # n=11
+    (4, 2, 0): 0.921,       # n=178
+    (4, 2, 1): 0.864,       # n=22
+    (4, 3, 0): 0.688,       # n=282
+    (4, 3, 1): 0.684,       # n=38
+    (4, 4, 0): 0.520,       # n=369
+    (4, 4, 1): 0.468,       # n=47
+    (4, 5, 0): 0.310,       # n=364
+    (4, 5, 1): 0.321,       # n=28
+    (5, 1, 0): 1.000,       # n=51
+    (5, 2, 0): 0.961,       # n=102
+    (5, 3, 0): 0.812,       # n=208
+    (5, 3, 1): 0.750,       # n=12
+    (5, 4, 0): 0.672,       # n=415
+    (5, 4, 1): 0.640,       # n=25
+    (5, 5, 0): 0.501,       # n=793
+    (5, 5, 1): 0.513,       # n=39
+}
+
+
+def _win_probability(ct_alive: int, t_alive: int, bomb_planted: bool) -> float:
+    """P(CT wins) for a round state, falling back when the state is unmeasured.
+
+    Falls back to the same man-count without the bomb, and finally to a plain
+    function of the man advantage, so that rare states still return something
+    monotone rather than dropping the kill out of the swing calculation.
+    """
+    if ct_alive <= 0:
+        return 0.0
+    if t_alive <= 0:
+        return 1.0
+
+    planted = 1 if bomb_planted else 0
+    exact = _WIN_PROB.get((ct_alive, t_alive, planted))
+    if exact is not None:
+        return exact
+
+    no_bomb = _WIN_PROB.get((ct_alive, t_alive, 0))
+    if no_bomb is not None:
+        # Planting is worth roughly a tenth of a round to the T side across the
+        # measured states; apply that shift when the planted cell is missing.
+        return max(0.0, min(1.0, no_bomb - 0.10)) if planted else no_bomb
+
+    diff = ct_alive - t_alive
+    return max(0.0, min(1.0, 0.5 + 0.18 * diff - (0.10 if planted else 0.0)))
+
+
+# ---------------------------------------------------------------------------
 # Benchmarks — tier classification for match metrics
 # ---------------------------------------------------------------------------
 
@@ -764,7 +1216,13 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
 # For "higher is better" metrics the tiers are low→high (first threshold is
 # the *best* floor).
 #
-# Tier labels: "pro", "high_amateur", "average", "below_average"
+# Tier keys are "pro", "high_amateur", "average", "below_average" for storage
+# compatibility, but nothing behind them is calibrated: every threshold in this
+# file is hand-set, not derived from a population of real players.  They are
+# presented as plain bands (Excellent/Strong/Fair/Needs Work) rather than as a
+# claim about how the player compares to pros, and each benchmark carries
+# ``calibration: "heuristic"`` so a consumer can tell.  Replacing these with
+# percentiles needs a corpus far larger than one player's match history.
 
 # Map-specific enemies-flashed benchmarks (24-round base).
 _FLASH_BENCHMARKS: dict[str, tuple[int, int, int]] = {
@@ -808,8 +1266,10 @@ def compute_benchmarks(
 ) -> dict[str, Any]:
     """Compute benchmark tier labels for key metrics.
 
-    Returns a dict of metric_key → {value, tier, label, unit} where tier is
-    one of "pro", "high_amateur", "average", "below_average".
+    Returns a dict of metric_key → {value, tier, unit, n, confidence,
+    calibration} where tier is one of "pro", "high_amateur", "average",
+    "below_average" and ``calibration`` is always "heuristic" for now — see the
+    note above the threshold tables.
     """
     benchmarks: dict[str, Any] = {}
     # Normalisation factor: benchmarks assume a 24-round (MR12) map
@@ -854,51 +1314,75 @@ def compute_benchmarks(
 
     # --- Aim benchmarks ---
     if aim_stats:
+        # All of these read the median rather than the mean: with a dozen-odd
+        # samples per match a single bad engagement was enough to drop a tier.
+
         # Speed When Shooting (u/s) — lower is better
         mv = aim_stats.get("movement", {})
-        if mv.get("avg") is not None:
+        if mv.get("median") is not None:
             benchmarks["shot_speed"] = {
-                "value": mv["avg"],
-                "tier": _classify_tier_lower_better(mv["avg"], 15, 40, 100),
+                "value": mv["median"],
+                "n": mv.get("n"),
+                "confidence": mv.get("confidence"),
+                "tier": _classify_tier_lower_better(mv["median"], *_aim_bounds("movement")),
                 "unit": "u/s",
             }
 
-        # Counterstrafe Quality — using avg shot speed as proxy (lower = better stop)
-        # Thresholds: Pro < 50, High Amateur 50–100, Average 100–200, Below Avg > 200
-        if mv.get("avg") is not None:
+        # Counter-strafe rate — of the rifle engagements that actually needed
+        # a stop, how many were stopped properly rather than coasted.  Graded
+        # on its own sample size, which is much smaller than the movement
+        # sample it comes from once crouches and non-rifles are excluded.
+        cs_rate = mv.get("counterstrafe_rate")
+        if cs_rate is not None:
+            cs_n = mv.get("counterstrafe_attempts", 0)
             benchmarks["counterstrafe"] = {
-                "value": mv["avg"],
-                "tier": _classify_tier_lower_better(mv["avg"], 50, 100, 200),
-                "unit": "u/s",
+                "value": cs_rate,
+                "n": cs_n,
+                "confidence": _confidence(cs_n),
+                "tier": _classify_tier_higher_better(cs_rate, 80, 60, 35),
+                "unit": "% of rifle stops",
             }
 
         # Pre-Aim Offset (degrees) — lower is better
         pa = aim_stats.get("preaim", {})
-        if pa.get("avg") is not None:
+        if pa.get("median") is not None:
             benchmarks["preaim_offset"] = {
-                "value": pa["avg"],
-                "tier": _classify_tier_lower_better(pa["avg"], 3, 10, 25),
+                "value": pa["median"],
+                "n": pa.get("n"),
+                "confidence": pa.get("confidence"),
+                "tier": _classify_tier_lower_better(pa["median"], *_aim_bounds("preaim")),
                 "unit": "°",
             }
 
-        # Reaction Time (ms) — lower is better
+        # Reaction Time (ms) — reported, but flagged: see _AIM_RATING_WEIGHTS.
         rxn = aim_stats.get("reaction", {})
-        if rxn.get("avg") is not None:
+        if rxn.get("median") is not None:
             benchmarks["reaction_time"] = {
-                "value": rxn["avg"],
-                "tier": _classify_tier_lower_better(rxn["avg"], 180, 230, 320),
+                "value": rxn["median"],
+                "n": rxn.get("n"),
+                "confidence": rxn.get("confidence"),
+                "diagnostic_only": True,
+                "tier": _classify_tier_lower_better(rxn["median"], *_aim_bounds("reaction")),
                 "unit": "ms",
             }
 
         # Engagement Time to Kill (ms) — lower is better
         ttk = aim_stats.get("ttk", {})
-        if ttk.get("avg") is not None:
-            ttk_ms = round(ttk["avg"] * 1000, 0)
+        if ttk.get("median") is not None:
+            ttk_ms = round(ttk["median"] * 1000, 0)
             benchmarks["engagement_ttk"] = {
                 "value": ttk_ms,
-                "tier": _classify_tier_lower_better(ttk_ms, 400, 650, 1100),
+                "n": ttk.get("n"),
+                "confidence": ttk.get("confidence"),
+                "tier": _classify_tier_lower_better(ttk_ms, *[b * 1000 for b in _aim_bounds("ttk")]),
                 "unit": "ms",
             }
+
+    # Every threshold in this function is a hand-set guess.  Marking each entry
+    # keeps that visible to consumers instead of leaving the tier looking like
+    # a measured comparison.
+    for entry in benchmarks.values():
+        entry["calibration"] = "heuristic"
 
     return benchmarks
 
@@ -906,6 +1390,21 @@ def compute_benchmarks(
 # ---------------------------------------------------------------------------
 # Utility & Economics
 # ---------------------------------------------------------------------------
+
+# Enemy blind time (seconds) below which a flash did not really achieve
+# anything.  A quarter of the enemy flashes in the stored matches land under a
+# second, which is barely a flinch — counting those the same as a four-second
+# blind is what made "enemies flashed" a poor guide to flash quality.
+_EFFECTIVE_BLIND_SECONDS = 1.0
+
+# Relative weights for the utility rating.  Smoke placement is deliberately
+# absent — see the note at the rating itself.
+_UTILITY_RATING_WEIGHTS = {
+    "use_rate": 0.35,
+    "flash": 0.35,
+    "damage": 0.30,
+}
+
 
 # Internal grenade key → cost in CS2
 _GRENADE_ITEMS: dict[str, int] = {
@@ -990,6 +1489,33 @@ _WEAPON_SLOT: dict[str, str] = {
 }
 
 
+
+def _genuine_purchases(purchase_df: pd.DataFrame) -> pd.DataFrame:
+    """Purchases we can actually stand behind.
+
+    item_purchase carries two things that are not buys. Refunds come back with
+    ``was_sold`` set, and the game periodically re-emits a player's whole
+    inventory as a burst of rows sharing one tick with the slot numbers
+    restarting at zero. A re-emitted rifle looked exactly like buying a second
+    one, which is how the drop detector reported weapons nobody bought.
+
+    Only single-row ticks are kept. Roughly a third of rows sit in bursts and
+    not all of them are snapshots, so this discards some real purchases too —
+    the trade is deliberate: under-reporting drops beats inventing them.
+    """
+    if purchase_df.empty:
+        return purchase_df
+    df = purchase_df
+    if "was_sold" in df.columns:
+        df = df[df["was_sold"] != True]  # noqa: E712
+    id_col = _find_id_col(df, ("steamid", "attacker_steamid", "user_steamid"))
+    if id_col is None or "tick" not in df.columns:
+        return df
+    counts = df.groupby([id_col, "tick"])[id_col].transform("size")
+    return df[counts == 1]
+
+
+
 def _calculate_utility_stats(
     enriched_rounds: list[dict[str, Any]],
     parsed_data: dict[str, Any],
@@ -1027,14 +1553,17 @@ def _calculate_utility_stats(
     }
 
     # Count purchases (deduplicated: cap at carry limit per round)
-    if not purchase_df.empty:
-        id_col = _find_id_col(purchase_df, ("steamid", "attacker_steamid", "user_steamid"))
+    _bought_source = purchase_df
+    if not purchase_df.empty and "was_sold" in purchase_df.columns:
+        _bought_source = purchase_df[purchase_df["was_sold"] != True]  # noqa: E712
+    if not _bought_source.empty:
+        id_col = _find_id_col(_bought_source, ("steamid", "attacker_steamid", "user_steamid"))
         if id_col:
-            name_col = "item_name" if "item_name" in purchase_df.columns else (
-                "weapon" if "weapon" in purchase_df.columns else None
+            name_col = "item_name" if "item_name" in _bought_source.columns else (
+                "weapon" if "weapon" in _bought_source.columns else None
             )
-            if name_col and "round" in purchase_df.columns:
-                player_buys = purchase_df[purchase_df[id_col].astype(str) == sid]
+            if name_col and "round" in _bought_source.columns:
+                player_buys = _bought_source[_bought_source[id_col].astype(str) == sid]
                 for rnd_num in player_buys["round"].unique():
                     rnd_buys = player_buys[player_buys["round"] == rnd_num]
                     rnd_counts: dict[str, int] = {}
@@ -1097,6 +1626,9 @@ def _calculate_utility_stats(
     total_enemy_blind_duration = 0.0
     total_team_blind_duration = 0.0
     flash_assists = 0
+    self_flashes = 0
+    total_self_blind_duration = 0.0
+    enemy_blind_durations: list[float] = []
 
     if not blind_df.empty:
         id_col = _find_id_col(blind_df, ("attacker_steamid", "user_steamid", "steamid"))
@@ -1109,6 +1641,13 @@ def _calculate_utility_stats(
 
                 for _, brow in player_blinds.iterrows():
                     dur = float(brow.get("blind_duration", 0))
+                    # Blinding yourself is not a team flash. Same team by
+                    # definition, so the team check alone charged every
+                    # self-flash to the player as if they had blinded a mate.
+                    if str(brow.get("user_steamid", "")) == sid:
+                        self_flashes += 1
+                        total_self_blind_duration += dur
+                        continue
                     is_team = False
                     if atk_team_col and vic_team_col:
                         try:
@@ -1121,6 +1660,7 @@ def _calculate_utility_stats(
                     else:
                         enemy_flashes += 1
                         total_enemy_blind_duration += dur
+                        enemy_blind_durations.append(dur)
 
     # Flash assists from death events
     death_df = parsed_data.get("player_death", pd.DataFrame())
@@ -1131,18 +1671,38 @@ def _calculate_utility_stats(
         ]
         flash_assists = len(fa)
 
+    flashes_thrown = thrown.get("flashbang", 0)
+    effective_flashes = sum(
+        1 for d in enemy_blind_durations if d >= _EFFECTIVE_BLIND_SECONDS
+    )
+
     flash_efficiency: dict[str, Any] = {
-        "thrown": thrown.get("flashbang", 0),
+        "thrown": flashes_thrown,
         "enemies_flashed": enemy_flashes,
         "team_flashed": team_flashes,
+        "self_flashed": self_flashes,
+        "self_blind_duration": round(total_self_blind_duration, 1),
         "avg_enemy_blind_duration": round(
             total_enemy_blind_duration / enemy_flashes, 1
         ) if enemy_flashes > 0 else 0.0,
+        "median_enemy_blind_duration": round(_median(enemy_blind_durations), 2)
+        if enemy_blind_durations else None,
         "total_enemy_blind_duration": round(total_enemy_blind_duration, 1),
         "flash_assists": flash_assists,
         "enemies_per_flash": round(
-            enemy_flashes / thrown["flashbang"], 2
-        ) if thrown.get("flashbang", 0) > 0 else 0.0,
+            enemy_flashes / flashes_thrown, 2
+        ) if flashes_thrown > 0 else 0.0,
+        # A count of enemies flashed treats a 0.3 s glance and a 4 s blind as
+        # the same event, and a quarter of these land under a second.  Blind
+        # seconds delivered per flash thrown is the figure that tracks whether
+        # the flash actually bought anything.
+        "effective_flashes": effective_flashes,
+        "effective_flash_pct": round(
+            effective_flashes / enemy_flashes * 100, 1
+        ) if enemy_flashes > 0 else 0.0,
+        "blind_seconds_per_flash": round(
+            total_enemy_blind_duration / flashes_thrown, 2
+        ) if flashes_thrown > 0 else 0.0,
     }
 
     # --- HE Grenades ---
@@ -1218,11 +1778,23 @@ def _calculate_utility_stats(
                     "y": round(sy, 1),
                 })
 
-    # Check if smokes extinguished enemy molotovs (within ~300 unit radius)
+    # Check if smokes extinguished *enemy* molotovs (within ~300 unit radius).
+    # Own molotovs have to be excluded: smokes and fire both get thrown at the
+    # same chokepoints, so counting every molotov in the round credited players
+    # for smoking out their own utility.
     molly_extinguishes = 0
-    if smoke_locations and not molotov_det_df.empty and "x" in molotov_det_df.columns:
+    enemy_molly_det = molotov_det_df
+    if not molotov_det_df.empty:
+        molly_id_col = _find_id_col(
+            molotov_det_df, ("user_steamid", "steamid", "attacker_steamid")
+        )
+        if molly_id_col:
+            enemy_molly_det = molotov_det_df[
+                molotov_det_df[molly_id_col].astype(str) != sid
+            ]
+    if smoke_locations and not enemy_molly_det.empty and "x" in enemy_molly_det.columns:
         for sm in smoke_locations:
-            for _, mrow in molotov_det_df.iterrows():
+            for _, mrow in enemy_molly_det.iterrows():
                 mx = float(mrow.get("x", 0))
                 my = float(mrow.get("y", 0))
                 m_rnd = int(mrow.get("round", 0)) if "round" in mrow.index else 0
@@ -1270,7 +1842,11 @@ def _calculate_utility_stats(
             "nade_spend": nade_spend,
             "enemies_flashed": util.get("enemies_flashed", 0),
             "enemy_blind_duration": round(
-                sum(f.get("duration", 0) for f in util.get("flash_instances", []) if not f.get("is_friendly")),
+                sum(
+                    f.get("duration", 0)
+                    for f in util.get("flash_instances", [])
+                    if not f.get("is_friendly") and not f.get("is_self")
+                ),
                 1,
             ),
             "flash_assists": util.get("flash_assists", 0),
@@ -1282,43 +1858,62 @@ def _calculate_utility_stats(
 
     # ------------------------------------------------------------------ #
     # Utility rating (0-100)                                               #
+    #                                                                      #
+    # Same construction as the aim rating: each component scores off what   #
+    # was actually observed, carries weight proportional to how much        #
+    # evidence stands behind it, and is dropped entirely when there is no   #
+    # evidence rather than being filled in at 50.                           #
+    #                                                                      #
+    # Smoke placement used to be 20% of this and has been removed.  It      #
+    # scored resolved-callout ÷ smokes-thrown, which measures how complete   #
+    # our callout map is and whether detonation events survived the parse —  #
+    # not whether the smoke was any good.  Across 76 stored matches it       #
+    # produced values from 0 to 100 on identical play.  Smoke locations are  #
+    # still reported; they are just no longer scored.                        #
     # ------------------------------------------------------------------ #
-    # Weighted: 30% use rate, 30% flash efficiency, 20% damage utility,
-    #           20% smoke coverage
-    rating = 50.0
+    util_components: list[tuple[str, float, int]] = []
 
-    # Use rate component (0-100, 100% = perfect)
-    use_score = min(100, use_rate) if total_bought > 0 else 50
-    # Flash component: enemies per flash (0.5+ is good, 1+ is great)
-    flash_score = 0
-    if thrown.get("flashbang", 0) > 0:
-        epf = enemy_flashes / thrown["flashbang"]
-        flash_score = min(100, epf * 100)  # 1.0 enemies/flash = 100
-    elif total_bought == 0:
-        flash_score = 50
-    # Damage component: avg damage per HE/molly (30+ is good)
-    total_dmg_nades = thrown.get("hegrenade", 0) + thrown.get("molotov", 0) + thrown.get("incgrenade", 0)
-    dmg_score = 0
+    if total_bought > 0:
+        util_components.append(("use_rate", min(100.0, use_rate), total_bought))
+
+    if flashes_thrown > 0:
+        # ~2 s of enemy blindness per flash thrown is a good flash.
+        bspf = total_enemy_blind_duration / flashes_thrown
+        util_components.append((
+            "flash", min(100.0, bspf / 2.0 * 100.0), flashes_thrown,
+        ))
+
+    total_dmg_nades = (
+        thrown.get("hegrenade", 0) + thrown.get("molotov", 0) + thrown.get("incgrenade", 0)
+    )
     if total_dmg_nades > 0:
         avg_dmg = (total_he_damage + total_molly_damage) / total_dmg_nades
-        dmg_score = min(100, avg_dmg * 2.5)  # 40 dmg/nade = 100
-    elif total_bought == 0:
-        dmg_score = 50
-    # Smoke coverage score
-    smoke_score = 0
-    if smoke_count > 0:
-        used_zones = len([s for s in smoke_locations if s["location"] != "unknown"])
-        smoke_score = min(100, (used_zones / smoke_count) * 100)
-    elif total_bought == 0:
-        smoke_score = 50
+        util_components.append((
+            "damage", min(100.0, avg_dmg * 2.5), total_dmg_nades,  # 40 dmg/nade = 100
+        ))
 
-    rating = (use_score * 0.30 + flash_score * 0.30
-              + dmg_score * 0.20 + smoke_score * 0.20)
-    # Teamplayer penalty — minimal: minor incidents are normal in CS2.
-    # Team flash: only penalise beyond 3 flashes (−0.5 each)
-    if team_flashes > 3:
-        rating -= (team_flashes - 3) * 0.5
-    rating = round(min(100, max(0, rating)), 1)
+    rating: float | None = None
+    rating_inputs: list[dict[str, Any]] = []
+    if util_components:
+        weighted_sum = 0.0
+        total_weight = 0.0
+        for name, score, n in util_components:
+            weight = _UTILITY_RATING_WEIGHTS[name] * (n / (n + _CONFIDENCE_K))
+            weighted_sum += score * weight
+            total_weight += weight
+            rating_inputs.append({
+                "metric": name, "score": round(score, 1),
+                "n": n, "weight": round(weight, 4),
+            })
+        if total_weight > 0:
+            rating = weighted_sum / total_weight
+            for item in rating_inputs:
+                item["weight_share"] = round(item["weight"] / total_weight, 3)
+            # Teamplayer penalty — minimal: minor incidents are normal in CS2.
+            # Team flash: only penalise beyond 3 flashes (−0.5 each)
+            if team_flashes > 3:
+                rating -= (team_flashes - 3) * 0.5
+            rating = round(min(100.0, max(0.0, rating)), 1)
 
     # ------------------------------------------------------------------ #
     # Teamplayer — per-round: teammate attacks, drops, team flashes        #
@@ -1356,19 +1951,21 @@ def _calculate_utility_stats(
                 vic_t = "user_team_num" if "user_team_num" in player_blinds.columns else None
                 if atk_t and vic_t:
                     _team_flash_rows = player_blinds[
-                        player_blinds[atk_t] == player_blinds[vic_t]
+                        (player_blinds[atk_t] == player_blinds[vic_t])
+                        & (player_blinds["user_steamid"].astype(str) != sid)
                     ]
 
     # Pre-compute per-round weapon drops
     _drop_rounds: dict[int, list[str]] = {}
-    if not purchase_df.empty:
-        id_col = _find_id_col(purchase_df, ("steamid", "attacker_steamid", "user_steamid"))
+    _drop_source = _genuine_purchases(purchase_df)
+    if not _drop_source.empty:
+        id_col = _find_id_col(_drop_source, ("steamid", "attacker_steamid", "user_steamid"))
         if id_col:
-            name_col = "item_name" if "item_name" in purchase_df.columns else (
-                "weapon" if "weapon" in purchase_df.columns else None
+            name_col = "item_name" if "item_name" in _drop_source.columns else (
+                "weapon" if "weapon" in _drop_source.columns else None
             )
-            if name_col and "round" in purchase_df.columns:
-                player_buys = purchase_df[purchase_df[id_col].astype(str) == sid]
+            if name_col and "round" in _drop_source.columns:
+                player_buys = _drop_source[_drop_source[id_col].astype(str) == sid]
                 for rnd_num in player_buys["round"].unique():
                     rnd_buys = player_buys[player_buys["round"] == rnd_num]
                     slot_items: dict[str, list[str]] = {}
@@ -1436,6 +2033,7 @@ def _calculate_utility_stats(
     }
 
     return {
+        "utility_rating_inputs": rating_inputs,
         "economics": economics,
         "flash": flash_efficiency,
         "he": he_efficiency,
@@ -2294,6 +2892,132 @@ def _build_round_stats(
     return stats
 
 
+def _calculate_impact_stats(
+    parsed_data: dict[str, Any],
+    steam_id: str,
+    total_rounds: int,
+    round_team_map: dict[int, str],
+) -> dict[str, Any]:
+    """Score every kill and death by how much it moved the round.
+
+    Walks each round's deaths in order, tracking who is alive and whether the
+    bomb is down, and prices each event as the change in the player's team's
+    chance of winning.  A kill that turns 5v5 into 5v4 is worth far more than
+    one that turns 4v1 into 4v0, and the same kill is worth more after the
+    bomb is planted — differences that counting kills cannot express.
+
+    Credit here goes entirely to whoever landed the kill.  Splitting it with
+    the players who did the damage, traded, or threw the flash is the next
+    step, and needs attribution this function does not yet do.
+    """
+    death_df = parsed_data.get("player_death", pd.DataFrame())
+    bomb_df = parsed_data.get("bomb_planted", pd.DataFrame())
+    sid = str(steam_id)
+
+    required = {"round", "tick", "user_team_num", "user_steamid"}
+    if death_df.empty or not required.issubset(death_df.columns):
+        # Without a tick to order deaths by, or a team to attribute them to,
+        # the round state cannot be reconstructed and no swing is measurable.
+        return {}
+
+    plant_tick_by_round: dict[int, int] = {}
+    if not bomb_df.empty and "round" in bomb_df.columns and "tick" in bomb_df.columns:
+        for _, row in bomb_df.iterrows():
+            try:
+                rnd = int(row["round"])
+                tick = int(row["tick"])
+            except (TypeError, ValueError):
+                continue
+            plant_tick_by_round.setdefault(rnd, tick)
+
+    kill_swings: list[float] = []
+    death_swings: list[float] = []
+    per_round: list[dict[str, Any]] = []
+
+    for rnd in range(1, total_rounds + 1):
+        rows = death_df[death_df["round"] == rnd]
+        if rows.empty:
+            continue
+        rows = rows.sort_values("tick")
+
+        side = round_team_map.get(rnd)
+        if side not in ("CT", "T"):
+            continue
+        player_is_ct = side == "CT"
+
+        ct_alive, t_alive = 5, 5
+        plant_tick = plant_tick_by_round.get(rnd)
+        round_kill_swing = 0.0
+        round_death_swing = 0.0
+
+        for _, row in rows.iterrows():
+            try:
+                tick = int(row["tick"])
+                victim_team = int(row["user_team_num"])
+            except (TypeError, ValueError):
+                continue
+            if victim_team not in (2, 3):
+                continue
+
+            planted = plant_tick is not None and tick >= plant_tick
+            before_ct = _win_probability(ct_alive, t_alive, planted)
+
+            if victim_team == 3:
+                ct_after, t_after = ct_alive - 1, t_alive
+            else:
+                ct_after, t_after = ct_alive, t_alive - 1
+            after_ct = _win_probability(ct_after, t_after, planted)
+
+            # Expressed from the player's own side.
+            before = before_ct if player_is_ct else 1.0 - before_ct
+            after = after_ct if player_is_ct else 1.0 - after_ct
+            swing = after - before
+
+            attacker = str(row.get("attacker_steamid", ""))
+            victim = str(row.get("user_steamid", ""))
+            if attacker == sid and victim != sid:
+                kill_swings.append(swing)
+                round_kill_swing += swing
+            if victim == sid:
+                death_swings.append(swing)
+                round_death_swing += swing
+
+            ct_alive, t_alive = ct_after, t_after
+            if ct_alive <= 0 or t_alive <= 0:
+                break
+
+        if round_kill_swing or round_death_swing:
+            per_round.append({
+                "round": rnd,
+                "side": side,
+                "kill_swing": round(round_kill_swing, 4),
+                "death_swing": round(round_death_swing, 4),
+                "net_swing": round(round_kill_swing + round_death_swing, 4),
+            })
+
+    if not kill_swings and not death_swings:
+        return {}
+
+    total_kill = sum(kill_swings)
+    total_death = sum(death_swings)
+    net = total_kill + total_death
+    n_events = len(kill_swings) + len(death_swings)
+
+    return {
+        "n": n_events,
+        "confidence": _confidence(n_events),
+        "kills_scored": len(kill_swings),
+        "deaths_scored": len(death_swings),
+        "kill_swing_total": round(total_kill, 3),
+        "death_swing_total": round(total_death, 3),
+        "net_swing_total": round(net, 3),
+        "net_swing_per_round": round(net / total_rounds, 4) if total_rounds else 0.0,
+        "best_kill_swing": round(max(kill_swings), 4) if kill_swings else None,
+        "median_kill_swing": round(_median(kill_swings), 4) if kill_swings else None,
+        "per_round": per_round,
+    }
+
+
 def _calculate_kast_rounds(round_stats: list[dict[str, Any]]) -> int:
     """
     Count rounds where the player had a Kill, Assist, Survived, or was Traded.
@@ -2599,7 +3323,14 @@ def build_enriched_rounds(
 
         # --- Damage-only encounters ---
         round_data["damage_encounters"] = _get_round_damage_encounters(
-            hurt_df, death_df, sid, r, velocities_df,
+            hurt_df, death_df, sid, r, velocities_df, weapon_fire_df,
+        )
+
+        # --- Bursts that hit nothing (accuracy denominator) ---
+        _side = round_data.get("side")
+        round_data["whiffed_engagements"] = _get_round_whiffed_engagements(
+            weapon_fire_df, hurt_df, parsed_data.get("spotted"), sid, r,
+            3 if _side == "CT" else 2 if _side == "T" else None,
         )
 
         # --- Opening duel ---
@@ -2738,17 +3469,49 @@ def _lookup_position(
     return (float(x), float(y))
 
 
+# Speed (u/s) below which a player counts as effectively stationary.
+_STATIC_SPEED = 10.0
+
+# CS2 rifles are accurate below ~34% of the 250 u/s max speed.
+_ACCURATE_SPEED = 85.0
+
+# Speeds above this are not movement.  Round restarts teleport all ten players
+# at once and the engine reports the jump as velocity, so a handful of ticks in
+# every match carry speeds in the tens of thousands for everybody
+# simultaneously.  Nothing on foot in CS2 approaches 400 u/s (the cap is ~250),
+# and measured samples cluster either below ~300 or above ~1000, so the
+# boundary is not delicate.
+_MAX_PLAUSIBLE_SPEED = 400.0
+
+# Ticks from the last above-_ACCURATE_SPEED sample to the shot.  Counter-
+# strafing cancels ~250 u/s in roughly 4 ticks; letting go and leaving it to
+# friction takes ~13 (sv_friction 5.2 decays speed ~8%/tick at 64-tick).
+# 7 sits between the two with margin on both sides.
+_COUNTERSTRAFE_MAX_TICKS = 7
+
+
 def _analyze_movement(
     velocities_df: pd.DataFrame, attacker_steamid: int, tick: int,
-    window: int = 16,
+    window: int = 32,
 ) -> dict[str, Any] | None:
-    """Compute movement metrics for the attacker at kill time.
+    """Compute movement metrics for the attacker at the moment of the shot.
 
     Returns a dict with:
-      - shot_speed: speed at the kill tick (units/s)
-      - pre_speed: peak speed in the window before the kill
-      - movement_quality: 'standing' | 'counter-strafed' | 'running'
+      - shot_speed: speed at the shot tick (units/s)
+      - pre_speed: peak speed in the window before the shot
+      - stop_ticks: ticks from the last running-speed sample to the shot,
+        or None if the player never exceeded the accuracy threshold
+      - window_span: ticks of history actually available (< window when the
+        sample runs off the start of the parsed data)
+      - movement_quality: 'standing' | 'counter-strafed' | 'stopped' | 'running'
       - movement_direction: 'still' | 'forward' | 'backward' | 'left' | 'right'
+
+    Speed at the shot alone cannot tell a counter-strafe from standing still —
+    a clean counter-strafe reads ~0 u/s, exactly like never having moved.  The
+    two are separated by how quickly the speed collapsed: an active
+    counter-strafe is several times faster than coasting to a halt on friction,
+    which is what ``stopped`` means.  ``stopped`` is still accurate fire, just
+    slow and telegraphed.
     """
     import math
 
@@ -2778,19 +3541,57 @@ def _analyze_movement(
     # Speed at shot tick (or closest)
     shot_row = window_ticks.iloc[-1]
     shot_speed = _speed(shot_row)
+    if shot_speed > _MAX_PLAUSIBLE_SPEED:
+        # The sample at the moment of the shot is a teleport artifact; the
+        # player's real speed here is unknown, so report nothing rather than
+        # guess from an earlier tick.
+        return None
 
-    # Peak speed in the window (ignoring NaN ticks)
-    speeds = [_speed(r) for _, r in window_ticks.iterrows()]
-    pre_speed = max(speeds) if speeds else 0.0
+    # Speed history across the window, minus any teleport artifacts.  These are
+    # dropped rather than clamped: one of them left in would set pre_speed for
+    # the whole window and mask whatever the player actually did.
+    samples = [
+        (int(r["tick"]), _speed(r))
+        for _, r in window_ticks.iterrows()
+    ]
+    samples = [(t, s) for t, s in samples if s <= _MAX_PLAUSIBLE_SPEED]
+    if not samples:
+        return None
 
-    # Movement quality classification
-    # CS2 rifles max speed ~250, accurate below ~34% = ~85 u/s
-    if shot_speed < 10:
+    speeds = [s for _, s in samples]
+    sample_ticks = [t for t, _ in samples]
+    shot_tick = sample_ticks[-1]
+    pre_speed = max(speeds)
+    window_span = shot_tick - sample_ticks[0]
+
+    # How long ago the player was last moving too fast to shoot accurately.
+    # Ascending iteration leaves this holding the *last* such sample.
+    stop_ticks: int | None = None
+    for t, s in samples:
+        if s > _ACCURATE_SPEED:
+            stop_ticks = shot_tick - t
+
+    # Crouching caps speed under the accuracy threshold on its own, so a
+    # crouched shot is accurate without any counter-strafe having happened.
+    # Recorded rather than reclassified: it still belongs in the speed
+    # distribution, it just must not count as evidence of a good stop.
+    ducked_raw = shot_row.get("ducked")
+    crouched = bool(ducked_raw) if ducked_raw == ducked_raw and ducked_raw is not None else False
+
+    # Movement quality classification.  The standing/stopped boundary is the
+    # accuracy threshold itself rather than a separate constant: a player whose
+    # peak speed never crossed it never had to stop to shoot straight, which is
+    # exactly what "standing" should mean.  stop_ticks is None in precisely
+    # that case, so the same measurement decides both questions.
+    if shot_speed >= _ACCURATE_SPEED:
+        quality = "running"
+    elif stop_ticks is None:
         quality = "standing"
-    elif shot_speed < 85:
+    elif stop_ticks <= _COUNTERSTRAFE_MAX_TICKS:
         quality = "counter-strafed"
     else:
-        quality = "running"
+        # Was moving fast enough to need a stop, but bled it off slowly.
+        quality = "stopped"
 
     # Movement direction relative to facing at shot tick
     vx = shot_row.get("velocity_X", 0)
@@ -2806,7 +3607,7 @@ def _analyze_movement(
     vy = vy or 0
     yaw = yaw or 0
 
-    if shot_speed < 10:
+    if shot_speed < _STATIC_SPEED:
         direction = "still"
     else:
         move_angle = math.degrees(math.atan2(float(vy), float(vx)))
@@ -2823,6 +3624,9 @@ def _analyze_movement(
     return {
         "shot_speed": round(shot_speed, 1),
         "pre_speed": round(pre_speed, 1),
+        "stop_ticks": stop_ticks,
+        "window_span": window_span,
+        "crouched": crouched,
         "movement_quality": quality,
         "movement_direction": direction,
     }
@@ -2835,11 +3639,14 @@ def _analyze_preaim(
     tick: int,
     offset: int = 32,
 ) -> dict[str, Any] | None:
-    """Measure crosshair placement accuracy before the kill.
+    """Measure crosshair placement accuracy before the engagement.
 
-    Computes the angular distance between where the attacker was looking
-    and where the victim actually was, at ``offset`` ticks before the kill
-    (default 32 ticks ≈ 0.5s — before the engagement starts).
+    Computes the angular distance between where the attacker was looking and
+    where the victim actually was, at ``offset`` ticks before ``tick`` (default
+    32 ticks ≈ 0.5 s).  ``tick`` must be the *first shot* of the engagement —
+    measuring back from the kill instead would land mid-duel on any drawn-out
+    fight, when the crosshair is already on target, and report that as
+    excellent placement.
 
     Returns a dict with:
       - crosshair_error: angular offset in degrees (lower = better)
@@ -2905,11 +3712,12 @@ def _analyze_preaim(
     pitch_err = ideal_pitch - a_pitch
     crosshair_error = math.sqrt(yaw_err ** 2 + pitch_err ** 2)
 
-    if crosshair_error < 5:
+    exc, good, moderate = _aim_bounds("preaim")
+    if crosshair_error < exc:
         quality = "excellent"
-    elif crosshair_error < 10:
+    elif crosshair_error < good:
         quality = "good"
-    elif crosshair_error < 20:
+    elif crosshair_error < moderate:
         quality = "moderate"
     else:
         quality = "poor"
@@ -3041,6 +3849,7 @@ def _analyze_reaction_time(
 
     # Walk backward: find the first tick where aim diverges from target
     acquisition_tick = None
+    found_off_target = False
     for _, atk_row in atk_rows:
         t = int(atk_row["tick"])
         vp = _closest_vic(t)
@@ -3051,11 +3860,22 @@ def _analyze_reaction_time(
             continue
         if angle > _AIM_ON_TARGET_DEG:
             # Aim was OFF target at this tick — the next tick is acquisition
+            found_off_target = True
             break
         acquisition_tick = t
 
+    if not found_off_target:
+        # The crosshair never left the target inside the data we have.  Either
+        # the player was pre-aimed, or the velocity sample does not reach far
+        # enough back to contain the moment they acquired.  Both are
+        # unmeasurable: falling through here would report the oldest sampled
+        # tick as the acquisition and invent a "reaction time" that is really
+        # just the size of the remaining window — which is longer the longer
+        # the engagement ran, so it would file clean pre-aims as "slow".
+        return None
+
     if acquisition_tick is None:
-        # Player was already aimed at the target for the entire window (pre-aimed)
+        # Aim was off target at the shot itself (spray transfer, or a miss).
         return None
 
     if acquisition_tick >= first_shot_tick:
@@ -3069,11 +3889,12 @@ def _analyze_reaction_time(
     if reaction_ms > 800:
         return None
 
-    if reaction_ms < 150:
+    lightning, fast, average = _aim_bounds("reaction")
+    if reaction_ms < lightning:
         category = "lightning"
-    elif reaction_ms < 200:
+    elif reaction_ms < fast:
         category = "fast"
-    elif reaction_ms < 300:
+    elif reaction_ms < average:
         category = "average"
     else:
         category = "slow"
@@ -3092,6 +3913,55 @@ _ENGAGEMENT_GAP = 128
 # How far before the first hit we look for weapon_fire events that are
 # likely misses aimed at the same target.  64 ticks ≈ 1 s.
 _PRE_HIT_WINDOW = 64
+
+
+def _engagement_accuracy(
+    hit_ticks: list[int],
+    hitgroups: list[str],
+    shots_fired: int,
+    first_shot_tick: int,
+) -> dict[str, Any]:
+    """Accuracy for one continuous engagement.
+
+    Split out of the kill path so damage-only engagements can be measured the
+    same way: nothing about hit rate or hitgroup distribution depends on
+    whether the duel ended in a kill.
+    """
+    hits = len(hit_ticks)
+    hit_pct = min(100.0, round(hits / shots_fired * 100, 1)) if shots_fired else 0.0
+    return {
+        "hit_pct": hit_pct,
+        # Small tolerance: the first hit registers a tick or two after the shot.
+        "first_bullet_hit": bool(hit_ticks) and hit_ticks[0] <= first_shot_tick + 2,
+        "hitgroups": hitgroups,
+        "head": sum(1 for h in hitgroups if h in ("head", "neck")),
+        "upper": sum(1 for h in hitgroups if h in ("chest", "stomach")),
+        "lower": sum(
+            1 for h in hitgroups
+            if h in ("left_arm", "right_arm", "left_leg", "right_leg")
+        ),
+    }
+
+
+def _cluster_ticks(ticks: list[int], gap: int = _ENGAGEMENT_GAP) -> list[list[int]]:
+    """Split ordered hit ticks into separate fights on a silence gap.
+
+    Two exchanges with the same opponent twenty seconds apart are two duels,
+    not one.  Without this they collapsed into a single encounter measured at
+    the first shot of the first fight.
+    """
+    if not ticks:
+        return []
+    clusters: list[list[int]] = []
+    current = [ticks[0]]
+    for t in ticks[1:]:
+        if t - current[-1] > gap:
+            clusters.append(current)
+            current = [t]
+        else:
+            current.append(t)
+    clusters.append(current)
+    return clusters
 
 
 def _analyze_time_to_damage(
@@ -3120,12 +3990,12 @@ def _analyze_time_to_damage(
     if hurt_df.empty or "round" not in hurt_df.columns:
         return None
 
-    pair_hits = hurt_df[
+    pair_hits = _gun_damage(hurt_df[
         (hurt_df["round"] == rnd)
         & (hurt_df["attacker_steamid"].astype(str) == attacker_sid)
         & (hurt_df["user_steamid"].astype(str) == victim_sid)
         & (hurt_df["tick"] <= kill_tick)
-    ]
+    ])
     if pair_hits.empty:
         return None
 
@@ -3177,23 +4047,15 @@ def _analyze_time_to_damage(
         "shots_fired": shots_fired,
     }
 
-    # Accuracy metrics for this engagement
+    # Accuracy metrics for this engagement, via the same helper the damage-only
+    # path uses so the two populations are measured identically.
     if shots_fired > 0:
-        hit_pct = min(100.0, round(engage_hits / shots_fired * 100, 1))
-        # First-bullet accuracy: did the first shot hit?
-        first_bullet_hit = engage_first_hit <= first_shot_tick + 2  # small tick tolerance
-        # Hitgroup breakdown: string labels from demoparser2
-        head = sum(1 for h in hitgroups if h in ("head", "neck"))
-        upper = sum(1 for h in hitgroups if h in ("chest", "stomach"))
-        lower = sum(1 for h in hitgroups if h in ("left_arm", "right_arm", "left_leg", "right_leg"))
-        result["accuracy"] = {
-            "hit_pct": hit_pct,
-            "first_bullet_hit": first_bullet_hit,
-            "hitgroups": hitgroups,
-            "head": head,
-            "upper": upper,
-            "lower": lower,
-        }
+        result["accuracy"] = _engagement_accuracy(
+            [int(t) for t in ticks[cluster_start_idx:]],
+            hitgroups,
+            shots_fired,
+            first_shot_tick,
+        )
 
     return result
 
@@ -3271,21 +4133,17 @@ def _get_round_kills(
             except (ValueError, TypeError):
                 atk_steamid = None
             victim_sid_str = str(row.get("user_steamid", ""))
+            try:
+                vic_steamid = int(victim_sid_str)
+            except (ValueError, TypeError):
+                vic_steamid = None
 
-            if atk_steamid is not None and velocities_df is not None and not velocities_df.empty:
-                movement = _analyze_movement(velocities_df, atk_steamid, tick)
-                if movement:
-                    kill_info["movement"] = movement
-
-                try:
-                    vic_steamid = int(victim_sid_str)
-                except (ValueError, TypeError):
-                    vic_steamid = None
-                if vic_steamid is not None:
-                    preaim = _analyze_preaim(velocities_df, atk_steamid, vic_steamid, tick)
-                    if preaim:
-                        kill_info["preaim"] = preaim
-
+            # Time-to-damage runs first because it resolves the tick the
+            # engagement actually opened on.  Everything mechanical below has
+            # to be anchored there: the death tick is the *last* bullet of the
+            # spray, often hundreds of ms after the stop and the crosshair
+            # placement we are trying to measure.
+            ttd = None
             if hurt_df is not None and not hurt_df.empty:
                 ttd = _analyze_time_to_damage(
                     hurt_df, sid, victim_sid_str, rnd, tick, weapon_fire_df,
@@ -3293,23 +4151,30 @@ def _get_round_kills(
                 if ttd:
                     kill_info["ttd"] = ttd
 
-            # Reaction time (yaw-snap approach)
-            if (
-                atk_steamid is not None
-                and vic_steamid is not None
-                and velocities_df is not None
-                and not velocities_df.empty
-            ):
-                first_shot_tick = (
-                    ttd["first_shot_tick"] if ttd and "first_shot_tick" in ttd else tick
-                )
-                rxn = _analyze_reaction_time(
-                    velocities_df, atk_steamid, vic_steamid,
-                    first_shot_tick, weapon_fire_df,
-                    attacker_sid_str=sid, rnd=rnd,
-                )
-                if rxn:
-                    kill_info["reaction"] = rxn
+            first_shot_tick = (
+                ttd["first_shot_tick"] if ttd and "first_shot_tick" in ttd else tick
+            )
+
+            if atk_steamid is not None and velocities_df is not None and not velocities_df.empty:
+                movement = _analyze_movement(velocities_df, atk_steamid, first_shot_tick)
+                if movement:
+                    kill_info["movement"] = movement
+
+                if vic_steamid is not None:
+                    preaim = _analyze_preaim(
+                        velocities_df, atk_steamid, vic_steamid, first_shot_tick,
+                    )
+                    if preaim:
+                        kill_info["preaim"] = preaim
+
+                    # Reaction time (yaw-snap approach)
+                    rxn = _analyze_reaction_time(
+                        velocities_df, atk_steamid, vic_steamid,
+                        first_shot_tick, weapon_fire_df,
+                        attacker_sid_str=sid, rnd=rnd,
+                    )
+                    if rxn:
+                        kill_info["reaction"] = rxn
 
         result.append(kill_info)
 
@@ -3365,76 +4230,291 @@ def _get_round_death(
     return info
 
 
+def _first_shot_tick(
+    weapon_fire_df: pd.DataFrame | None, sid: str, rnd: int, hit_tick: int,
+) -> int:
+    """Earliest shot by *sid* within ``_PRE_HIT_WINDOW`` ticks before a hit.
+
+    Falls back to ``hit_tick`` when there is no weapon_fire data to refine it.
+    """
+    if (
+        weapon_fire_df is None
+        or weapon_fire_df.empty
+        or "round" not in weapon_fire_df.columns
+        or "tick" not in weapon_fire_df.columns
+    ):
+        return hit_tick
+    id_col = _find_id_col(weapon_fire_df, ("user_steamid", "steamid", "attacker_steamid"))
+    if id_col is None:
+        return hit_tick
+    fires = weapon_fire_df[
+        (weapon_fire_df["round"] == rnd)
+        & (weapon_fire_df[id_col].astype(str) == sid)
+        & (weapon_fire_df["tick"] >= hit_tick - _PRE_HIT_WINDOW)
+        & (weapon_fire_df["tick"] <= hit_tick)
+    ]
+    if fires.empty:
+        return hit_tick
+    return int(fires["tick"].min())
+
+
+# Damage that did not come out of a gun barrel. player_hurt carries molotov
+# ticks and grenade blasts alongside bullet hits, and CS reports those with a
+# "generic" hitgroup because there is no hitbox involved. Counting them as hits
+# credited a burning enemy to the player's gun accuracy while the molotov was
+# never counted as a shot — which is how engagements ended up reading 100%.
+# These stay in ADR and in the utility metrics, where they belong.
+_NON_BULLET_DAMAGE = {
+    "inferno", "molotov", "incgrenade", "hegrenade", "flashbang", "decoy",
+    "world", "knife", "knife_t", "bomb", "c4", "taser",
+}
+
+
+def _gun_damage(df: pd.DataFrame) -> pd.DataFrame:
+    """Restrict a player_hurt frame to bullet hits."""
+    if df.empty or "weapon" not in df.columns:
+        return df
+    weapons = df["weapon"].astype(str).str.replace("weapon_", "", regex=False).str.lower()
+    return df[~weapons.isin(_NON_BULLET_DAMAGE)]
+
+
+# Weapons whose fire events are shots at a player rather than utility.
+_NON_AIM_FIRE = {
+    "flashbang", "smokegrenade", "hegrenade", "molotov", "incgrenade",
+    "decoy", "knife", "knife_t", "bomb", "c4", "taser",
+}
+
+# A hit lands a tick or two after the shot, and the tail of a spray keeps
+# arriving after it.  Damage inside this window belongs to the burst.
+_FIRE_HIT_LEAD = 8
+_FIRE_HIT_TAIL = 32
+
+
+def _player_fire_clusters(
+    weapon_fire_df: pd.DataFrame | None, sid: str, rnd: int,
+) -> list[list[int]]:
+    """The player's bursts this round, as lists of tick numbers.
+
+    Grenades and knives are excluded — they are not aim.
+    """
+    if (
+        weapon_fire_df is None
+        or weapon_fire_df.empty
+        or "round" not in weapon_fire_df.columns
+        or "tick" not in weapon_fire_df.columns
+    ):
+        return []
+    id_col = _find_id_col(weapon_fire_df, ("user_steamid", "steamid", "attacker_steamid"))
+    if id_col is None:
+        return []
+    fires = weapon_fire_df[
+        (weapon_fire_df["round"] == rnd)
+        & (weapon_fire_df[id_col].astype(str) == sid)
+    ]
+    if fires.empty:
+        return []
+    if "weapon" in fires.columns:
+        weapons = fires["weapon"].astype(str).str.replace("weapon_", "", regex=False)
+        fires = fires[~weapons.isin(_NON_AIM_FIRE)]
+    if fires.empty:
+        return []
+    return _cluster_ticks(sorted(int(t) for t in fires["tick"]))
+
+
+def _get_round_whiffed_engagements(
+    weapon_fire_df: pd.DataFrame | None,
+    hurt_df: pd.DataFrame,
+    spotted_df: pd.DataFrame | None,
+    sid: str,
+    rnd: int,
+    player_team: int | None,
+) -> list[dict[str, Any]]:
+    """Bursts fired at a visible enemy that landed nothing.
+
+    Engagements were previously anchored on damage, so a duel the player lost
+    without connecting simply did not exist — which biased accuracy upward by
+    removing their worst engagements from the denominator.
+
+    The visibility gate matters as much as the engagements do: around 60% of
+    bursts that hit nothing are fired with no enemy on screen at all — smoke
+    spray, wallbangs, pre-fires — and charging those to aim would penalise
+    deliberate utility use.  Only bursts opened while an enemy was spotted
+    count.
+    """
+    if player_team not in (2, 3):
+        return []
+    clusters = _player_fire_clusters(weapon_fire_df, sid, rnd)
+    if not clusters:
+        return []
+
+    hit_ticks: list[int] = []
+    if (
+        not hurt_df.empty
+        and "round" in hurt_df.columns
+        and "tick" in hurt_df.columns
+        and "attacker_steamid" in hurt_df.columns
+    ):
+        mine = _gun_damage(hurt_df[
+            (hurt_df["round"] == rnd)
+            & (hurt_df["attacker_steamid"].astype(str) == sid)
+        ])
+        hit_ticks = sorted(int(t) for t in mine["tick"])
+
+    # Enemies visible at each tick somebody fired.
+    visible_at: dict[int, bool] = {}
+    if (
+        spotted_df is not None
+        and not spotted_df.empty
+        and {"tick", "spotted", "team_num"}.issubset(spotted_df.columns)
+    ):
+        enemies = spotted_df[spotted_df["team_num"] != player_team]
+        for tick, group in enemies.groupby("tick"):
+            visible_at[int(tick)] = bool(group["spotted"].any())
+
+    result: list[dict[str, Any]] = []
+    for cluster in clusters:
+        lo = cluster[0] - _FIRE_HIT_LEAD
+        hi = cluster[-1] + _FIRE_HIT_TAIL
+        if any(lo <= h <= hi for h in hit_ticks):
+            continue  # landed something — the damage/kill path owns it
+        if not visible_at.get(cluster[0], False):
+            continue  # nothing to shoot at; not an aim duel
+        result.append({
+            "shots_fired": len(cluster),
+            "hits": 0,
+            "first_tick": cluster[0],
+            "last_tick": cluster[-1],
+            "accuracy": _engagement_accuracy([], [], len(cluster), cluster[0]),
+        })
+    return result
+
+
 def _get_round_damage_encounters(
     hurt_df: pd.DataFrame,
     death_df: pd.DataFrame,
     sid: str,
     rnd: int,
     velocities_df: pd.DataFrame | None = None,
+    weapon_fire_df: pd.DataFrame | None = None,
 ) -> list[dict[str, Any]]:
     """Get damage-only encounters: enemies hurt but not killed by the player."""
     if hurt_df.empty or "round" not in hurt_df.columns:
         return []
+    if "user_steamid" not in hurt_df.columns or "tick" not in hurt_df.columns:
+        # Without a victim to group by (or a tick to order on) there are no
+        # encounters to reconstruct.
+        return []
 
-    player_damage = hurt_df[
+    player_damage = _gun_damage(hurt_df[
         (hurt_df["round"] == rnd)
         & (hurt_df["attacker_steamid"].astype(str) == sid)
-    ]
+    ])
     if player_damage.empty:
         return []
 
     # Find victims the player killed this round
     killed_victims: set[str] = set()
-    if not death_df.empty and "round" in death_df.columns:
+    if (
+        not death_df.empty
+        and "round" in death_df.columns
+        and "user_steamid" in death_df.columns
+    ):
         kills = death_df[
             (death_df["round"] == rnd)
             & (death_df["attacker_steamid"].astype(str) == sid)
         ]
         killed_victims = set(kills["user_steamid"].astype(str))
 
+    try:
+        atk_steamid: int | None = int(sid)
+    except (ValueError, TypeError):
+        atk_steamid = None
+
+    fire_clusters = _player_fire_clusters(weapon_fire_df, sid, rnd)
+
     result: list[dict[str, Any]] = []
     for victim_sid, group in player_damage.groupby(
         player_damage["user_steamid"].astype(str)
     ):
-        if victim_sid in killed_victims:
-            continue  # Already counted as a kill
-
         sorted_group = group.sort_values("tick")
-        first_hit = sorted_group.iloc[0]
-        tick = int(first_hit["tick"])
-        last_tick = int(sorted_group.iloc[-1]["tick"])
-        weapon = str(first_hit.get("weapon", ""))
+        tick_list = [int(t) for t in sorted_group["tick"].tolist()]
 
-        enc: dict[str, Any] = {
-            "weapon": _weapon_display(weapon),
-            "victim_sid": victim_sid,
-            "last_tick": last_tick,
-        }
+        # Two exchanges with the same opponent minutes apart are two duels.
+        # Grouping only by victim merged them into one, measured at the first
+        # shot of the first fight and counted once.
+        clusters = _cluster_ticks(tick_list)
+        was_killed = victim_sid in killed_victims
 
-        # Movement and preaim analysis at time of first hit
-        if velocities_df is not None and not velocities_df.empty:
-            try:
-                atk_steamid = int(sid)
-            except (ValueError, TypeError):
-                atk_steamid = None
+        try:
+            vic_steamid_int: int | None = int(victim_sid)
+        except (ValueError, TypeError):
+            vic_steamid_int = None
 
-            if atk_steamid is not None:
-                movement = _analyze_movement(velocities_df, atk_steamid, tick)
+        for idx, cluster in enumerate(clusters):
+            # Only the last exchange can be the one that produced the kill;
+            # everything before it is a genuine damage-only engagement.
+            if was_killed and idx == len(clusters) - 1:
+                continue
+
+            first_tick, last_tick = cluster[0], cluster[-1]
+            rows = sorted_group[
+                (sorted_group["tick"] >= first_tick) & (sorted_group["tick"] <= last_tick)
+            ]
+            weapon = str(rows.iloc[0].get("weapon", "")) if len(rows) else ""
+
+            enc: dict[str, Any] = {
+                "weapon": _weapon_display(weapon),
+                "victim_sid": victim_sid,
+                "last_tick": last_tick,
+            }
+
+            # Anchor to the first shot of the engagement rather than the first
+            # hit, so these land on the same point of the duel as the kill path
+            # — both distributions get pooled in _calculate_aim_stats.
+            shot_tick = _first_shot_tick(weapon_fire_df, sid, rnd, first_tick)
+
+            # Accuracy: nothing about hit rate depends on the duel being won,
+            # and these engagements are ~40% of all the shooting a player does.
+            # Count the whole burst, not just up to the last bullet that
+            # connected: the tail of a spray that missed is exactly the part
+            # that should count against accuracy.
+            shots_fired = len(cluster)
+            for burst in fire_clusters:
+                if burst[0] - _FIRE_HIT_TAIL <= first_tick <= burst[-1] + _FIRE_HIT_TAIL:
+                    shots_fired = max(shots_fired, len(burst))
+                    break
+
+            hitgroups: list[str] = []
+            if "hitgroup" in rows.columns:
+                hitgroups = rows["hitgroup"].dropna().astype(str).str.lower().tolist()
+            enc["accuracy"] = _engagement_accuracy(
+                cluster, hitgroups, shots_fired, shot_tick,
+            )
+            enc["shots_fired"] = shots_fired
+            enc["hits"] = len(cluster)
+
+            if velocities_df is not None and not velocities_df.empty and atk_steamid is not None:
+                movement = _analyze_movement(velocities_df, atk_steamid, shot_tick)
                 if movement:
                     enc["movement"] = movement
 
-                try:
-                    vic_steamid_int = int(victim_sid)
-                except (ValueError, TypeError):
-                    vic_steamid_int = None
                 if vic_steamid_int is not None:
                     preaim = _analyze_preaim(
-                        velocities_df, atk_steamid, vic_steamid_int, tick,
+                        velocities_df, atk_steamid, vic_steamid_int, shot_tick,
                     )
                     if preaim:
                         enc["preaim"] = preaim
 
-        result.append(enc)
+                    # Reaction is about how fast the crosshair got there and
+                    # the trigger followed; whether the duel ended in a kill
+                    # has no bearing on it.
+                    rxn = _analyze_reaction_time(
+                        velocities_df, atk_steamid, vic_steamid_int, shot_tick,
+                    )
+                    if rxn:
+                        enc["reaction"] = rxn
+
+            result.append(enc)
 
     return result
 
@@ -3600,8 +4680,14 @@ def _get_round_utility(
                     dur = round(float(brow.get("blind_duration", 0)), 2)
                     vname = str(brow.get(victim_name_col, "?")) if victim_name_col in round_blinds.columns else "?"
 
+                    # Blinding yourself is not blinding a teammate. The team
+                    # check alone says otherwise, since you share your own
+                    # team — which put the player on their own friendly-fire
+                    # chart. Self-flashes are tagged and left out of both the
+                    # enemy and friendly sides.
+                    is_self = str(brow.get("user_steamid", "")) == sid
                     is_team = False
-                    if atk_team_col and vic_team_col:
+                    if not is_self and atk_team_col and vic_team_col:
                         try:
                             is_team = int(brow[atk_team_col]) == int(brow[vic_team_col])
                         except (ValueError, TypeError):
@@ -3629,6 +4715,7 @@ def _get_round_utility(
                         "name": vname,
                         "duration": dur,
                         "is_friendly": is_team,
+                        "is_self": is_self,
                     }
                     if victim_xy:
                         inst["victim_xy"] = victim_xy

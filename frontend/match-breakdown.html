@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" href="img/logo-big.png"/>
 <link rel="stylesheet" href="theme.css"/>
 <script src="theme.js?v=2"></script>
+<script src="reanalyze.js?v=1"></script>
 <script>
 /* Map-icon helpers come from theme.js. This page is served no-store but a
    browser can still be holding an older theme.js than the HTML it is running
@@ -636,19 +637,11 @@ if (typeof mapIconHtml !== 'function') {
 <div class="flex flex-wrap items-center gap-2 mb-2">
 <span class="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Compare</span>
 <select id="aim-scatter-x" class="bg-surface-container-highest text-on-surface text-[9px] rounded-lg px-2 py-0.5 border border-white/10 focus:outline-none focus:ring-1 focus:ring-primary">
-<option value="movement">Counterstrafe (u/s)</option>
-<option value="preaim" selected>Crosshair Placement (°)</option>
-<option value="ttk">Engagement Time (s)</option>
-<option value="reaction">Reaction Time (ms)</option>
-<option value="accuracy">Accuracy (%)</option>
+<option value="movement">Shot Speed</option>
 </select>
 <span class="text-[9px] text-on-surface-variant">vs</span>
 <select id="aim-scatter-y" class="bg-surface-container-highest text-on-surface text-[9px] rounded-lg px-2 py-0.5 border border-white/10 focus:outline-none focus:ring-1 focus:ring-primary">
-<option value="movement">Counterstrafe (u/s)</option>
-<option value="preaim">Crosshair Placement (°)</option>
-<option value="ttk">Engagement Time (s)</option>
-<option value="reaction" selected>Reaction Time (ms)</option>
-<option value="accuracy">Accuracy (%)</option>
+<option value="preaim">Crosshair Placement</option>
 </select>
 </div>
 <div class="bg-surface-container-highest rounded-lg p-2">
@@ -667,8 +660,9 @@ if (typeof mapIconHtml !== 'function') {
 <div id="aim-mov-range" class="text-[8px] text-on-surface-variant mb-1"></div>
 <canvas id="aim-mov-chart" height="28" class="w-full rounded"></canvas>
 <div class="flex gap-2 mt-1 flex-wrap">
-<span id="aim-mov-standing" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-emerald-400/20 text-emerald-400"></span>
-<span id="aim-mov-cs" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-orange-400/20 text-orange-400"></span>
+<span id="aim-mov-cs" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-emerald-400/20 text-emerald-400"></span>
+<span id="aim-mov-standing" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-cyan-400/20 text-cyan-400"></span>
+<span id="aim-mov-stopped" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-orange-400/20 text-orange-400"></span>
 <span id="aim-mov-running" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-error/20 text-error"></span>
 </div>
 <div id="aim-mov-gun-note" class="text-[8px] text-on-surface-variant/60 mt-1 hidden">
@@ -721,15 +715,16 @@ if (typeof mapIconHtml !== 'function') {
 <div id="aim-accuracy-card" class="bg-surface-container-highest rounded-lg p-3 hidden">
 <div class="flex items-center justify-between mb-1">
 <span class="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Accuracy</span>
-<span class="flex items-end gap-1"><span id="aim-acc-avg" class="text-base font-bold font-headline text-secondary">—</span><span class="text-[8px] text-on-surface-variant">% avg</span></span>
+<span class="flex items-end gap-1"><span id="aim-acc-avg" class="text-base font-bold font-headline text-secondary">—</span><span class="text-[8px] text-on-surface-variant">% hit</span></span>
 </div>
 <div id="aim-acc-range" class="text-[8px] text-on-surface-variant mb-1"></div>
+<div id="aim-acc-fb" class="text-[8px] text-on-surface-variant mb-1"></div>
 <canvas id="aim-acc-chart" height="28" class="w-full rounded"></canvas>
 <div class="flex gap-2 mt-1 flex-wrap">
-<span id="aim-acc-fb" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-secondary/20 text-secondary"></span>
-<span id="aim-acc-head" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-amber-400/20 text-amber-400"></span>
-<span id="aim-acc-upper" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-emerald-400/20 text-emerald-400"></span>
-<span id="aim-acc-lower" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-error/20 text-error"></span>
+<span class="text-[8px] text-on-surface-variant self-center mr-0.5">Where hits landed</span>
+<span id="aim-acc-head" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-secondary/30 text-secondary"></span>
+<span id="aim-acc-upper" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-secondary/15 text-secondary/80"></span>
+<span id="aim-acc-lower" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-white/5 text-on-surface-variant"></span>
 </div>
 </div>
 </div>
@@ -861,12 +856,12 @@ if (typeof mapIconHtml !== 'function') {
 <div class="flex items-center justify-between mb-2">
 <div class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Per-Round Utility Impact</div>
 <div class="flex items-center gap-3 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-yellow-400 inline-block"></span>Flash</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-yellow-400 inline-block"></span>Blind s</span>
 <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-red-400 inline-block"></span>HE</span>
 <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-orange-400 inline-block"></span>Molly</span>
 </div>
 </div>
-<canvas id="util-round-chart" height="180" class="w-full rounded-lg bg-surface-container-highest"></canvas>
+<canvas id="util-round-chart" height="230" class="w-full rounded-lg bg-surface-container-highest"></canvas>
 </div>
 <!-- Per-instance flash scatter: enemy vs friendly blind duration -->
 <div id="util-flash-scatter-wrap" class="mt-6 hidden">
@@ -1256,6 +1251,7 @@ MINIMAP — <span id="minimap-title">Round ?</span>
       <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
       <button id="settings-tab-steam" onclick="switchSettingsTab('steam')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Steam</button>
       <button id="settings-tab-storage" onclick="switchSettingsTab('storage')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Storage</button>
+      <button id="settings-tab-reanalyze" onclick="switchSettingsTab('reanalyze')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Re-analyze</button>
       <button id="settings-tab-reset" onclick="switchSettingsTab('reset')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Reset</button>
     </nav>
     <div class="flex-1 min-w-0 overflow-y-auto p-6 sm:p-8">
@@ -1423,6 +1419,7 @@ MINIMAP — <span id="minimap-title">Round ?</span>
       <p id="storage-result" class="text-[9px] text-on-surface-variant mt-2 leading-relaxed"></p>
     </div>
     </div>
+    <div id="settings-reanalyze-panel" class="hidden"></div>
     <div id="settings-reset-panel" class="hidden">
       <div class="text-center mb-6">
         <span class="material-symbols-outlined text-4xl text-error mb-3 block">warning</span>
@@ -1551,7 +1548,7 @@ document.getElementById('settings-modal').addEventListener('click', e => { if (e
 function openAISettings() { openSettingsModal('ai'); }
 
 function switchSettingsTab(tab) {
-  const tabs = ['accounts', 'friends', 'ai', 'steam', 'storage', 'reset'];
+  const tabs = ['accounts', 'friends', 'ai', 'steam', 'storage', 'reanalyze', 'reset'];
   tabs.forEach(t => {
     const btn = document.getElementById('settings-tab-' + t);
     const panel = document.getElementById('settings-' + t + '-panel');
@@ -1565,6 +1562,7 @@ function switchSettingsTab(tab) {
     }
   });
   if (tab === 'friends') loadFriends();
+  if (tab === 'reanalyze') loadReanalyzeList();
   if (tab === 'steam') loadSteamStatus();
 }
 
@@ -2544,11 +2542,14 @@ function applyTrendIndicators(m, avg) {
 
   // --- Aim ---
   const aim = m.aim_stats ? (typeof m.aim_stats === 'string' ? JSON.parse(m.aim_stats) : m.aim_stats) : null;
+  // Compare like with like: the cards show medians, so the trend arrows have
+  // to read medians too. Older matches only stored a mean.
+  const headline = (b) => (b == null ? null : (b.median != null ? b.median : b.avg));
   if (aim?.aim_rating != null) _injectTrend('aim-score', aim.aim_rating, avg.aim_rating, true);
-  if (aim?.movement?.avg != null) _injectTrend('aim-mov-avg', aim.movement.avg, avg.movement_avg, false);
-  if (aim?.ttk?.avg != null) _injectTrend('aim-ttk-avg', aim.ttk.avg, avg.ttk_avg, false);
-  if (aim?.preaim?.avg != null) _injectTrend('aim-preaim-avg', aim.preaim.avg, avg.preaim_avg, false);
-  if (aim?.reaction?.avg != null) _injectTrend('aim-rxn-avg', aim.reaction.avg, avg.reaction_avg, false);
+  if (headline(aim?.movement) != null) _injectTrend('aim-mov-avg', headline(aim.movement), avg.movement_avg, false);
+  if (headline(aim?.ttk) != null) _injectTrend('aim-ttk-avg', headline(aim.ttk), avg.ttk_avg, false);
+  if (headline(aim?.preaim) != null) _injectTrend('aim-preaim-avg', headline(aim.preaim), avg.preaim_avg, false);
+  if (headline(aim?.reaction) != null) _injectTrend('aim-rxn-avg', headline(aim.reaction), avg.reaction_avg, false);
 
   // --- Utility: Use Rate ---
   const ud = m.utility_data ? (typeof m.utility_data === 'string' ? JSON.parse(m.utility_data) : m.utility_data) : null;
@@ -2723,32 +2724,53 @@ function renderSideAnalysis(m, rounds) {
 function renderAimRoles(m) {
   const aim = m.aim_stats;
   if (!aim || (!aim.movement && !aim.preaim && !aim.ttk && !aim.reaction)) return;
+  buildAimKpiMeta(aim.thresholds);
   document.getElementById('aim-roles-section').classList.remove('hidden');
 
-  // Overall aim rating
-  const rating = aim.aim_rating || 0;
+  // Overall aim rating. Null means nothing measurable was found in this match
+  // — distinct from a genuine zero, so it must not render as one.
+  const rating = aim.aim_rating;
   const ratingEl = document.getElementById('aim-score');
-  ratingEl.textContent = rating.toFixed(0);
-  const ratingLabel = rating >= 70 ? 'Excellent' : rating >= 50 ? 'Good' : rating >= 30 ? 'Average' : 'Needs Work';
-  const ratingColor = rating >= 70 ? 'text-emerald-400' : rating >= 50 ? 'text-cyan-400' : rating >= 30 ? 'text-orange-400' : 'text-error';
-  ratingEl.className = ratingEl.className.replace(/text-\S+/g, '') + ' ' + ratingColor;
-  document.getElementById('aim-score-label').textContent = ratingLabel;
   const barEl = document.getElementById('aim-score-bar');
-  barEl.style.width = rating + '%';
-  const barColor = rating >= 70 ? 'bg-emerald-400' : rating >= 50 ? 'bg-cyan-400' : rating >= 30 ? 'bg-orange-400' : 'bg-error';
-  barEl.className = 'h-full rounded-full transition-all ' + barColor;
-  document.getElementById('aim-rating-badge').textContent = 'AIM: ' + rating.toFixed(0) + '/100';
+  if (rating == null) {
+    ratingEl.textContent = '—';
+    ratingEl.className = ratingEl.className.replace(/text-\S+/g, '') + ' text-on-surface-variant';
+    document.getElementById('aim-score-label').textContent = 'Not measurable';
+    barEl.style.width = '0%';
+    document.getElementById('aim-rating-badge').textContent = 'AIM: n/a';
+  } else {
+    ratingEl.textContent = rating.toFixed(0);
+    const ratingLabel = rating >= 70 ? 'Excellent' : rating >= 50 ? 'Good' : rating >= 30 ? 'Average' : 'Needs Work';
+    const ratingColor = rating >= 70 ? 'text-emerald-400' : rating >= 50 ? 'text-cyan-400' : rating >= 30 ? 'text-orange-400' : 'text-error';
+    ratingEl.className = ratingEl.className.replace(/text-\S+/g, '') + ' ' + ratingColor;
+    document.getElementById('aim-score-label').textContent = ratingLabel;
+    barEl.style.width = rating + '%';
+    const barColor = rating >= 70 ? 'bg-emerald-400' : rating >= 50 ? 'bg-cyan-400' : rating >= 30 ? 'bg-orange-400' : 'bg-error';
+    barEl.className = 'h-full rounded-full transition-all ' + barColor;
+    document.getElementById('aim-rating-badge').textContent = 'AIM: ' + rating.toFixed(0) + '/100';
+  }
+
+  // Sample size drives how much each metric was trusted, so show it.
+  const sampleNote = (m) => {
+    if (!m || m.n == null) return '';
+    const tone = m.confidence === 'high' ? 'text-emerald-400'
+               : m.confidence === 'medium' ? 'text-on-surface-variant'
+               : 'text-amber-300';
+    return ` <span class="${tone}">n=${m.n}</span>`;
+  };
 
   // Movement
   const mv = aim.movement || {};
-  if (mv.avg !== undefined) {
-    document.getElementById('aim-mov-avg').textContent = mv.avg.toFixed(0);
-    document.getElementById('aim-mov-range').textContent = 'Range: ' + mv.min.toFixed(0) + ' – ' + mv.max.toFixed(0) + ' u/s';
-    document.getElementById('aim-mov-standing').textContent = (mv.standing_pct || 0).toFixed(0) + '% Still';
+  if (mv.median != null) {
+    document.getElementById('aim-mov-avg').textContent = mv.median.toFixed(0);
+    document.getElementById('aim-mov-range').innerHTML = 'Median of ' + mv.min.toFixed(0) + ' – ' + mv.max.toFixed(0) + ' u/s' + sampleNote(mv);
     document.getElementById('aim-mov-cs').textContent = (mv.counterstrafed_pct || 0).toFixed(0) + '% C-Strafed';
+    document.getElementById('aim-mov-standing').textContent = (mv.standing_pct || 0).toFixed(0) + '% Static';
+    document.getElementById('aim-mov-stopped').textContent = (mv.stopped_pct || 0).toFixed(0) + '% Coasted';
     document.getElementById('aim-mov-running').textContent = (mv.running_pct || 0).toFixed(0) + '% Running';
-    drawStripChart('aim-mov-chart', mv.speeds || [], mv.avg, {
-      thresholds: [50, 100, 200],
+    drawStripChart('aim-mov-chart', mv.speeds || [], mv.median, {
+      thresholds: aimBounds('movement'),
+      range: aimRange('movement'),
       colors: [TC.amber||'#fbbf24', TC.success||'#34d399', TC.ct||'#60a5fa', TC.error||'#ef4444'],
       bgColor: TC.bg||'#0f1930',
       avgColor: TC.cyan||'#53ddfc',
@@ -2769,12 +2791,15 @@ function renderAimRoles(m) {
 
   // Engagement Time
   const ttk = aim.ttk || {};
-  if (ttk.avg !== undefined) {
-    document.getElementById('aim-ttk-avg').textContent = ttk.avg.toFixed(2);
-    document.getElementById('aim-ttk-range').textContent = 'Range: ' + ttk.min.toFixed(2) + 's – ' + ttk.max.toFixed(2) + 's';
-    document.getElementById('aim-ttk-note').textContent = (ttk.values || []).length + ' multi-hit engagements (first shot → kill)';
-    drawStripChart('aim-ttk-chart', ttk.values || [], ttk.avg, {
-      thresholds: [0.4, 0.65, 1.1],
+  if (ttk.median != null) {
+    document.getElementById('aim-ttk-avg').textContent = ttk.median.toFixed(2);
+    document.getElementById('aim-ttk-range').innerHTML = 'Median of ' + ttk.min.toFixed(2) + 's – ' + ttk.max.toFixed(2) + 's' + sampleNote(ttk);
+    document.getElementById('aim-ttk-note').textContent =
+      (ttk.values || []).length + ' engagements (first shot → kill)'
+      + (ttk.excluded_outliers ? ', ' + ttk.excluded_outliers + ' over 1s excluded' : '');
+    drawStripChart('aim-ttk-chart', ttk.values || [], ttk.median, {
+      thresholds: aimBounds('ttk'),
+      range: aimRange('ttk'),
       colors: [TC.amber||'#fbbf24', TC.success||'#34d399', TC.ct||'#60a5fa', TC.error||'#ef4444'],
       bgColor: TC.bg||'#0f1930',
       avgColor: TC.cyan||'#53ddfc',
@@ -2788,15 +2813,16 @@ function renderAimRoles(m) {
 
   // Pre-aim
   const pa = aim.preaim || {};
-  if (pa.avg !== undefined) {
-    document.getElementById('aim-preaim-avg').textContent = pa.avg.toFixed(1);
-    document.getElementById('aim-preaim-range').textContent = 'Range: ' + pa.min.toFixed(1) + '° – ' + pa.max.toFixed(1) + '°';
-    document.getElementById('aim-preaim-exc').textContent = (pa.excellent_pct || 0).toFixed(0) + '% <3°';
+  if (pa.median != null) {
+    document.getElementById('aim-preaim-avg').textContent = pa.median.toFixed(1);
+    document.getElementById('aim-preaim-range').innerHTML = 'Median of ' + pa.min.toFixed(1) + '° – ' + pa.max.toFixed(1) + '°' + sampleNote(pa);
+    document.getElementById('aim-preaim-exc').textContent = (pa.excellent_pct || 0).toFixed(0) + '% <5°';
     document.getElementById('aim-preaim-good').textContent = (pa.good_pct || 0).toFixed(0) + '% <10°';
-    document.getElementById('aim-preaim-mod').textContent = (pa.moderate_pct || 0).toFixed(0) + '% <25°';
-    document.getElementById('aim-preaim-poor').textContent = (pa.poor_pct || 0).toFixed(0) + '% 25°+';
-    drawStripChart('aim-preaim-chart', pa.errors || [], pa.avg, {
-      thresholds: [3, 10, 25],
+    document.getElementById('aim-preaim-mod').textContent = (pa.moderate_pct || 0).toFixed(0) + '% <20°';
+    document.getElementById('aim-preaim-poor').textContent = (pa.poor_pct || 0).toFixed(0) + '% 20°+';
+    drawStripChart('aim-preaim-chart', pa.errors || [], pa.median, {
+      thresholds: aimBounds('preaim'),
+      range: aimRange('preaim'),
       colors: [TC.amber||'#fbbf24', TC.success||'#34d399', TC.ct||'#60a5fa', TC.error||'#ef4444'],
       bgColor: TC.bg||'#0f1930',
       avgColor: TC.cyan||'#53ddfc',
@@ -2806,16 +2832,19 @@ function renderAimRoles(m) {
 
   // Reaction Time
   const rxn = aim.reaction || {};
-  if (rxn.avg !== undefined && (rxn.values || []).length > 0) {
+  if (rxn.median != null && (rxn.values || []).length > 0) {
     document.getElementById('aim-reaction-card').classList.remove('hidden');
-    document.getElementById('aim-rxn-avg').textContent = rxn.avg.toFixed(0);
-    document.getElementById('aim-rxn-range').textContent = 'Range: ' + rxn.min.toFixed(0) + 'ms – ' + rxn.max.toFixed(0) + 'ms';
-    document.getElementById('aim-rxn-lightning').textContent = (rxn.lightning_pct || 0).toFixed(0) + '% 🏆<180ms';
-    document.getElementById('aim-rxn-fast').textContent = (rxn.fast_pct || 0).toFixed(0) + '% <230ms';
-    document.getElementById('aim-rxn-average').textContent = (rxn.average_pct || 0).toFixed(0) + '% <320ms';
-    document.getElementById('aim-rxn-slow').textContent = (rxn.slow_pct || 0).toFixed(0) + '% 320ms+';
-    drawStripChart('aim-rxn-chart', rxn.values || [], rxn.avg, {
-      thresholds: [180, 230, 320],
+    document.getElementById('aim-rxn-avg').textContent = rxn.median.toFixed(0);
+    document.getElementById('aim-rxn-range').innerHTML =
+      'Median of ' + rxn.min.toFixed(0) + 'ms – ' + rxn.max.toFixed(0) + 'ms' + sampleNote(rxn)
+      + ' <span class="text-on-surface-variant/60">· diagnostic, not in rating</span>';
+    document.getElementById('aim-rxn-lightning').textContent = (rxn.lightning_pct || 0).toFixed(0) + '% 🏆<150ms';
+    document.getElementById('aim-rxn-fast').textContent = (rxn.fast_pct || 0).toFixed(0) + '% <200ms';
+    document.getElementById('aim-rxn-average').textContent = (rxn.average_pct || 0).toFixed(0) + '% <300ms';
+    document.getElementById('aim-rxn-slow').textContent = (rxn.slow_pct || 0).toFixed(0) + '% 300ms+';
+    drawStripChart('aim-rxn-chart', rxn.values || [], rxn.median, {
+      thresholds: aimBounds('reaction'),
+      range: aimRange('reaction'),
       colors: [TC.amber||'#fbbf24', TC.success||'#34d399', TC.ct||'#60a5fa', TC.error||'#ef4444'],
       bgColor: TC.bg||'#0f1930',
       avgColor: TC.cyan||'#53ddfc',
@@ -2825,16 +2854,23 @@ function renderAimRoles(m) {
 
   // Accuracy
   const acc = aim.accuracy || {};
-  if (acc.avg !== undefined && (acc.values || []).length > 0) {
+  if (acc.median != null && (acc.values || []).length > 0) {
     document.getElementById('aim-accuracy-card').classList.remove('hidden');
-    document.getElementById('aim-acc-avg').textContent = acc.avg.toFixed(0);
-    document.getElementById('aim-acc-range').textContent = 'Range: ' + acc.min.toFixed(0) + '% – ' + acc.max.toFixed(0) + '%';
-    document.getElementById('aim-acc-fb').textContent = (acc.first_bullet_pct || 0).toFixed(0) + '% 1st bullet';
+    // Pooled over every bullet — see the note in _calculate_aim_stats.
+    const accHeadline = acc.pooled_pct != null ? acc.pooled_pct : acc.median;
+    document.getElementById('aim-acc-avg').textContent = accHeadline.toFixed(0);
+    document.getElementById('aim-acc-range').innerHTML =
+      (acc.total_shots ? acc.total_hits + '/' + acc.total_shots + ' bullets' : 'Median')
+      + sampleNote(acc);
+    document.getElementById('aim-acc-fb').textContent =
+      'First bullet landed in ' + (acc.first_bullet_pct || 0).toFixed(0) + '% of engagements';
     document.getElementById('aim-acc-head').textContent = (acc.head_pct || 0).toFixed(0) + '% Head';
     document.getElementById('aim-acc-upper').textContent = (acc.upper_pct || 0).toFixed(0) + '% Chest';
     document.getElementById('aim-acc-lower').textContent = (acc.lower_pct || 0).toFixed(0) + '% Limbs';
-    drawStripChart('aim-acc-chart', acc.values || [], acc.avg, {
-      thresholds: [75, 50, 30],
+    // Reference line matches the headline figure rather than a second statistic.
+    drawStripChart('aim-acc-chart', acc.values || [], accHeadline, {
+      thresholds: aimBounds('accuracy'),
+      range: aimRange('accuracy'),
       colors: [TC.amber||'#fbbf24', TC.success||'#34d399', TC.ct||'#60a5fa', TC.error||'#ef4444'],
       bgColor: TC.bg||'#0f1930',
       avgColor: TC.cyan||'#53ddfc',
@@ -2846,10 +2882,32 @@ function renderAimRoles(m) {
   // 2D Scatter Plot
   const encounters = aim.encounters || [];
   if (encounters.length > 1) {
+    buildAimKpiMeta(aim.thresholds);
     document.getElementById('aim-scatter-section').classList.remove('hidden');
     window._aimEncounters = encounters;
     const xSel = document.getElementById('aim-scatter-x');
     const ySel = document.getElementById('aim-scatter-y');
+
+    // Metrics are measured over different engagements: movement and crosshair
+    // placement come from every duel, while engagement time, reaction and
+    // accuracy only exist where the player got the kill. Showing each option's
+    // count makes that visible instead of leaving the point counts a mystery.
+    const counts = {};
+    for (const key of Object.keys(AIM_KPI_META)) {
+      counts[key] = encounters.filter(e => e[key] !== undefined).length;
+    }
+    const options = Object.entries(AIM_KPI_META)
+      .filter(([key]) => counts[key] > 0)
+      .map(([key, meta]) => `<option value="${key}">${meta.label} — ${counts[key]}</option>`)
+      .join('');
+    const keep = (sel, fallback) => (counts[sel.value] > 0 ? sel.value : fallback);
+    const prevX = keep(xSel, 'movement');
+    const prevY = keep(ySel, 'preaim');
+    xSel.innerHTML = options;
+    ySel.innerHTML = options;
+    xSel.value = counts[prevX] ? prevX : Object.keys(counts).find(k => counts[k] > 0);
+    ySel.value = counts[prevY] ? prevY : xSel.value;
+
     const redraw = () => drawAimScatter('aim-scatter-canvas', encounters, xSel.value, ySel.value);
     xSel.onchange = redraw;
     ySel.onchange = redraw;
@@ -2857,14 +2915,48 @@ function renderAimRoles(m) {
   }
 }
 
-// --- Aim KPI tier thresholds (lower-is-better metrics use inverted ranges) ---
-const AIM_KPI_META = {
-  movement:  { label: 'Counterstrafe (u/s)',     unit: 'u/s', tiers: [50, 100, 200],    tierLabels: ['Pro','High Amateur','Average','Below Avg'], lowerBetter: true  },
-  preaim:    { label: 'Crosshair Placement (°)',  unit: '°',   tiers: [3, 10, 25],       tierLabels: ['Pro','High Amateur','Average','Below Avg'], lowerBetter: true  },
-  ttk:       { label: 'Engagement Time (s)',      unit: 's',   tiers: [0.4, 0.65, 1.1],  tierLabels: ['Pro','High Amateur','Average','Below Avg'], lowerBetter: true  },
-  reaction:  { label: 'Reaction Time (ms)',       unit: 'ms',  tiers: [180, 230, 320],   tierLabels: ['Pro','High Amateur','Average','Below Avg'], lowerBetter: true  },
-  accuracy:  { label: 'Accuracy (%)',             unit: '%',   tiers: [75, 50, 30],      tierLabels: ['Pro','High Amateur','Average','Below Avg'], lowerBetter: false },
+// --- Aim KPI bands ---
+// Built from aim_stats.thresholds so the scatter grades on exactly the same
+// numbers as the cards and the benchmark badges. The literals below are only a
+// fallback for matches analysed before the backend started shipping them.
+const AIM_KPI_FALLBACK = {
+  movement:   { label: 'Shot Speed',          unit: 'u/s',   bounds: [15, 40, 100],   lower_better: true, range: [0, 250]  },
+  stop_ticks: { label: 'Counter-strafe',      unit: 'ticks', bounds: [3, 7, 15],      lower_better: true, range: [0, 32]  },
+  preaim:     { label: 'Crosshair Placement', unit: '°', bounds: [5, 10, 20],   lower_better: true, range: [0, 45]  },
+  ttk:        { label: 'Engagement Time',     unit: 's',     bounds: [0.4, 0.65, 1.1],lower_better: true, range: [0, 1.0]  },
+  reaction:   { label: 'Reaction Time',       unit: 'ms',    bounds: [150, 200, 300], lower_better: true, range: [0, 800]  },
+  accuracy:   { label: 'Accuracy',            unit: '%',     bounds: [75, 50, 30],    lower_better: false, range: [0, 100] },
 };
+const AIM_TIER_LABELS = ['Excellent', 'Strong', 'Fair', 'Needs Work'];
+let AIM_KPI_META = {};
+
+function buildAimKpiMeta(thresholds) {
+  const src = thresholds && Object.keys(thresholds).length ? thresholds : AIM_KPI_FALLBACK;
+  AIM_KPI_META = {};
+  for (const [key, t] of Object.entries(src)) {
+    AIM_KPI_META[key] = {
+      label: t.label + (t.unit ? ' (' + t.unit + ')' : ''),
+      unit: t.unit,
+      tiers: t.bounds,
+      tierLabels: AIM_TIER_LABELS,
+      lowerBetter: t.lower_better,
+      range: t.range || null,
+    };
+  }
+}
+buildAimKpiMeta(null);
+
+// Bounds for a metric, from the shared table the backend ships.
+function aimBounds(key) {
+  const meta = AIM_KPI_META[key] || AIM_KPI_FALLBACK[key];
+  return meta ? meta.tiers || meta.bounds : [];
+}
+
+// Fixed axis span for a metric, when it declares one.
+function aimRange(key) {
+  const meta = AIM_KPI_META[key] || AIM_KPI_FALLBACK[key];
+  return meta && meta.range ? meta.range : null;
+}
 
 function drawAimScatter(canvasId, encounters, xKey, yKey) {
   const canvas = document.getElementById(canvasId);
@@ -2886,8 +2978,9 @@ function drawAimScatter(canvasId, encounters, xKey, yKey) {
     return;
   }
 
-  const xMeta = AIM_KPI_META[xKey];
-  const yMeta = AIM_KPI_META[yKey];
+  const xMeta = AIM_KPI_META[xKey] || AIM_KPI_FALLBACK[xKey];
+  const yMeta = AIM_KPI_META[yKey] || AIM_KPI_FALLBACK[yKey];
+  if (!xMeta || !yMeta) return;
 
   const xVals = pts.map(p => p[xKey]);
   const yVals = pts.map(p => p[yKey]);
@@ -3069,10 +3162,21 @@ function drawStripChart(canvasId, values, avg, opts) {
 
   const thresholds = opts.thresholds || [];
   const colors = opts.colors || [TC.success || '#34d399'];
-  const allVals = [...values, avg];
-  const minV = Math.min(...allVals) * 0.9;
-  const maxV = Math.max(...allVals) * 1.1 || 1;
+  // Fixed axis when the metric declares one, so the same value sits in the
+  // same place every match and the shape of the distribution is comparable.
+  // Falls back to scaling on the data for anything without a declared span.
+  let minV, maxV;
+  if (opts.range && opts.range.length === 2) {
+    [minV, maxV] = opts.range;
+  } else {
+    const allVals = [...values, avg];
+    minV = Math.min(...allVals) * 0.9;
+    maxV = Math.max(...allVals) * 1.1 || 1;
+  }
   const range = maxV - minV || 1;
+  // Anything past the end of a fixed axis is pinned to the edge rather than
+  // drawn outside the chart.
+  const clampV = v => Math.max(minV, Math.min(maxV, v));
 
   // Background
   ctx.fillStyle = opts.bgColor || TC.bg || '#0f1930';
@@ -3081,8 +3185,8 @@ function drawStripChart(canvasId, values, avg, opts) {
   // Draw threshold zones
   const invert = opts.invert || false;
   const getX = invert
-    ? v => ((maxV - v) / range) * w
-    : v => ((v - minV) / range) * w;
+    ? v => ((maxV - clampV(v)) / range) * w
+    : v => ((clampV(v) - minV) / range) * w;
   let prevX = 0;
   for (let i = 0; i <= thresholds.length; i++) {
     const nextX = i < thresholds.length ? getX(thresholds[i]) : w;
@@ -3090,7 +3194,17 @@ function drawStripChart(canvasId, values, avg, opts) {
     // Use hex to rgba
     const c = colors[i] || colors[colors.length - 1];
     ctx.fillStyle = hexToRgba(c, 0.08);
-    ctx.fillRect(Math.max(0, prevX), 0, Math.min(w, nextX) - Math.max(0, prevX), h);
+    const bandL = Math.max(0, prevX);
+    const bandW = Math.min(w, nextX) - bandL;
+    ctx.fillRect(bandL, 0, bandW, h);
+    // Name the band. Unlabelled shading invites being read as a category of
+    // whatever the badges underneath happen to be showing.
+    if (bandW > 34) {
+      ctx.fillStyle = hexToRgba(c, 0.55);
+      ctx.font = '7px Space Grotesk, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText((AIM_TIER_LABELS[i] || '').toUpperCase(), bandL + 3, h - 3);
+    }
     prevX = nextX;
   }
 
@@ -3099,11 +3213,27 @@ function drawStripChart(canvasId, values, avg, opts) {
   const lowPenalty = opts.lowPenalty || [];
   const weapons = opts.weapons || [];
   const outcomes = opts.outcomes || [];
+
+  // Encounters that scored identically land on the same x and hid each other:
+  // nine engagements at 100% drew as one dot, so the strip never matched the
+  // stated sample size. Stack collisions vertically instead.
+  const columnCount = {};
+  const columnSeen = {};
+  for (let i = 0; i < values.length; i++) {
+    const k = Math.round(getX(values[i]));
+    columnCount[k] = (columnCount[k] || 0) + 1;
+  }
+
   for (let i = 0; i < values.length; i++) {
     const v = values[i];
     const x = getX(v);
     const cx = Math.max(dotR, Math.min(w - dotR, x));
-    const cy = h / 2;
+    const col = Math.round(x);
+    const total = columnCount[col] || 1;
+    const seen = (columnSeen[col] = (columnSeen[col] || 0) + 1) - 1;
+    // Spread the column around the centre line, capped so dots stay in frame.
+    const spread = Math.min(dotR * 2.2, (h - dotR * 2) / Math.max(1, total));
+    const cy = h / 2 + (seen - (total - 1) / 2) * spread;
     const outcome = outcomes[i] || '';
 
     if (outcome === 'death') {
@@ -3360,11 +3490,16 @@ function hexToRgba(hex, alpha) {
 }
 
 // --- Benchmark Tier Badges ---
+// Tier labels describe the band a value falls in, not a population it was
+// compared against. The thresholds behind them are hand-set: nothing here has
+// been calibrated against real pro or amateur data, so calling a band "PRO"
+// asserted something we cannot support. Renamed until percentile calibration
+// against a real population replaces the constants.
 const _TIER_CONFIG = {
-  pro:            { label: 'PRO',           bg: 'rgba(251,191,36,0.15)', text: '#fbbf24', icon: '🏆', tcText: 'amber' },
-  high_amateur:   { label: 'HIGH AMATEUR',  bg: 'rgba(52,211,153,0.15)', text: '#34d399', icon: '⬆', tcText: 'success' },
-  average:        { label: 'AVERAGE',       bg: 'rgba(96,165,250,0.15)', text: '#60a5fa', icon: '—', tcText: 'ct' },
-  below_average:  { label: 'BELOW AVG',     bg: 'rgba(239,68,68,0.15)',  text: '#ef4444', icon: '⬇', tcText: 'error' },
+  pro:            { label: 'EXCELLENT',  bg: 'rgba(251,191,36,0.15)', text: '#fbbf24', icon: '★', tcText: 'amber' },
+  high_amateur:   { label: 'STRONG',     bg: 'rgba(52,211,153,0.15)', text: '#34d399', icon: '⬆', tcText: 'success' },
+  average:        { label: 'FAIR',       bg: 'rgba(96,165,250,0.15)', text: '#60a5fa', icon: '—', tcText: 'ct' },
+  below_average:  { label: 'NEEDS WORK', bg: 'rgba(239,68,68,0.15)',  text: '#ef4444', icon: '⬇', tcText: 'error' },
 };
 
 function _benchmarkBadgeHTML(tier) {
@@ -3579,10 +3714,11 @@ function renderUtilityEconomics(m) {
   if (!ud) return;
   document.getElementById('utility-section').classList.remove('hidden');
 
-  // Rating badge
-  const rating = ud.utility_rating || 0;
+  // Rating badge. Null means no utility was bought or thrown — distinct from
+  // a zero, which would read as "used utility, used it badly".
+  const rating = ud.utility_rating;
   const badge = document.getElementById('utility-rating-badge');
-  badge.textContent = rating.toFixed(0) + ' / 100';
+  badge.textContent = rating == null ? 'n/a' : rating.toFixed(0) + ' / 100';
 
   // Top KPIs
   const eco = ud.economics || {};
@@ -3596,6 +3732,10 @@ function renderUtilityEconomics(m) {
   document.getElementById('util-flash-stats').innerHTML = _utilStatRows([
     ['Thrown', fl.thrown || 0],
     ['Enemies Flashed', fl.enemies_flashed || 0],
+    ['Effective (1s+)', (fl.effective_flashes != null
+        ? fl.effective_flashes + ' <span class="text-on-surface-variant">(' + (fl.effective_flash_pct || 0).toFixed(0) + '%)</span>'
+        : '—')],
+    ['Blind Sec / Flash', (fl.blind_seconds_per_flash || 0).toFixed(2) + 's'],
     ['Team Flashed', '<span class="text-error">' + (fl.team_flashed || 0) + '</span>'],
     ['Avg Blind Duration', (fl.avg_enemy_blind_duration || 0).toFixed(1) + 's'],
     ['Enemies / Flash', (fl.enemies_per_flash || 0).toFixed(2)],
@@ -3825,46 +3965,62 @@ function _drawUtilityRoundChart(perRound) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.clientWidth;
-  const h = 180;
+  const h = 230;
   canvas.width = w * dpr; canvas.height = h * dpr;
   ctx.scale(dpr, dpr);
 
   const n = perRound.length;
-  const pad = { left: 50, right: 20, top: 18, bottom: 50 };
+  // Damage is HP and flash is seconds, so they cannot share a y-axis. They
+  // used to: the flash legend implied a bar, but blind time was printed as a
+  // caption under the axis because there was nowhere to draw it. Two stacked
+  // panels over the same round columns, each with its own scale.
+  const pad = { left: 50, right: 20, top: 18, bottom: 46 };
   const cw = w - pad.left - pad.right;
-  const ch = h - pad.top - pad.bottom;
+  const gap = 16;
+  const chDmg = Math.round((h - pad.top - pad.bottom - gap) * 0.62);
+  const chFl = (h - pad.top - pad.bottom - gap) - chDmg;
+  const dmgBase = pad.top + chDmg;
+  const flTop = dmgBase + gap;
+  const flBase = flTop + chFl;
   const colW = Math.floor(cw / n);
   const barW = Math.max(4, colW - 3);
 
-  // Max values for scale: damage dominates, flash blind duration separate
   const maxDmg = Math.max(30, ...perRound.map(r => (r.he_damage || 0) + (r.molotov_damage || 0)));
+  const maxBlind = Math.max(4, ...perRound.map(r => r.enemy_blind_duration || 0));
 
   ctx.fillStyle = TC.bg||'#0f1930';
   ctx.fillRect(0, 0, w, h);
 
-  // Y axis grid
+  const gridText = TC.gridText||'rgba(255,255,255,0.4)';
   ctx.strokeStyle = TC.grid||'rgba(255,255,255,0.06)';
   ctx.lineWidth = 1;
   const yStep = Math.max(10, Math.ceil(maxDmg / 4 / 10) * 10);
   for (let d = 0; d <= maxDmg; d += yStep) {
-    const y = pad.top + ch - (d / maxDmg) * ch;
-    ctx.beginPath();
-    ctx.moveTo(pad.left, y);
-    ctx.lineTo(pad.left + cw, y);
-    ctx.stroke();
-    ctx.fillStyle = TC.gridText||'rgba(255,255,255,0.4)';
+    const y = dmgBase - (d / maxDmg) * chDmg;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+    ctx.fillStyle = gridText;
     ctx.font = '9px Space Grotesk, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText(d, pad.left - 6, y + 3);
   }
 
-  // Axes
+  // Panel captions, so each scale says what it is.
+  ctx.textAlign = 'left';
+  ctx.font = '8px Space Grotesk, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillText('DAMAGE (HP)', pad.left + 2, pad.top - 6);
+  ctx.fillStyle = 'rgba(250,204,21,0.55)';
+  ctx.fillText('ENEMY BLIND (S)', pad.left + 2, flTop - 4);
+
   ctx.strokeStyle = TC.grid||'rgba(255,255,255,0.15)';
   ctx.beginPath();
-  ctx.moveTo(pad.left, pad.top);
-  ctx.lineTo(pad.left, pad.top + ch);
-  ctx.lineTo(pad.left + cw, pad.top + ch);
+  ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, dmgBase); ctx.lineTo(pad.left + cw, dmgBase);
+  ctx.moveTo(pad.left, flTop); ctx.lineTo(pad.left, flBase); ctx.lineTo(pad.left + cw, flBase);
   ctx.stroke();
+  ctx.fillStyle = gridText;
+  ctx.font = '9px Space Grotesk, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(maxBlind.toFixed(0) + 's', pad.left - 6, flTop + 4);
 
   for (let i = 0; i < n; i++) {
     const r = perRound[i];
@@ -3874,23 +4030,20 @@ function _drawUtilityRoundChart(perRound) {
     const totalDmg = heDmg + mollyDmg;
     const blindDur = r.enemy_blind_duration || 0;
     const flashCount = r.enemies_flashed || 0;
-    let y = pad.top + ch;
+    let y = dmgBase;
 
-    // Stacked damage bars: molly bottom, HE top
     if (mollyDmg > 0) {
-      const barH = (mollyDmg / maxDmg) * ch;
+      const barH = (mollyDmg / maxDmg) * chDmg;
       ctx.fillStyle = TC.orange||'#fb923c';
       ctx.fillRect(x, y - barH, barW, barH);
       y -= barH;
     }
     if (heDmg > 0) {
-      const barH = (heDmg / maxDmg) * ch;
+      const barH = (heDmg / maxDmg) * chDmg;
       ctx.fillStyle = TC.he||'#f87171';
       ctx.fillRect(x, y - barH, barW, barH);
       y -= barH;
     }
-
-    // Damage value label on top of bar
     if (totalDmg > 0) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.font = 'bold 8px Space Grotesk, sans-serif';
@@ -3898,25 +4051,32 @@ function _drawUtilityRoundChart(perRound) {
       ctx.fillText(totalDmg, x + barW / 2, y - 2);
     }
 
-    // Flash blind duration as yellow text below the axis
-    if (flashCount > 0) {
+    // Blind time as an actual bar, on its own scale.
+    if (blindDur > 0) {
+      const barH = Math.max(1, (blindDur / maxBlind) * chFl);
       ctx.fillStyle = TC.flash||'#facc15';
-      ctx.font = '8px Space Grotesk, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(blindDur.toFixed(1) + 's', x + barW / 2, pad.top + ch + 20);
-      // Flash count
-      ctx.fillStyle = 'rgba(250,204,21,0.6)';
+      ctx.globalAlpha = 0.8;
+      ctx.fillRect(x, flBase - barH, barW, barH);
+      ctx.globalAlpha = 1;
+      if (barW >= 12) {
+        ctx.fillStyle = 'rgba(250,204,21,0.85)';
+        ctx.font = '7px Space Grotesk, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(blindDur.toFixed(1), x + barW / 2, flBase - barH - 2);
+      }
+    }
+    if (flashCount > 0 && barW >= 12) {
+      ctx.fillStyle = 'rgba(250,204,21,0.45)';
       ctx.font = '7px Space Grotesk, sans-serif';
-      ctx.fillText(flashCount + (flashCount === 1 ? ' flash' : ' flsh'), x + barW / 2, pad.top + ch + 30);
+      ctx.textAlign = 'center';
+      ctx.fillText(flashCount + 'x', x + barW / 2, flBase + 9);
     }
 
-    // Round number
     ctx.fillStyle = TC.gridText||'rgba(255,255,255,0.3)';
     ctx.font = '8px Space Grotesk, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(r.round, x + barW / 2, h - 3);
 
-    // Side indicator (top bar)
     ctx.fillStyle = r.side === 'CT' ? 'rgba(96,165,250,0.5)' : 'rgba(251,146,60,0.5)';
     ctx.fillRect(x, pad.top, barW, 3);
   }
@@ -3930,6 +4090,9 @@ function _drawFlashScatterChart(rounds) {
     const u = r.enriched?.utility || {};
     const fi = u.flash_instances || [];
     for (const f of fi) {
+      // Flashing yourself is neither an enemy flash nor a team flash, and it
+      // put the player onto their own friendly-fire chart.
+      if (f.is_self) continue;
       instances.push({
         round: r.enriched?.round || r.round_number || 0,
         name: f.name,
@@ -4430,12 +4593,16 @@ function renderRoundTimeline(rounds, matchData) {
       if (k.movement) {
         const mq = k.movement.movement_quality;
         const spd = k.movement.shot_speed;
+        const pre = k.movement.pre_speed;
+        const st = k.movement.stop_ticks;
         if (mq === 'running') {
-          movBadge = ` <span class="bg-error/20 text-error px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Moving at ${spd} u/s">${spd} u/s</span>`;
+          movBadge = ` <span class="bg-error/20 text-error px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Firing while moving at ${spd} u/s">${spd} u/s</span>`;
         } else if (mq === 'counter-strafed') {
-          movBadge = ` <span class="bg-orange-400/20 text-orange-400 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Counter-strafed to ${spd} u/s">${spd} u/s</span>`;
+          movBadge = ` <span class="bg-emerald-400/20 text-emerald-400 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Cancelled ${pre} u/s in ${st} ticks, shot at ${spd} u/s">c-strafe</span>`;
+        } else if (mq === 'stopped') {
+          movBadge = ` <span class="bg-orange-400/20 text-orange-400 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Coasted down from ${pre} u/s over ${st} ticks instead of counter-strafing">coasted</span>`;
         } else {
-          movBadge = ` <span class="bg-emerald-400/20 text-emerald-400 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Standing still">still</span>`;
+          movBadge = ` <span class="bg-cyan-400/20 text-cyan-400 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Already static — never moved before the shot">still</span>`;
         }
       }
       // Pre-aim quality badge
