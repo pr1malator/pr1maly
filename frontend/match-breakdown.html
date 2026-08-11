@@ -6,8 +6,9 @@
 <title>pr1maly // Matches</title>
 <link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
 <link rel="icon" type="image/png" href="img/logo-big.png"/>
-<link rel="stylesheet" href="theme.css"/>
-<script src="theme.js?v=2"></script>
+<link rel="stylesheet" href="theme.css?v=3"/>
+<script src="theme.js?v=3"></script>
+<script src="charts.js?v=1"></script>
 <script src="reanalyze.js?v=1"></script>
 <script>
 /* Map-icon helpers come from theme.js. This page is served no-store but a
@@ -308,7 +309,7 @@ if (typeof mapIconHtml !== 'function') {
 </head>
 <body class="bg-background text-on-background font-body selection:bg-primary selection:text-on-primary-container">
 <!-- SideNavBar -->
-<aside id="sidebar" class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container shadow-2xl shadow-purple-900/20 border-r border-white/5 pt-6 z-40">
+<aside id="sidebar" class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container shadow-2xl shadow-primary/20 border-r border-white/5 pt-6 z-40">
 <div class="sidebar-header px-6 py-4 mb-8">
 <div class="flex items-center gap-3">
 <div class="sidebar-logo w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
@@ -321,11 +322,11 @@ if (typeof mapIconHtml !== 'function') {
 </div>
 </div>
 <nav class="flex-1 space-y-1">
-<a class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="breakdown.html">
+<a class="text-muted py-4 px-6 hover:bg-white/5 hover:text-primary flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="breakdown.html">
 <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="insights">insights</span>
 <span class="sidebar-label">Trend</span>
             </a>
-<a class="bg-gradient-to-r from-purple-500/20 to-transparent border-l-4 border-cyan-400 text-cyan-400 py-4 px-6 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest group" href="match-breakdown.html">
+<a class="bg-gradient-to-r from-primary/20 to-transparent border-l-4 border-accent text-accent py-4 px-6 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest group" href="match-breakdown.html">
 <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="sports_esports">sports_esports</span>
 <span class="sidebar-label">Matches</span>
             </a>
@@ -346,11 +347,11 @@ if (typeof mapIconHtml !== 'function') {
 <span id="auto-sync-dot" class="hidden w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
 </button>
 <div class="space-y-1">
-<button onclick="openSettingsModal()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
+<button onclick="openSettingsModal()" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
 <span class="material-symbols-outlined text-sm">settings</span> <span class="sidebar-label">Settings</span>
 </button>
-<button onclick="toggleTheme()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Toggle light/dark mode">
-<span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme</span>
+<button data-theme-button onclick="toggleThemeMenu(this)" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Choose a theme">
+<span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme<span class="theme-name text-outline normal-case font-normal ml-1"></span></span>
 </button>
 </div>
 </div>
@@ -376,18 +377,18 @@ if (typeof mapIconHtml !== 'function') {
 <div class="flex flex-wrap items-center gap-2 mb-2">
 <span class="bg-secondary/10 text-secondary px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">MAP: DE_ANUBIS</span>
 <span id="match-date-badge" class="bg-primary/10 text-primary px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap hidden"></span>
-<span id="partial-import-badge" class="bg-amber-400/15 text-amber-300 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap hidden">PARTIAL IMPORT</span>
+<span id="partial-import-badge" class="bg-caution/15 text-caution px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap hidden">PARTIAL IMPORT</span>
 <span class="text-on-surface-variant font-label text-[10px] tracking-widest whitespace-nowrap">MATCH_ID: #8821-X</span>
-<button id="reimport-match-btn" onclick="reimportCurrentMatch()" class="ml-2 bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 whitespace-nowrap hidden" title="Re-import this match with a demo file">
+<button id="reimport-match-btn" onclick="reimportCurrentMatch()" class="ml-2 bg-caution/15 hover:bg-caution/25 text-caution px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 whitespace-nowrap hidden" title="Re-import this match with a demo file">
 <span class="material-symbols-outlined text-xs">upload_file</span> Re-import
 </button>
 <button id="delete-match-btn" onclick="deleteCurrentMatch()" class="ml-2 bg-error/10 hover:bg-error/20 text-error px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 whitespace-nowrap" title="Delete this match">
 <span class="material-symbols-outlined text-xs">delete</span> Delete
 </button>
-<button onclick="exportMatch()" class="no-print ml-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 whitespace-nowrap" title="Export as PDF">
+<button onclick="exportMatch()" class="no-print ml-2 bg-accent/10 hover:bg-accent/20 text-accent px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 whitespace-nowrap" title="Export as PDF">
 <span class="material-symbols-outlined text-xs">picture_as_pdf</span> Export PDF
 </button>
-<a id="replay-link" href="#replay-section" onclick="event.preventDefault();document.getElementById('replay-section').scrollIntoView({behavior:'smooth'});" class="no-print ml-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 whitespace-nowrap hidden cursor-pointer" title="Jump to 2D Replay">
+<a id="replay-link" href="#replay-section" onclick="event.preventDefault();document.getElementById('replay-section').scrollIntoView({behavior:'smooth'});" class="no-print ml-2 bg-good/10 hover:bg-good/20 text-good px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 whitespace-nowrap hidden cursor-pointer" title="Jump to 2D Replay">
 <span class="material-symbols-outlined text-xs">play_circle</span> 2D Replay
 </a>
 </div>
@@ -567,7 +568,7 @@ if (typeof mapIconHtml !== 'function') {
 <div class="space-y-6">
 <div>
 <div class="flex justify-between items-end mb-2">
-<span class="text-[10px] font-bold uppercase tracking-widest text-cyan-400">Counter-Terrorist</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-accent">Counter-Terrorist</span>
 <span id="side-ct-score" class="text-xl font-bold font-headline">— : —</span>
 </div>
 <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
@@ -577,11 +578,11 @@ if (typeof mapIconHtml !== 'function') {
 </div>
 <div>
 <div class="flex justify-between items-end mb-2">
-<span class="text-[10px] font-bold uppercase tracking-widest text-orange-400">Terrorist</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-warn">Terrorist</span>
 <span id="side-t-score" class="text-xl font-bold font-headline">— : —</span>
 </div>
 <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-<div id="side-t-bar" class="bg-orange-400 h-full transition-all" style="width: 0%"></div>
+<div id="side-t-bar" class="bg-warn h-full transition-all" style="width: 0%"></div>
 </div>
 <div id="side-t-stats" class="text-[9px] text-on-surface-variant mt-2 space-y-0.5"></div>
 </div>
@@ -611,9 +612,9 @@ if (typeof mapIconHtml !== 'function') {
 </div>
 <!-- Encounter outcome legend -->
 <div id="aim-outcome-legend" class="flex items-center gap-4 mb-2 text-[9px] text-on-surface-variant/70">
-<span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Kill</span>
-<span class="flex items-center gap-1"><span class="inline-block text-red-400 font-bold text-[11px] leading-none">✕</span> Death</span>
-<span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-gray-400/50"></span> Dmg Only</span>
+<span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full bg-good"></span> Kill</span>
+<span class="flex items-center gap-1"><span class="inline-block text-bad font-bold text-[11px] leading-none">✕</span> Death</span>
+<span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-on-surface-variant/50"></span> Dmg Only</span>
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
 <!-- Left: Overall Aim + Scatter Plot -->
@@ -660,14 +661,25 @@ if (typeof mapIconHtml !== 'function') {
 <div id="aim-mov-range" class="text-[8px] text-on-surface-variant mb-1"></div>
 <canvas id="aim-mov-chart" height="28" class="w-full rounded"></canvas>
 <div class="flex gap-2 mt-1 flex-wrap">
-<span id="aim-mov-cs" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-emerald-400/20 text-emerald-400"></span>
-<span id="aim-mov-standing" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-cyan-400/20 text-cyan-400"></span>
-<span id="aim-mov-stopped" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-orange-400/20 text-orange-400"></span>
+<span id="aim-mov-cs" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-good/20 text-good"></span>
+<span id="aim-mov-standing" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-accent/20 text-accent"></span>
+<span id="aim-mov-stopped" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-warn/20 text-warn"></span>
 <span id="aim-mov-running" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-error/20 text-error"></span>
 </div>
 <div id="aim-mov-gun-note" class="text-[8px] text-on-surface-variant/60 mt-1 hidden">
-<span class="inline-block w-1.5 h-1.5 rotate-45 bg-orange-400/50 mr-1" style="vertical-align:middle"></span>
+<span class="inline-block w-1.5 h-1.5 rotate-45 bg-warn/50 mr-1" style="vertical-align:middle"></span>
 = SMG / shotgun / pistol
+</div>
+<div id="aim-peek-block" class="mt-2 pt-2 border-t border-white/5 hidden">
+<div class="flex items-center justify-between">
+<span class="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Peek Speed</span>
+<span class="flex items-end gap-1"><span id="aim-peek-avg" class="text-xs font-bold font-headline text-secondary">—</span><span class="text-[8px] text-on-surface-variant">u/s median</span></span>
+</div>
+<div id="aim-peek-range" class="text-[8px] text-on-surface-variant"></div>
+<canvas id="aim-peek-chart" height="28" class="w-full rounded mt-1"></canvas>
+<div id="aim-peek-split" class="flex gap-2 mt-1 flex-wrap"></div>
+<div id="aim-peek-cs" class="text-[8px] text-on-surface-variant/80 mt-1"></div>
+<div id="aim-peek-cs-buckets" class="flex gap-1.5 mt-1 flex-wrap"></div>
 </div>
 </div>
 <!-- Engagement Time -->
@@ -690,9 +702,9 @@ if (typeof mapIconHtml !== 'function') {
 <div id="aim-preaim-range" class="text-[8px] text-on-surface-variant mb-1"></div>
 <canvas id="aim-preaim-chart" height="28" class="w-full rounded"></canvas>
 <div class="flex gap-2 mt-1 flex-wrap">
-<span id="aim-preaim-exc" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-amber-400/20 text-amber-400"></span>
-<span id="aim-preaim-good" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-emerald-400/20 text-emerald-400"></span>
-<span id="aim-preaim-mod" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-blue-400/20 text-blue-400"></span>
+<span id="aim-preaim-exc" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-caution/20 text-caution"></span>
+<span id="aim-preaim-good" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-good/20 text-good"></span>
+<span id="aim-preaim-mod" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-info/20 text-info"></span>
 <span id="aim-preaim-poor" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-error/20 text-error"></span>
 </div>
 </div>
@@ -705,9 +717,9 @@ if (typeof mapIconHtml !== 'function') {
 <div id="aim-rxn-range" class="text-[8px] text-on-surface-variant mb-1"></div>
 <canvas id="aim-rxn-chart" height="28" class="w-full rounded"></canvas>
 <div class="flex gap-2 mt-1 flex-wrap">
-<span id="aim-rxn-lightning" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-amber-400/20 text-amber-400"></span>
-<span id="aim-rxn-fast" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-emerald-400/20 text-emerald-400"></span>
-<span id="aim-rxn-average" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-blue-400/20 text-blue-400"></span>
+<span id="aim-rxn-lightning" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-caution/20 text-caution"></span>
+<span id="aim-rxn-fast" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-good/20 text-good"></span>
+<span id="aim-rxn-average" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-info/20 text-info"></span>
 <span id="aim-rxn-slow" class="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-error/20 text-error"></span>
 </div>
 </div>
@@ -747,9 +759,9 @@ if (typeof mapIconHtml !== 'function') {
 <!-- CT Half -->
 <div>
 <div class="flex items-center gap-2 mb-3">
-<div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-<span class="text-[10px] font-bold uppercase tracking-widest text-blue-400">CT Side</span>
-<span id="roles-ct-primary" class="ml-auto text-[9px] text-on-surface-variant bg-blue-400/10 px-2 py-0.5 rounded-full"></span>
+<div class="w-2 h-2 bg-info rounded-full"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-info">CT Side</span>
+<span id="roles-ct-primary" class="ml-auto text-[9px] text-on-surface-variant bg-info/10 px-2 py-0.5 rounded-full"></span>
 </div>
 <div class="relative mb-3">
 <canvas id="roles-ct-spider" width="400" height="400" class="w-full rounded-lg bg-surface-container-highest" style="aspect-ratio:1/1"></canvas>
@@ -760,9 +772,9 @@ if (typeof mapIconHtml !== 'function') {
 <!-- T Half -->
 <div>
 <div class="flex items-center gap-2 mb-3">
-<div class="w-2 h-2 bg-orange-400 rounded-full"></div>
-<span class="text-[10px] font-bold uppercase tracking-widest text-orange-400">T Side</span>
-<span id="roles-t-primary" class="ml-auto text-[9px] text-on-surface-variant bg-orange-400/10 px-2 py-0.5 rounded-full"></span>
+<div class="w-2 h-2 bg-warn rounded-full"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-warn">T Side</span>
+<span id="roles-t-primary" class="ml-auto text-[9px] text-on-surface-variant bg-warn/10 px-2 py-0.5 rounded-full"></span>
 </div>
 <div class="relative mb-3">
 <canvas id="roles-t-spider" width="400" height="400" class="w-full rounded-lg bg-surface-container-highest" style="aspect-ratio:1/1"></canvas>
@@ -804,34 +816,34 @@ if (typeof mapIconHtml !== 'function') {
 <!-- Grenade type breakdown -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 <!-- Flash card -->
-<div class="bg-surface-container-highest rounded-xl p-4 border-l-2 border-yellow-400">
+<div class="bg-surface-container-highest rounded-xl p-4 border-l-2 border-caution">
 <div class="flex items-center gap-2 mb-3">
-<span class="material-symbols-outlined text-yellow-400 text-base">flash_on</span>
-<span class="text-[10px] font-bold uppercase tracking-widest text-yellow-400">Flashbangs</span>
+<span class="material-symbols-outlined text-caution text-base">flash_on</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-caution">Flashbangs</span>
 </div>
 <div id="util-flash-stats" class="space-y-1.5 text-xs text-on-surface-variant"></div>
 </div>
 <!-- HE card -->
-<div class="bg-surface-container-highest rounded-xl p-4 border-l-2 border-red-400">
+<div class="bg-surface-container-highest rounded-xl p-4 border-l-2 border-bad">
 <div class="flex items-center gap-2 mb-3">
-<span class="material-symbols-outlined text-red-400 text-base">explosion</span>
-<span class="text-[10px] font-bold uppercase tracking-widest text-red-400">HE Grenades</span>
+<span class="material-symbols-outlined text-bad text-base">explosion</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-bad">HE Grenades</span>
 </div>
 <div id="util-he-stats" class="space-y-1.5 text-xs text-on-surface-variant"></div>
 </div>
 <!-- Molotov card -->
-<div class="bg-surface-container-highest rounded-xl p-4 border-l-2 border-orange-400">
+<div class="bg-surface-container-highest rounded-xl p-4 border-l-2 border-warn">
 <div class="flex items-center gap-2 mb-3">
-<span class="material-symbols-outlined text-orange-400 text-base">local_fire_department</span>
-<span class="text-[10px] font-bold uppercase tracking-widest text-orange-400">Molotov / Inc</span>
+<span class="material-symbols-outlined text-warn text-base">local_fire_department</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-warn">Molotov / Inc</span>
 </div>
 <div id="util-molly-stats" class="space-y-1.5 text-xs text-on-surface-variant"></div>
 </div>
 <!-- Smoke card -->
-<div class="bg-surface-container-highest rounded-xl p-4 border-l-2 border-slate-400">
+<div class="bg-surface-container-highest rounded-xl p-4 border-l-2 border-on-surface-variant">
 <div class="flex items-center gap-2 mb-3">
-<span class="material-symbols-outlined text-slate-400 text-base">cloud</span>
-<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Smokes</span>
+<span class="material-symbols-outlined text-on-surface-variant text-base">cloud</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Smokes</span>
 </div>
 <div id="util-smoke-stats" class="space-y-1.5 text-xs text-on-surface-variant"></div>
 </div>
@@ -840,13 +852,13 @@ if (typeof mapIconHtml !== 'function') {
 <div id="teamplayer-section" class="mt-6 hidden">
 <div class="flex items-center justify-between mb-2">
 <div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-emerald-400 text-lg">group</span>
+<span class="material-symbols-outlined text-good text-lg">group</span>
 <span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Teamplayer — Team Damage, Flashes &amp; Drops</span>
 </div>
 <div class="flex items-center gap-4 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
 <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-error inline-block"></span>Team Damage</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-yellow-400 inline-block"></span>Team Flashes</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-emerald-400 inline-block"></span>Drops</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-caution inline-block"></span>Team Flashes</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-good inline-block"></span>Drops</span>
 </div>
 </div>
 <canvas id="teamplayer-canvas" height="280" class="w-full rounded-lg bg-surface-container-highest"></canvas>
@@ -856,9 +868,9 @@ if (typeof mapIconHtml !== 'function') {
 <div class="flex items-center justify-between mb-2">
 <div class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Per-Round Utility Impact</div>
 <div class="flex items-center gap-3 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-yellow-400 inline-block"></span>Blind s</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-red-400 inline-block"></span>HE</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-orange-400 inline-block"></span>Molly</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-caution inline-block"></span>Blind s</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-bad inline-block"></span>HE</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-warn inline-block"></span>Molly</span>
 </div>
 </div>
 <canvas id="util-round-chart" height="230" class="w-full rounded-lg bg-surface-container-highest"></canvas>
@@ -871,12 +883,12 @@ if (typeof mapIconHtml !== 'function') {
 <!-- Economy Timeline -->
 <div id="economy-timeline-wrap" class="mt-6">
 <div class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Economy Timeline — Items Bought &amp; Round Impact</div>
-<canvas id="economy-timeline-canvas" height="420" class="w-full rounded-lg bg-surface-container-highest"></canvas>
+<canvas id="economy-timeline-canvas" height="440" class="w-full rounded-lg bg-surface-container-highest"></canvas>
 <div class="flex gap-4 mt-3 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
 <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm bg-secondary"></div>Full Buy</div>
 <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm bg-primary"></div>Half Buy</div>
 <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm bg-tertiary"></div>Force Buy</div>
-<div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm bg-orange-400"></div>Pistol</div>
+<div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm bg-warn"></div>Pistol</div>
 <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-sm bg-on-surface-variant"></div>Eco</div>
 </div>
 </div>
@@ -911,9 +923,9 @@ if (typeof mapIconHtml !== 'function') {
   <!-- CT Side -->
   <div class="bg-surface-container-highest rounded-xl p-5 border border-secondary/20">
     <div class="flex items-center gap-2 mb-4">
-      <div class="w-2.5 h-2.5 bg-blue-400 rounded-full"></div>
-      <span class="text-[10px] font-bold uppercase tracking-widest text-blue-400">CT Side</span>
-      <span id="beh-ct-dominant" class="ml-auto text-[9px] text-on-surface-variant bg-blue-400/10 px-2 py-0.5 rounded-full font-bold"></span>
+      <div class="w-2.5 h-2.5 bg-info rounded-full"></div>
+      <span class="text-[10px] font-bold uppercase tracking-widest text-info">CT Side</span>
+      <span id="beh-ct-dominant" class="ml-auto text-[9px] text-on-surface-variant bg-info/10 px-2 py-0.5 rounded-full font-bold"></span>
     </div>
     <div class="flex justify-center mb-4">
       <canvas id="beh-ct-radar" width="260" height="260" style="width:260px;height:260px"></canvas>
@@ -923,9 +935,9 @@ if (typeof mapIconHtml !== 'function') {
   <!-- T Side -->
   <div class="bg-surface-container-highest rounded-xl p-5 border border-tertiary/20">
     <div class="flex items-center gap-2 mb-4">
-      <div class="w-2.5 h-2.5 bg-orange-400 rounded-full"></div>
-      <span class="text-[10px] font-bold uppercase tracking-widest text-orange-400">T Side</span>
-      <span id="beh-t-dominant" class="ml-auto text-[9px] text-on-surface-variant bg-orange-400/10 px-2 py-0.5 rounded-full font-bold"></span>
+      <div class="w-2.5 h-2.5 bg-warn rounded-full"></div>
+      <span class="text-[10px] font-bold uppercase tracking-widest text-warn">T Side</span>
+      <span id="beh-t-dominant" class="ml-auto text-[9px] text-on-surface-variant bg-warn/10 px-2 py-0.5 rounded-full font-bold"></span>
     </div>
     <div class="flex justify-center mb-4">
       <canvas id="beh-t-radar" width="260" height="260" style="width:260px;height:260px"></canvas>
@@ -944,7 +956,7 @@ if (typeof mapIconHtml !== 'function') {
 <div class="flex justify-between items-center mb-4">
 <h3 class="font-label text-xs tracking-widest text-on-surface uppercase">Round-by-Round</h3>
 <div class="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
-<span class="text-emerald-400">● Win</span>
+<span class="text-good">● Win</span>
 <span class="text-error">● Loss</span>
 </div>
 </div>
@@ -962,20 +974,20 @@ MINIMAP — <span id="minimap-title">Round ?</span>
 <button onclick="minimapZoomIn()" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg transition-colors" title="Zoom in">zoom_in</button>
 <button onclick="minimapZoomOut()" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg transition-colors" title="Zoom out">zoom_out</button>
 <button onclick="minimapResetView()" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg transition-colors" title="Reset view">center_focus_strong</button>
-<button id="debug-positions-btn" onclick="toggleDebugPositions()" class="material-symbols-outlined text-on-surface-variant hover:text-amber-400 text-lg transition-colors" title="Debug: show all event positions">scatter_plot</button>
+<button id="debug-positions-btn" onclick="toggleDebugPositions()" class="material-symbols-outlined text-on-surface-variant hover:text-caution text-lg transition-colors" title="Debug: show all event positions">scatter_plot</button>
 <span id="minimap-zoom-label" class="text-[9px] text-on-surface-variant font-mono w-8 text-center">1.0x</span>
 <span id="minimap-coords" class="text-[9px] text-on-surface-variant font-mono ml-2 hidden"></span>
 </div>
 </div>
 <div class="flex flex-wrap gap-2 mb-3 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Kill</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-good"></span>Kill</span>
 <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-error"></span>Death</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-400"></span>Player pos</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400 opacity-50"></span>AI zone</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-300"></span>Flash</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400"></span>HE</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-500"></span>Molotov</span>
-<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-300"></span>Smoke</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-accent"></span>Player pos</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-caution opacity-50"></span>AI zone</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-caution"></span>Flash</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-bad"></span>HE</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-warn"></span>Molotov</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-on-surface-variant"></span>Smoke</span>
 </div>
 <div class="flex justify-center">
 <div id="minimap-container" class="relative w-full" style="max-width:100%;overflow:hidden;cursor:grab;aspect-ratio:1/1;">
@@ -999,7 +1011,7 @@ MINIMAP — <span id="minimap-title">Round ?</span>
 <div id="replay-section" class="md:col-span-12 bg-surface-container rounded-2xl p-6 border-t border-white/5">
 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
   <h3 class="font-label text-xs tracking-widest text-on-surface uppercase flex items-center gap-2">
-    <span class="material-symbols-outlined text-green-400 text-base">play_circle</span>
+    <span class="material-symbols-outlined text-good text-base">play_circle</span>
     2D REPLAY
   </h3>
   <div id="replay-round-controls" class="hidden flex items-center gap-2">
@@ -1076,10 +1088,10 @@ MINIMAP — <span id="minimap-title">Round ?</span>
       <div class="rounded-xl bg-surface-container-highest border border-white/5 p-3">
         <h4 class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Players</h4>
         <div id="replay-ct-players" class="space-y-1 mb-2">
-          <div class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Counter-Terrorists</div>
+          <div class="text-[10px] font-bold text-info uppercase tracking-widest mb-1">Counter-Terrorists</div>
         </div>
         <div id="replay-t-players" class="space-y-1">
-          <div class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-1">Terrorists</div>
+          <div class="text-[10px] font-bold text-caution uppercase tracking-widest mb-1">Terrorists</div>
         </div>
       </div>
       <div class="rounded-xl bg-surface-container-highest border border-white/5 p-3">
@@ -1142,11 +1154,11 @@ MINIMAP — <span id="minimap-title">Round ?</span>
 </main>
 <!-- BottomNavBar (Mobile Only) -->
 <nav class="fixed lg:hidden bottom-0 w-full z-50 flex justify-around items-center px-6 pb-6 pt-3 bg-background/90 backdrop-blur-lg border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] rounded-t-3xl">
-<a class="flex flex-col items-center justify-center text-slate-500 active:bg-purple-500/10 transition-transform scale-90 active:scale-100" href="breakdown.html">
+<a class="flex flex-col items-center justify-center text-muted active:bg-primary/10 transition-transform scale-90 active:scale-100" href="breakdown.html">
 <span class="material-symbols-outlined" data-icon="insights">insights</span>
 <span class="font-headline text-[10px] font-bold uppercase mt-1">Trend</span>
 </a>
-<a class="flex flex-col items-center justify-center text-cyan-400 bg-cyan-400/10 rounded-xl px-4 py-1 tap-highlight-transparent scale-100 transition-transform" href="match-breakdown.html">
+<a class="flex flex-col items-center justify-center text-accent bg-accent/10 rounded-xl px-4 py-1 tap-highlight-transparent scale-100 transition-transform" href="match-breakdown.html">
 <span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
 <span class="font-headline text-[10px] font-bold uppercase mt-1">Matches</span>
 </a>
@@ -1281,7 +1293,7 @@ MINIMAP — <span id="minimap-title">Round ?</span>
           <input id="new-friend-steamid" type="text" placeholder="Steam ID 64" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
           <input id="new-friend-name" type="text" placeholder="Name (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
         </div>
-        <button onclick="addFriend()" class="mt-3 w-full bg-gradient-to-r from-cyan-500/80 to-cyan-500/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
+        <button onclick="addFriend()" class="mt-3 w-full bg-gradient-to-r from-accent/80 to-accent/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
           Add Friend
         </button>
         <div id="friend-status" class="text-xs mt-2"></div>
@@ -1627,7 +1639,7 @@ function renderFriendsList(friends) {
   list.innerHTML = friends.map(f => `
     <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest border border-transparent group">
       <div class="flex-1 min-w-0">
-        <div class="font-bold text-sm text-cyan-400">${esc(f.name || 'Unnamed')}</div>
+        <div class="font-bold text-sm text-accent">${esc(f.name || 'Unnamed')}</div>
         <div class="text-[9px] text-on-surface-variant/50 font-mono">${esc(f.steam_id)}</div>
       </div>
       <div class="flex gap-1">
@@ -1647,7 +1659,7 @@ async function addFriend() {
       body: JSON.stringify({ steam_id: steamId, name })
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
-    statusEl.textContent = 'Friend added!'; statusEl.className = 'text-xs text-cyan-400 mt-2';
+    statusEl.textContent = 'Friend added!'; statusEl.className = 'text-xs text-accent mt-2';
     document.getElementById('new-friend-steamid').value = '';
     document.getElementById('new-friend-name').value = '';
     loadFriends();
@@ -2362,8 +2374,8 @@ function renderMatchDetail(m) {
   // Hero section
   const heroSection = document.querySelector('section.border-l-8');
   if (heroSection) {
-    heroSection.classList.remove('border-secondary', 'border-emerald-400', 'border-error');
-    heroSection.classList.add(isMatchWin ? 'border-emerald-400' : 'border-error');
+    heroSection.classList.remove('border-secondary', 'border-good', 'border-error');
+    heroSection.classList.add(isMatchWin ? 'border-good' : 'border-error');
   }
 
   const mapBadge = document.querySelector('.bg-secondary\\/10.text-secondary');
@@ -2419,7 +2431,7 @@ function renderMatchDetail(m) {
   const scoreEl = document.querySelector('h1.text-5xl');
   if (scoreEl) {
     const result = m.match_result || '';
-    const resultColor = isMatchWin ? 'text-emerald-400' : 'text-error';
+    const resultColor = isMatchWin ? 'text-good' : 'text-error';
     scoreEl.innerHTML = `${m.team_score || 0} <span class="text-primary">:</span> ${m.enemy_score || 0} <span class="${resultColor} ml-4 text-2xl font-light tracking-widest">${result.toUpperCase()}</span>`;
   }
 
@@ -2479,7 +2491,7 @@ function _trendBadge(matchVal, avgVal, higherIsBetter = true) {
   if (pct < 2) return '<span class="ml-1.5 text-[9px] text-on-surface-variant font-bold" title="avg: ' + avgVal.toFixed(1) + '">≈</span>';
   const positive = higherIsBetter ? diff > 0 : diff < 0;
   const arrow = diff > 0 ? '▲' : '▼';
-  const color = positive ? 'text-emerald-400' : 'text-error';
+  const color = positive ? 'text-good' : 'text-error';
   return '<span class="ml-1.5 text-[9px] font-bold ' + color + '" title="avg: ' + avgVal.toFixed(1) + '">' + arrow + ' ' + pct.toFixed(0) + '%</span>';
 }
 
@@ -2741,11 +2753,11 @@ function renderAimRoles(m) {
   } else {
     ratingEl.textContent = rating.toFixed(0);
     const ratingLabel = rating >= 70 ? 'Excellent' : rating >= 50 ? 'Good' : rating >= 30 ? 'Average' : 'Needs Work';
-    const ratingColor = rating >= 70 ? 'text-emerald-400' : rating >= 50 ? 'text-cyan-400' : rating >= 30 ? 'text-orange-400' : 'text-error';
+    const ratingColor = rating >= 70 ? 'text-good' : rating >= 50 ? 'text-accent' : rating >= 30 ? 'text-warn' : 'text-error';
     ratingEl.className = ratingEl.className.replace(/text-\S+/g, '') + ' ' + ratingColor;
     document.getElementById('aim-score-label').textContent = ratingLabel;
     barEl.style.width = rating + '%';
-    const barColor = rating >= 70 ? 'bg-emerald-400' : rating >= 50 ? 'bg-cyan-400' : rating >= 30 ? 'bg-orange-400' : 'bg-error';
+    const barColor = rating >= 70 ? 'bg-good' : rating >= 50 ? 'bg-accent' : rating >= 30 ? 'bg-warn' : 'bg-error';
     barEl.className = 'h-full rounded-full transition-all ' + barColor;
     document.getElementById('aim-rating-badge').textContent = 'AIM: ' + rating.toFixed(0) + '/100';
   }
@@ -2753,9 +2765,9 @@ function renderAimRoles(m) {
   // Sample size drives how much each metric was trusted, so show it.
   const sampleNote = (m) => {
     if (!m || m.n == null) return '';
-    const tone = m.confidence === 'high' ? 'text-emerald-400'
+    const tone = m.confidence === 'high' ? 'text-good'
                : m.confidence === 'medium' ? 'text-on-surface-variant'
-               : 'text-amber-300';
+               : 'text-caution';
     return ` <span class="${tone}">n=${m.n}</span>`;
   };
 
@@ -2786,6 +2798,74 @@ function renderAimRoles(m) {
         noteEl.textContent = lpn + ' of ' + mv.running_total + ' running kill' + (mv.running_total > 1 ? 's' : '') + ' with SMG/shotgun/pistol';
         noteEl.classList.remove('hidden');
       }
+    }
+  }
+
+  // Peek speed — how much speed was carried into the duel. Drawn without tier
+  // bands: on its own the number is not good or bad, it is the context the
+  // counter-strafe below it has to be read against.
+  const peek = aim.peek || {};
+  if (peek.median != null) {
+    document.getElementById('aim-peek-block').classList.remove('hidden');
+    document.getElementById('aim-peek-avg').textContent = peek.median.toFixed(0);
+    document.getElementById('aim-peek-range').innerHTML =
+      'Peak of ' + peek.min.toFixed(0) + ' – ' + peek.max.toFixed(0)
+      + ' u/s in the 0.5s before firing' + sampleNote(peek);
+    drawStripChart('aim-peek-chart', peek.values || [], peek.median, {
+      thresholds: aimBounds('peek'),
+      zones: aimZones('peek'),
+      range: aimRange('peek'),
+      colors: [TC.amber||'#fbbf24', TC.success||'#34d399', TC.ct||'#60a5fa', TC.error||'#ef4444'],
+      bgColor: TC.bg||'#0f1930',
+      avgColor: TC.cyan||'#53ddfc',
+      outcomes: peek.outcomes || [],
+    });
+    // Legend for the chart above: one chip per shaded region, carrying that
+    // region's shade, so a band and the number describing it are visibly the
+    // same thing rather than two colour schemes for one split.
+    const byZone = peek.by_zone || [];
+    const zoneSpan = (i) => (byZone[i + 1]
+      ? byZone[i].at + '–' + byZone[i + 1].at + ' u/s'
+      : byZone[i].at + '+ u/s');
+    document.getElementById('aim-peek-split').innerHTML = byZone.map((z, i) =>
+      '<span class="px-1.5 py-0.5 rounded-full text-[8px] font-bold" style="'
+      + _zoneChipStyle(i) + '" title="' + z.n + ' of ' + peek.n
+      + ' engagements entered at ' + zoneSpan(i) + '">'
+      + esc(z.label) + ' ' + z.pct.toFixed(0) + '%</span>'
+    ).join('');
+
+    // Counter-strafe rate split by how fast the peek was. This is the whole
+    // point of measuring peek speed: a stop that holds off a walk but not off
+    // a full-speed peek is a specific thing to practise, and the pooled rate
+    // hides it completely.
+    const buckets = (mv.counterstrafe_by_peek || []).filter(b => b.attempts > 0);
+    const csEl = document.getElementById('aim-peek-cs');
+    const bucketEl = document.getElementById('aim-peek-cs-buckets');
+    if (buckets.length) {
+      csEl.textContent = 'Rifle stops counter-strafed, by peek speed';
+      // Chip body carries the peek zone it belongs to; only the rate inside is
+      // graded, on the same bands and the same palette as the benchmark badge
+      // that grades the pooled version of this number — one rate, one colour.
+      const bands = aimBounds('counterstrafe');
+      const tierKeys = ['pro', 'high_amateur', 'average', 'below_average'];
+      const rateColor = (rate) => {
+        const i = bands.findIndex(b => rate >= b);
+        const cfg = _TIER_CONFIG[tierKeys[i < 0 ? tierKeys.length - 1 : i]];
+        return TC[cfg.tcText] || cfg.text;
+      };
+      bucketEl.innerHTML = buckets.map(b => {
+        const zi = _peekZoneIndexAt(byZone, b.min);
+        const span = b.max == null ? b.min + '+' : b.min + '–' + b.max;
+        return '<span class="px-1.5 py-0.5 rounded-full text-[8px] font-bold" style="'
+          + _zoneChipStyle(zi) + '" title="' + esc(b.label) + ' peeks (' + span + ' u/s): '
+          + b.good + ' of ' + b.attempts + ' stopped properly">'
+          + esc(b.label) + ' <span style="color:' + rateColor(b.rate) + '">'
+          + b.rate.toFixed(0) + '%</span> <span class="opacity-60">'
+          + b.good + '/' + b.attempts + '</span></span>';
+      }).join('');
+    } else {
+      csEl.textContent = '';
+      bucketEl.innerHTML = '';
     }
   }
 
@@ -2919,395 +2999,38 @@ function renderAimRoles(m) {
 // Built from aim_stats.thresholds so the scatter grades on exactly the same
 // numbers as the cards and the benchmark badges. The literals below are only a
 // fallback for matches analysed before the backend started shipping them.
-const AIM_KPI_FALLBACK = {
-  movement:   { label: 'Shot Speed',          unit: 'u/s',   bounds: [15, 40, 100],   lower_better: true, range: [0, 250]  },
-  stop_ticks: { label: 'Counter-strafe',      unit: 'ticks', bounds: [3, 7, 15],      lower_better: true, range: [0, 32]  },
-  preaim:     { label: 'Crosshair Placement', unit: '°', bounds: [5, 10, 20],   lower_better: true, range: [0, 45]  },
-  ttk:        { label: 'Engagement Time',     unit: 's',     bounds: [0.4, 0.65, 1.1],lower_better: true, range: [0, 1.0]  },
-  reaction:   { label: 'Reaction Time',       unit: 'ms',    bounds: [150, 200, 300], lower_better: true, range: [0, 800]  },
-  accuracy:   { label: 'Accuracy',            unit: '%',     bounds: [75, 50, 30],    lower_better: false, range: [0, 100] },
-};
-const AIM_TIER_LABELS = ['Excellent', 'Strong', 'Fair', 'Needs Work'];
-let AIM_KPI_META = {};
 
-function buildAimKpiMeta(thresholds) {
-  const src = thresholds && Object.keys(thresholds).length ? thresholds : AIM_KPI_FALLBACK;
-  AIM_KPI_META = {};
-  for (const [key, t] of Object.entries(src)) {
-    AIM_KPI_META[key] = {
-      label: t.label + (t.unit ? ' (' + t.unit + ')' : ''),
-      unit: t.unit,
-      tiers: t.bounds,
-      tierLabels: AIM_TIER_LABELS,
-      lowerBetter: t.lower_better,
-      range: t.range || null,
-    };
-  }
-}
-buildAimKpiMeta(null);
+
+
 
 // Bounds for a metric, from the shared table the backend ships.
-function aimBounds(key) {
-  const meta = AIM_KPI_META[key] || AIM_KPI_FALLBACK[key];
-  return meta ? meta.tiers || meta.bounds : [];
-}
+
 
 // Fixed axis span for a metric, when it declares one.
-function aimRange(key) {
-  const meta = AIM_KPI_META[key] || AIM_KPI_FALLBACK[key];
-  return meta && meta.range ? meta.range : null;
-}
 
-function drawAimScatter(canvasId, encounters, xKey, yKey) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
 
-  // Filter to encounters that have both KPIs
-  const pts = encounters.filter(e => e[xKey] !== undefined && e[yKey] !== undefined);
-  if (!pts.length) {
-    const w = canvas.clientWidth, h = canvas.clientHeight;
-    canvas.width = w * 2; canvas.height = h * 2;
-    ctx.scale(2, 2);
-    ctx.fillStyle = TC.bg || '#0f1930';
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = TC.onSurfaceVariant || '#8899aa';
-    ctx.font = '11px Space Grotesk, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('No encounters with both KPIs available', w / 2, h / 2);
-    return;
-  }
+// Named regions of an ungraded axis, when it declares them.
 
-  const xMeta = AIM_KPI_META[xKey] || AIM_KPI_FALLBACK[xKey];
-  const yMeta = AIM_KPI_META[yKey] || AIM_KPI_FALLBACK[yKey];
-  if (!xMeta || !yMeta) return;
 
-  const xVals = pts.map(p => p[xKey]);
-  const yVals = pts.map(p => p[yKey]);
+// Shading for those regions. Deliberately one neutral hue at rising alpha
+// rather than the tier palette: more shade means more speed, not better or
+// worse. Anything drawn in the tier colours is a grade, and peek speed is not.
 
-  // Axis range: include tier boundaries + data extents with padding
-  const xAllBounds = [...xVals, ...xMeta.tiers];
-  const yAllBounds = [...yVals, ...yMeta.tiers];
-  const xMin = Math.min(...xAllBounds) * 0.85;
-  const xMax = Math.max(...xAllBounds) * 1.15 || 1;
-  const yMin = Math.min(...yAllBounds) * 0.85;
-  const yMax = Math.max(...yAllBounds) * 1.15 || 1;
 
-  const pad = { top: 18, right: 18, bottom: 32, left: 48 };
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  canvas.width = w * 2; canvas.height = h * 2;
-  ctx.scale(2, 2);
 
-  const plotW = w - pad.left - pad.right;
-  const plotH = h - pad.top - pad.bottom;
-  // For lowerBetter KPIs: left/bottom = low = best (natural).
-  // For higherBetter KPIs: flip so left/bottom = high = best (matches strip chart inversion).
-  const toX = v => { let n = (v - xMin) / (xMax - xMin); if (!xMeta.lowerBetter) n = 1 - n; return pad.left + n * plotW; };
-  const toY = v => { let n = (v - yMin) / (yMax - yMin); if (yMeta.lowerBetter) n = 1 - n; return pad.top + n * plotH; };
+// The same ramp at chip strength. A 4%-alpha wash reads fine as a band across
+// a chart and is invisible on a pill, so the legend keeps the hue and the
+// ordering but not the literal alpha — a chip and its band still read as the
+// same thing, which is the point of matching them at all.
 
-  // Background
-  ctx.fillStyle = TC.bg || '#0f1930';
-  ctx.fillRect(0, 0, w, h);
 
-  // Draw tier zone rectangles (intersection of X and Y tier bands)
-  const tierColors = ['#fbbf24', '#34d399', '#60a5fa', '#ef4444'];
-  const xSorted = [...xMeta.tiers].sort((a,b) => a - b);
-  const ySorted = [...yMeta.tiers].sort((a,b) => a - b);
-  const xBounds = [xMin, ...xSorted.filter(t => t > xMin && t < xMax), xMax];
-  const yBounds = [yMin, ...ySorted.filter(t => t > yMin && t < yMax), yMax];
+// Which shaded region a peek-speed boundary belongs to, so a counter-strafe
+// chip can take the same shade as the legend chip covering the same speeds.
 
-  // Compute tier index: for lowerBetter the more thresholds exceeded the worse;
-  // for higherBetter (accuracy) the more thresholds exceeded the better.
-  function tierIndex(val, sorted, meta) {
-    const n = sorted.filter(t => val >= t).length;
-    return meta.lowerBetter ? n : sorted.length - n;
-  }
 
-  for (let xi = 0; xi < xBounds.length - 1; xi++) {
-    for (let yi = 0; yi < yBounds.length - 1; yi++) {
-      const xTier = tierIndex(xBounds[xi], xSorted, xMeta);
-      const yTier = tierIndex(yBounds[yi], ySorted, yMeta);
-      // Combined tier: worst of the two (higher index = worse)
-      const combinedTier = Math.max(xTier, yTier);
-      const color = tierColors[Math.min(combinedTier, tierColors.length - 1)];
 
-      const rx1 = toX(xBounds[xi]);
-      const rx2 = toX(xBounds[xi + 1]);
-      const ry1 = toY(yBounds[yi + 1]); // note: Y is inverted
-      const ry2 = toY(yBounds[yi]);
-      ctx.fillStyle = hexToRgba(color, 0.06);
-      ctx.fillRect(rx1, ry1, rx2 - rx1, ry2 - ry1);
-    }
-  }
 
-  // Draw tier threshold lines
-  ctx.setLineDash([3, 3]);
-  ctx.lineWidth = 0.5;
-  xSorted.forEach(t => {
-    if (t > xMin && t < xMax) {
-      const x = toX(t);
-      ctx.strokeStyle = hexToRgba('#ffffff', 0.15);
-      ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + plotH); ctx.stroke();
-    }
-  });
-  ySorted.forEach(t => {
-    if (t > yMin && t < yMax) {
-      const y = toY(t);
-      ctx.strokeStyle = hexToRgba('#ffffff', 0.15);
-      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + plotW, y); ctx.stroke();
-    }
-  });
-  ctx.setLineDash([]);
 
-  // Tier labels on edges
-  ctx.font = '7px Space Grotesk, sans-serif';
-  ctx.textAlign = 'center';
-  const xLabelBounds = [xMin, ...xSorted.filter(t => t > xMin && t < xMax), xMax];
-  for (let i = 0; i < xLabelBounds.length - 1; i++) {
-    const mid = toX((xLabelBounds[i] + xLabelBounds[i + 1]) / 2);
-    const tier = tierIndex(xLabelBounds[i], xSorted, xMeta);
-    const label = xMeta.tierLabels[Math.min(tier, xMeta.tierLabels.length - 1)];
-    ctx.fillStyle = hexToRgba(tierColors[Math.min(tier, tierColors.length - 1)], 0.5);
-    ctx.fillText(label, mid, pad.top + plotH + 22);
-  }
-  ctx.textAlign = 'right';
-  const yLabelBounds = [yMin, ...ySorted.filter(t => t > yMin && t < yMax), yMax];
-  for (let i = 0; i < yLabelBounds.length - 1; i++) {
-    const mid = toY((yLabelBounds[i] + yLabelBounds[i + 1]) / 2);
-    const tier = tierIndex(yLabelBounds[i], ySorted, yMeta);
-    const label = yMeta.tierLabels[Math.min(tier, yMeta.tierLabels.length - 1)];
-    ctx.fillStyle = hexToRgba(tierColors[Math.min(tier, tierColors.length - 1)], 0.5);
-    ctx.save();
-    ctx.translate(10, mid);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = 'center';
-    ctx.fillText(label, 0, 0);
-    ctx.restore();
-  }
-
-  // Axis tick values
-  ctx.fillStyle = TC.onSurfaceVariant || '#8899aa';
-  ctx.font = '8px Space Grotesk, sans-serif';
-  ctx.textAlign = 'center';
-  const xTicks = [xMin, ...xSorted.filter(t => t > xMin && t < xMax), xMax];
-  xTicks.forEach(t => {
-    ctx.fillText(t % 1 === 0 ? t.toFixed(0) : t.toFixed(1), toX(t), pad.top + plotH + 12);
-  });
-  ctx.textAlign = 'right';
-  const yTicks = [yMin, ...ySorted.filter(t => t > yMin && t < yMax), yMax];
-  yTicks.forEach(t => {
-    ctx.fillText(t % 1 === 0 ? t.toFixed(0) : t.toFixed(1), pad.left - 4, toY(t) + 3);
-  });
-
-  // Axis labels
-  ctx.fillStyle = TC.onSurfaceVariant || '#8899aa';
-  ctx.font = 'bold 9px Space Grotesk, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(xMeta.label, pad.left + plotW / 2, h - 2);
-  ctx.save();
-  ctx.translate(12, pad.top + plotH / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText(yMeta.label, 0, 0);
-  ctx.restore();
-
-  // Plot border
-  ctx.strokeStyle = hexToRgba('#ffffff', 0.1);
-  ctx.lineWidth = 1;
-  ctx.strokeRect(pad.left, pad.top, plotW, plotH);
-
-  // Plot points with outcome indicators
-  const dotR = Math.max(3, Math.min(5, plotW / pts.length));
-  for (let i = 0; i < pts.length; i++) {
-    const px = toX(pts[i][xKey]);
-    const py = toY(pts[i][yKey]);
-    const outcome = pts[i].outcome || '';
-
-    if (outcome === 'death') {
-      const s = dotR * 1.2;
-      ctx.globalAlpha = 0.85;
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = Math.max(1.5, dotR * 0.5);
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(px - s, py - s); ctx.lineTo(px + s, py + s);
-      ctx.moveTo(px + s, py - s); ctx.lineTo(px - s, py + s);
-      ctx.stroke();
-    } else if (outcome === 'damage') {
-      ctx.globalAlpha = 0.45;
-      ctx.fillStyle = '#9ca3af';
-      ctx.beginPath();
-      ctx.arc(px, py, dotR * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // kill
-      ctx.globalAlpha = 0.8;
-      ctx.fillStyle = '#34d399';
-      ctx.beginPath();
-      ctx.arc(px, py, dotR, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  ctx.globalAlpha = 1;
-}
-
-function drawStripChart(canvasId, values, avg, opts) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas || !values.length) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  canvas.width = w * 2; canvas.height = h * 2;
-  ctx.scale(2, 2); // retina
-
-  const thresholds = opts.thresholds || [];
-  const colors = opts.colors || [TC.success || '#34d399'];
-  // Fixed axis when the metric declares one, so the same value sits in the
-  // same place every match and the shape of the distribution is comparable.
-  // Falls back to scaling on the data for anything without a declared span.
-  let minV, maxV;
-  if (opts.range && opts.range.length === 2) {
-    [minV, maxV] = opts.range;
-  } else {
-    const allVals = [...values, avg];
-    minV = Math.min(...allVals) * 0.9;
-    maxV = Math.max(...allVals) * 1.1 || 1;
-  }
-  const range = maxV - minV || 1;
-  // Anything past the end of a fixed axis is pinned to the edge rather than
-  // drawn outside the chart.
-  const clampV = v => Math.max(minV, Math.min(maxV, v));
-
-  // Background
-  ctx.fillStyle = opts.bgColor || TC.bg || '#0f1930';
-  ctx.fillRect(0, 0, w, h);
-
-  // Draw threshold zones
-  const invert = opts.invert || false;
-  const getX = invert
-    ? v => ((maxV - clampV(v)) / range) * w
-    : v => ((clampV(v) - minV) / range) * w;
-  let prevX = 0;
-  for (let i = 0; i <= thresholds.length; i++) {
-    const nextX = i < thresholds.length ? getX(thresholds[i]) : w;
-    ctx.fillStyle = (colors[i] || colors[colors.length - 1]).replace(')', ',0.08)').replace('rgb', 'rgba').replace('#', '');
-    // Use hex to rgba
-    const c = colors[i] || colors[colors.length - 1];
-    ctx.fillStyle = hexToRgba(c, 0.08);
-    const bandL = Math.max(0, prevX);
-    const bandW = Math.min(w, nextX) - bandL;
-    ctx.fillRect(bandL, 0, bandW, h);
-    // Name the band. Unlabelled shading invites being read as a category of
-    // whatever the badges underneath happen to be showing.
-    if (bandW > 34) {
-      ctx.fillStyle = hexToRgba(c, 0.55);
-      ctx.font = '7px Space Grotesk, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText((AIM_TIER_LABELS[i] || '').toUpperCase(), bandL + 3, h - 3);
-    }
-    prevX = nextX;
-  }
-
-  // Plot each value as a dot with encounter outcome indicator
-  const dotR = Math.max(2, Math.min(4, w / values.length / 3));
-  const lowPenalty = opts.lowPenalty || [];
-  const weapons = opts.weapons || [];
-  const outcomes = opts.outcomes || [];
-
-  // Encounters that scored identically land on the same x and hid each other:
-  // nine engagements at 100% drew as one dot, so the strip never matched the
-  // stated sample size. Stack collisions vertically instead.
-  const columnCount = {};
-  const columnSeen = {};
-  for (let i = 0; i < values.length; i++) {
-    const k = Math.round(getX(values[i]));
-    columnCount[k] = (columnCount[k] || 0) + 1;
-  }
-
-  for (let i = 0; i < values.length; i++) {
-    const v = values[i];
-    const x = getX(v);
-    const cx = Math.max(dotR, Math.min(w - dotR, x));
-    const col = Math.round(x);
-    const total = columnCount[col] || 1;
-    const seen = (columnSeen[col] = (columnSeen[col] || 0) + 1) - 1;
-    // Spread the column around the centre line, capped so dots stay in frame.
-    const spread = Math.min(dotR * 2.2, (h - dotR * 2) / Math.max(1, total));
-    const cy = h / 2 + (seen - (total - 1) / 2) * spread;
-    const outcome = outcomes[i] || '';
-
-    if (outcome === 'death') {
-      // Red cross (×) — player died in this encounter
-      const s = dotR * 1.3;
-      ctx.globalAlpha = 0.85;
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = Math.max(1.5, dotR * 0.6);
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(cx - s, cy - s);
-      ctx.lineTo(cx + s, cy + s);
-      ctx.moveTo(cx + s, cy - s);
-      ctx.lineTo(cx - s, cy + s);
-      ctx.stroke();
-    } else if (outcome === 'damage') {
-      // Grey dot — damage only, no kill
-      ctx.globalAlpha = 0.45;
-      ctx.fillStyle = '#9ca3af';
-      ctx.beginPath();
-      ctx.arc(cx, cy, dotR * 0.75, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (outcome === 'kill') {
-      // Green circle — got the kill
-      ctx.globalAlpha = 0.8;
-      ctx.fillStyle = '#34d399';
-      ctx.beginPath();
-      ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // Fallback: original rendering (threshold-colored dot / diamond)
-      let color = colors[0];
-      for (let t = 0; t < thresholds.length; t++) {
-        if (v >= thresholds[t]) color = colors[t + 1] || color;
-      }
-      ctx.fillStyle = color;
-      ctx.globalAlpha = 0.7;
-      if (lowPenalty[i]) {
-        const d = dotR * 1.4;
-        ctx.globalAlpha = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - d);
-        ctx.lineTo(cx + d, cy);
-        ctx.lineTo(cx, cy + d);
-        ctx.lineTo(cx - d, cy);
-        ctx.closePath();
-        ctx.fill();
-      } else {
-        ctx.beginPath();
-        ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-
-  // Average line
-  ctx.globalAlpha = 1;
-  const avgX = getX(avg);
-  ctx.strokeStyle = opts.avgColor || TC.cyan || '#53ddfc';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([4, 3]);
-  ctx.beginPath();
-  ctx.moveTo(avgX, 2);
-  ctx.lineTo(avgX, h - 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Average label
-  ctx.font = 'bold 9px Space Grotesk, sans-serif';
-  ctx.fillStyle = opts.avgColor || TC.cyan || '#53ddfc';
-  ctx.textAlign = avgX > w / 2 ? 'right' : 'left';
-  const labelX = avgX > w / 2 ? avgX - 4 : avgX + 4;
-  ctx.fillText('AVG', labelX, 10);
-}
 
 // --- Roles ---
 const _ROLE_PALETTE = [
@@ -3480,14 +3203,7 @@ function _drawSpiderChart(canvasId, roles, rounds, tintColor) {
   }
 }
 
-function hexToRgba(hex, alpha) {
-  hex = hex.replace('#', '');
-  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
-}
+
 
 // --- Benchmark Tier Badges ---
 // Tier labels describe the band a value falls in, not a population it was
@@ -4239,19 +3955,19 @@ function formatRank(p) {
   // Premier (rank_type_id 11): CS Rating integer
   if (rankType === 11) {
     const rating = rankNum;
-    let color = 'text-zinc-400';           // Gray: 0–4,999
-    if (rating >= 30000) color = 'text-yellow-400';       // Gold
-    else if (rating >= 25000) color = 'text-red-500';     // Red
-    else if (rating >= 20000) color = 'text-pink-400';    // Pink
-    else if (rating >= 15000) color = 'text-purple-400';  // Purple
-    else if (rating >= 10000) color = 'text-blue-500';    // Blue
-    else if (rating >= 5000) color = 'text-sky-400';      // Light Blue
+    let color = 'text-on-surface-variant';           // Gray: 0–4,999
+    if (rating >= 30000) color = 'text-caution';       // Gold
+    else if (rating >= 25000) color = 'text-bad';     // Red
+    else if (rating >= 20000) color = 'text-tertiary';    // Pink
+    else if (rating >= 15000) color = 'text-primary';  // Purple
+    else if (rating >= 10000) color = 'text-info';    // Blue
+    else if (rating >= 5000) color = 'text-info';      // Light Blue
     const display = rating.toLocaleString();
     return { display, title: 'CS Rating ' + display, color };
   }
   // Competitive (rank_type_id 12 or fallback): skill group 1-18
   const rankName = RANK_NAMES[rankNum] || 'Unranked';
-  const color = rankNum >= 15 ? 'text-yellow-400' : rankNum >= 11 ? 'text-cyan-400' : rankNum >= 7 ? 'text-amber-300' : rankNum >= 1 ? 'text-zinc-400' : 'text-on-surface-variant/50';
+  const color = rankNum >= 15 ? 'text-caution' : rankNum >= 11 ? 'text-accent' : rankNum >= 7 ? 'text-caution' : rankNum >= 1 ? 'text-on-surface-variant' : 'text-on-surface-variant/50';
   return { display: rankName, title: rankName, color };
 }
 
@@ -4306,14 +4022,14 @@ function renderTeamRows(containerId, players, isMyTeam) {
   rows.forEach(r => r.remove());
   for (const p of players) {
     const isUser = p.is_user;
-    const ratingColor = (p.hltv_rating || 0) >= 1.2 ? 'text-emerald-400' : (p.hltv_rating || 0) >= 1.0 ? 'text-on-surface' : 'text-error';
+    const ratingColor = (p.hltv_rating || 0) >= 1.2 ? 'text-good' : (p.hltv_rating || 0) >= 1.0 ? 'text-on-surface' : 'text-error';
     const highlight = isUser ? 'bg-primary/5 border-l-2 border-primary' : 'hover:bg-white/5';
     const r = formatRank(p);
     const row = document.createElement('div');
     row.className = `player-row grid items-center text-xs px-3 py-2 rounded-lg ${highlight} transition-colors`;
     row.style.gridTemplateColumns = '2.5fr 1.3fr 0.7fr 0.7fr 0.7fr 1fr 1fr 1fr';
     row.innerHTML = `
-      <div class=\"font-bold truncate ${isUser ? 'text-primary' : 'text-on-surface'}\">${p.steam_id ? `<a href="https://steamcommunity.com/profiles/${esc(p.steam_id)}" target="_blank" rel="noopener noreferrer" class="hover:underline">${esc(p.name || '?')}</a>` : esc(p.name || '?')}${isUser ? ' <span class=\"text-[9px] text-primary-dim\">(you)</span>' : ''}${p.is_friend ? ' <span class=\"text-[9px] text-cyan-400\">(friend)</span>' : ''}</div>
+      <div class=\"font-bold truncate ${isUser ? 'text-primary' : 'text-on-surface'}\">${p.steam_id ? `<a href="https://steamcommunity.com/profiles/${esc(p.steam_id)}" target="_blank" rel="noopener noreferrer" class="hover:underline">${esc(p.name || '?')}</a>` : esc(p.name || '?')}${isUser ? ' <span class=\"text-[9px] text-primary-dim\">(you)</span>' : ''}${p.is_friend ? ' <span class=\"text-[9px] text-accent\">(friend)</span>' : ''}</div>
       <div class=\"text-center text-[10px] ${r.color}\" title=\"${r.title}\">${r.display}</div>
       <div class=\"text-center font-semibold text-on-surface\">${p.kills||0}</div>
       <div class=\"text-center text-on-surface-variant\">${p.deaths||0}</div>
@@ -4326,230 +4042,7 @@ function renderTeamRows(containerId, players, isMyTeam) {
 }
 
 // --- Economy Timeline (canvas-based) ---
-function renderEconomyTimeline(rounds) {
-  const canvas = document.getElementById('economy-timeline-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const w = canvas.clientWidth;
-  const h = 420;
-  canvas.width = w * dpr; canvas.height = h * dpr;
-  ctx.scale(dpr, dpr);
 
-  const buyColorMap = {
-    'FULL BUY': TC.buyFull||'#c497ff', 'HALF BUY': TC.buyHalf||'#bb86fc', 'FORCE BUY': TC.buyForce||'#03dac6',
-    'PISTOL': TC.buyPistol||'#fb923c', 'ECO': TC.gridText||'rgba(255,255,255,0.35)'
-  };
-
-  // Short display names for items
-  const ITEM_SHORT = {
-    'incgrenade': 'Inc', 'molotov': 'Molly', 'hegrenade': 'HE',
-    'flashbang': 'Flash', 'smokegrenade': 'Smoke', 'decoy': 'Decoy',
-    'taser': 'Zeus', 'kevlar': 'Armor', 'assaultsuit': 'Arm+H',
-    'defuser': 'Kit', 'kevlar vest': 'Armor', 'helmet': 'Helm',
-  };
-
-  const pad = { left: 55, right: 20, top: 25, bottom: 130 };
-  const cw = w - pad.left - pad.right;
-  const ch = h - pad.top - pad.bottom;
-
-  // Background
-  ctx.fillStyle = TC.bg||'#0f1930';
-  ctx.fillRect(0, 0, w, h);
-
-  const n = rounds.length;
-  if (!n) return;
-
-  const colW = Math.floor(cw / n);
-
-  // Find max money for Y scale
-  let maxMoney = 16000;
-  for (const r of rounds) {
-    const eco = r.enriched?.economy || {};
-    if ((eco.start_money || 0) > maxMoney) maxMoney = eco.start_money;
-    if ((eco.end_money || 0) > maxMoney) maxMoney = eco.end_money;
-  }
-  maxMoney = Math.ceil(maxMoney / 4000) * 4000;
-
-  const moneyToY = (val) => pad.top + ch - (val / maxMoney) * ch;
-
-  // --- Draw grid ---
-  ctx.strokeStyle = TC.grid||'rgba(255,255,255,0.06)';
-  ctx.lineWidth = 1;
-  for (let m = 0; m <= maxMoney; m += 4000) {
-    const y = moneyToY(m);
-    ctx.beginPath();
-    ctx.moveTo(pad.left, y);
-    ctx.lineTo(pad.left + cw, y);
-    ctx.stroke();
-    ctx.fillStyle = TC.gridText||'rgba(255,255,255,0.45)';
-    ctx.font = '11px Space Grotesk, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText('$' + (m / 1000) + 'k', pad.left - 6, y + 4);
-  }
-
-  // Axes
-  ctx.strokeStyle = TC.grid||'rgba(255,255,255,0.15)';
-
-  // --- Draw per-round columns ---
-  const startMoneyPts = [];
-  const endMoneyPts = [];
-
-  for (let i = 0; i < n; i++) {
-    const r = rounds[i];
-    const eco = r.enriched?.economy || {};
-    const buyType = eco.buy_type || 'ECO';
-    const spend = eco.player_spend || 0;
-    const items = eco.items || [];
-    const startMoney = eco.start_money;
-    const endMoney = eco.end_money;
-    const side = r.enriched?.side || '?';
-    const winner = r.enriched?.round_winner;
-    const won = side === winner;
-    const kills = r.kills || 0;
-
-    const x = pad.left + i * colW;
-    const barW = Math.max(4, colW - 3);
-
-    // Column background tint
-    ctx.fillStyle = won ? 'rgba(52,211,153,0.06)' : 'rgba(248,113,113,0.06)';
-    ctx.fillRect(x, pad.top, barW, ch);
-
-    // Buy type color bar at bottom of chart area
-    ctx.fillStyle = buyColorMap[buyType] || TC.gridText||'rgba(255,255,255,0.2)';
-    ctx.fillRect(x, pad.top + ch, barW, 4);
-
-    // Spend bar (scaled to maxMoney)
-    if (spend > 0) {
-      const barH = (spend / maxMoney) * ch;
-      ctx.fillStyle = buyColorMap[buyType] || TC.gridText||'rgba(255,255,255,0.2)';
-      ctx.globalAlpha = 0.35;
-      ctx.fillRect(x, pad.top + ch - barH, barW, barH);
-      ctx.globalAlpha = 1.0;
-    }
-
-    // Side indicator (top bar)
-    ctx.fillStyle = side === 'CT' ? 'rgba(96,165,250,0.5)' : 'rgba(251,146,60,0.5)';
-    ctx.fillRect(x, pad.top, barW, 3);
-
-    // --- Items as vertical text list below the axis ---
-    const util = r.enriched?.utility || {};
-    const itemStartY = pad.top + ch + 10;
-    const lineH = 10;
-    ctx.font = '8px Space Grotesk, sans-serif';
-    ctx.textAlign = 'center';
-
-    for (let j = 0; j < items.length; j++) {
-      const item = items[j];
-      const itemKey = item.toLowerCase();
-      const isNade = ['flashbang','hegrenade','smokegrenade','molotov','incgrenade','decoy'].includes(itemKey);
-      const isEquip = ['kevlar','assaultsuit','defuser','taser','kevlar vest','helmet'].includes(itemKey);
-
-      // Determine impact status
-      let hadImpact = false;
-      let wasUsed = true;
-      if (itemKey === 'flashbang') {
-        const ef = util.enemies_flashed || 0;
-        hadImpact = ef > 0;
-        wasUsed = (util.flash_instances || []).length > 0 || ef > 0;
-      } else if (itemKey === 'hegrenade') {
-        const hd = util.he_damage || 0;
-        hadImpact = hd > 0;
-        wasUsed = hd > 0 || (util.he_thrown || 0) > 0;
-      } else if (itemKey === 'molotov' || itemKey === 'incgrenade') {
-        const md = (util.molotov_damage || []).reduce((s, m) => s + (m.damage || 0), 0);
-        hadImpact = md > 0;
-        wasUsed = (util.molotov_damage || []).length > 0 || md > 0;
-      } else if (itemKey === 'smokegrenade') {
-        hadImpact = true;
-        wasUsed = true;
-      } else if (isEquip) {
-        hadImpact = true; // equipment always used
-        wasUsed = true;
-      } else {
-        // Weapon — had impact if player got kills
-        hadImpact = kills > 0;
-        wasUsed = true;
-      }
-
-      // Color: red = not used, yellow = used but no impact, normal = had impact
-      let color;
-      if (!wasUsed) {
-        color = TC.fail||'#f87171'; // red — not used at all
-      } else if (!hadImpact) {
-        color = TC.flash||'#facc15'; // yellow — used but no impact
-      } else {
-        color = TC.gridText||'rgba(255,255,255,0.6)'; // normal — had impact
-      }
-
-      const shortName = ITEM_SHORT[itemKey] || item.replace(/^(weapon_)?/, '').substring(0, 5);
-      const iy = itemStartY + j * lineH;
-      ctx.fillStyle = color;
-      ctx.fillText(shortName, x + barW / 2, iy);
-    }
-
-    // Money line points
-    if (startMoney != null) startMoneyPts.push({ x: x + barW / 2, y: moneyToY(startMoney), val: startMoney });
-    if (endMoney != null) endMoneyPts.push({ x: x + barW / 2, y: moneyToY(endMoney), val: endMoney });
-
-    // Round number label
-    ctx.fillStyle = TC.gridText||'rgba(255,255,255,0.45)';
-    ctx.font = '10px Space Grotesk, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('R' + (r.round_number || r.enriched?.round || '?'), x + barW / 2, h - 5);
-
-    // Win/Loss indicator
-    ctx.fillStyle = won ? (TC.success||'#34d399') : (TC.fail||'#f87171');
-    ctx.font = 'bold 10px Space Grotesk, sans-serif';
-    ctx.fillText(won ? 'W' : 'L', x + barW / 2, h - 16);
-  }
-
-  // --- Draw money lines ---
-  const drawLine = (pts, color, label) => {
-    if (pts.length < 2) return;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) {
-      ctx.lineTo(pts[i].x, pts[i].y);
-    }
-    ctx.stroke();
-    // Dots
-    for (const p of pts) {
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  };
-
-  drawLine(startMoneyPts, TC.sky||'#38bdf8', 'Start $');
-  drawLine(endMoneyPts, 'rgba(56,189,248,0.35)', 'End $');
-
-  // Legend for money lines
-  ctx.font = 'bold 11px Space Grotesk, sans-serif';
-  ctx.textAlign = 'left';
-  // Start money
-  ctx.strokeStyle = TC.sky||'#38bdf8'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
-  ctx.beginPath(); ctx.moveTo(pad.left + 4, pad.top + 10); ctx.lineTo(pad.left + 20, pad.top + 10); ctx.stroke();
-  ctx.fillStyle = TC.gridText||'rgba(255,255,255,0.7)';
-  ctx.fillText('Start $', pad.left + 24, pad.top + 14);
-  // End money
-  ctx.strokeStyle = 'rgba(56,189,248,0.35)'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(pad.left + 80, pad.top + 10); ctx.lineTo(pad.left + 96, pad.top + 10); ctx.stroke();
-  ctx.fillStyle = TC.gridText||'rgba(255,255,255,0.7)';
-  ctx.fillText('End $', pad.left + 100, pad.top + 14);
-  // Items legend
-  ctx.font = '10px Space Grotesk, sans-serif';
-  ctx.fillStyle = TC.fail||'#f87171';
-  ctx.fillText('\u25CF not used', pad.left + 160, pad.top + 14);
-  ctx.fillStyle = TC.flash||'#facc15';
-  ctx.fillText('\u25CF no impact', pad.left + 240, pad.top + 14);
-  ctx.fillStyle = TC.gridText||'rgba(255,255,255,0.6)';
-  ctx.fillText('\u25CF had impact', pad.left + 330, pad.top + 14);
-}
 
 // --- Round Timeline ---
 function renderRoundTimeline(rounds, matchData) {
@@ -4564,20 +4057,20 @@ function renderRoundTimeline(rounds, matchData) {
     const deaths = r.deaths || 0;
     const damage = r.damage || 0;
 
-    const borderColor = won ? 'border-emerald-400/30' : 'border-error/30';
-    const bgColor = won ? 'bg-emerald-400/5' : 'bg-error/5';
+    const borderColor = won ? 'border-good/30' : 'border-error/30';
+    const bgColor = won ? 'bg-good/5' : 'bg-error/5';
     const resultBadge = won
-      ? '<span class="bg-emerald-400/20 text-emerald-400 px-2 py-0.5 rounded-full text-[9px] font-bold">WIN</span>'
+      ? '<span class="bg-good/20 text-good px-2 py-0.5 rounded-full text-[9px] font-bold">WIN</span>'
       : '<span class="bg-error/20 text-error px-2 py-0.5 rounded-full text-[9px] font-bold">LOSS</span>';
 
     // Economy badge
-    const buyColors = { 'FULL BUY':'text-secondary','HALF BUY':'text-primary','FORCE BUY':'text-tertiary','PISTOL':'text-orange-400','ECO':'text-on-surface-variant' };
-    const buyBg = { 'FULL BUY':'bg-secondary/10','HALF BUY':'bg-primary/10','FORCE BUY':'bg-tertiary/10','PISTOL':'bg-orange-400/10','ECO':'bg-white/5' };
+    const buyColors = { 'FULL BUY':'text-secondary','HALF BUY':'text-primary','FORCE BUY':'text-tertiary','PISTOL':'text-warn','ECO':'text-on-surface-variant' };
+    const buyBg = { 'FULL BUY':'bg-secondary/10','HALF BUY':'bg-primary/10','FORCE BUY':'bg-tertiary/10','PISTOL':'bg-warn/10','ECO':'bg-white/5' };
     const buyType = eco.buy_type || '?';
     const ecoBadge = `<span class="${buyBg[buyType] || ''} ${buyColors[buyType] || ''} px-2 py-0.5 rounded-full text-[9px] font-bold">${buyType} $${eco.player_spend||0}</span>`;
 
     // Side badge
-    const sideBadge = `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${side === 'CT' ? 'bg-cyan-400/10 text-cyan-400' : 'bg-orange-400/10 text-orange-400'}">${side}</span>`;
+    const sideBadge = `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${side === 'CT' ? 'bg-accent/10 text-accent' : 'bg-warn/10 text-warn'}">${side}</span>`;
 
     // Kill details
     let killLines = '';
@@ -4598,11 +4091,11 @@ function renderRoundTimeline(rounds, matchData) {
         if (mq === 'running') {
           movBadge = ` <span class="bg-error/20 text-error px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Firing while moving at ${spd} u/s">${spd} u/s</span>`;
         } else if (mq === 'counter-strafed') {
-          movBadge = ` <span class="bg-emerald-400/20 text-emerald-400 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Cancelled ${pre} u/s in ${st} ticks, shot at ${spd} u/s">c-strafe</span>`;
+          movBadge = ` <span class="bg-good/20 text-good px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Cancelled ${pre} u/s in ${st} ticks, shot at ${spd} u/s">c-strafe</span>`;
         } else if (mq === 'stopped') {
-          movBadge = ` <span class="bg-orange-400/20 text-orange-400 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Coasted down from ${pre} u/s over ${st} ticks instead of counter-strafing">coasted</span>`;
+          movBadge = ` <span class="bg-warn/20 text-warn px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Coasted down from ${pre} u/s over ${st} ticks instead of counter-strafing">coasted</span>`;
         } else {
-          movBadge = ` <span class="bg-cyan-400/20 text-cyan-400 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Already static — never moved before the shot">still</span>`;
+          movBadge = ` <span class="bg-accent/20 text-accent px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Already static — never moved before the shot">still</span>`;
         }
       }
       // Pre-aim quality badge
@@ -4610,7 +4103,7 @@ function renderRoundTimeline(rounds, matchData) {
       if (k.preaim) {
         const pq = k.preaim.preaim_quality;
         const err = k.preaim.crosshair_error;
-        const colors = { excellent: 'bg-emerald-400/20 text-emerald-400', good: 'bg-cyan-400/20 text-cyan-400', moderate: 'bg-orange-400/20 text-orange-400', poor: 'bg-error/20 text-error' };
+        const colors = { excellent: 'bg-good/20 text-good', good: 'bg-accent/20 text-accent', moderate: 'bg-warn/20 text-warn', poor: 'bg-error/20 text-error' };
         preaimBadge = ` <span class="${colors[pq] || ''} px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="Crosshair ${err}° off target">${err}°</span>`;
       }
       // Time to damage badge
@@ -4618,10 +4111,10 @@ function renderRoundTimeline(rounds, matchData) {
       if (k.ttd && k.ttd.ttk_seconds > 0) {
         const sec = k.ttd.ttk_seconds;
         const hits = k.ttd.hits;
-        const col = sec < 0.2 ? 'bg-emerald-400/20 text-emerald-400' : sec < 0.5 ? 'bg-orange-400/20 text-orange-400' : 'bg-error/20 text-error';
+        const col = sec < 0.2 ? 'bg-good/20 text-good' : sec < 0.5 ? 'bg-warn/20 text-warn' : 'bg-error/20 text-error';
         ttdBadge = ` <span class="${col} px-1.5 py-0.5 rounded-full text-[9px] font-bold" title="${hits} hits over ${sec}s">TTK ${sec}s</span>`;
       }
-      killLines += `<div class="text-[10px] text-emerald-400 ml-4">→ ${esc(k.victim)}${posStr} — ${esc(k.weapon || '?')}${hs}${specials}${movBadge}${preaimBadge}${ttdBadge}</div>`;
+      killLines += `<div class="text-[10px] text-good ml-4">→ ${esc(k.victim)}${posStr} — ${esc(k.weapon || '?')}${hs}${specials}${movBadge}${preaimBadge}${ttdBadge}</div>`;
     }
 
     // Death detail
@@ -4640,22 +4133,22 @@ function renderRoundTimeline(rounds, matchData) {
     let openingLine = '';
     if (e.opening_duel) {
       const od = e.opening_duel;
-      if (od.role === 'opening_kill') openingLine = `<span class="bg-emerald-400/20 text-emerald-400 px-2 py-0.5 rounded-full text-[9px] font-bold">⚡ ENTRY</span>`;
+      if (od.role === 'opening_kill') openingLine = `<span class="bg-good/20 text-good px-2 py-0.5 rounded-full text-[9px] font-bold">⚡ ENTRY</span>`;
       else openingLine = `<span class="bg-error/20 text-error px-2 py-0.5 rounded-full text-[9px] font-bold">💀 FIRST DEATH</span>`;
     }
 
     // Clutch
     let clutchLine = '';
     if (e.clutch) {
-      const cw = e.clutch.won ? 'text-emerald-400' : 'text-error';
+      const cw = e.clutch.won ? 'text-good' : 'text-error';
       clutchLine = `<span class="bg-primary/20 ${cw} px-2 py-0.5 rounded-full text-[9px] font-bold">🏆 1v${e.clutch.vs} ${e.clutch.won ? 'WON' : 'LOST'}</span>`;
     }
 
     // Bomb
     let bombLine = '';
     if (e.bomb) {
-      if (e.bomb.planted) bombLine += `<span class="text-[10px] text-orange-400 ml-4">💣 Planted</span> `;
-      if (e.bomb.defused) bombLine += `<span class="text-[10px] text-cyan-400 ml-4">🔧 Defused</span> `;
+      if (e.bomb.planted) bombLine += `<span class="text-[10px] text-warn ml-4">💣 Planted</span> `;
+      if (e.bomb.defused) bombLine += `<span class="text-[10px] text-accent ml-4">🔧 Defused</span> `;
     }
 
     // Utility
@@ -4681,7 +4174,7 @@ function renderRoundTimeline(rounds, matchData) {
     const grenades = u.grenades || [];
     if (grenades.length) {
       const nadeIcons = { flash: '⚡', he: '💥', molotov: '🔥', smoke: '💨' };
-      const nadeColors = { flash: 'text-yellow-300', he: 'text-red-400', molotov: 'text-orange-400', smoke: 'text-gray-400' };
+      const nadeColors = { flash: 'text-caution', he: 'text-bad', molotov: 'text-warn', smoke: 'text-on-surface-variant' };
       const bits = grenades.map(g => {
         const icon = nadeIcons[g.type] || '🧨';
         const cls = nadeColors[g.type] || 'text-on-surface-variant';
@@ -4817,11 +4310,11 @@ async function loadMatchList() {
 
     for (const m of matches) {
       const isWin = m.match_result === 'Victory' || m.match_result === 'win';
-      const borderColor = isWin ? 'border-emerald-400' : 'border-error';
-      const scoreColor = isWin ? 'text-emerald-400' : 'text-error';
+      const borderColor = isWin ? 'border-good' : 'border-error';
+      const scoreColor = isWin ? 'text-good' : 'text-error';
       const dateStr = m.date || '';
       const partialBadge = m.partial_import
-        ? '<div class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-400/15 text-amber-300 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"><span class="material-symbols-outlined text-[10px]">warning</span>Partial</div>'
+        ? '<div class="mt-1 inline-flex items-center gap-1 rounded-full bg-caution/15 text-caution px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"><span class="material-symbols-outlined text-[10px]">warning</span>Partial</div>'
         : '';
       // Find player name from accounts  
       const acct = accounts.find(a => a.steam_id === m.player_steam_id);
@@ -4845,11 +4338,11 @@ async function loadMatchList() {
           </div>
           <div class="hidden md:block md:col-span-2">
             <div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">RATING</div>
-            <div class="text-sm font-bold ${(m.hltv_rating||0) >= 1.0 ? 'text-emerald-400' : 'text-on-surface'}">${(m.hltv_rating||0).toFixed(2)}</div>
+            <div class="text-sm font-bold ${(m.hltv_rating||0) >= 1.0 ? 'text-good' : 'text-on-surface'}">${(m.hltv_rating||0).toFixed(2)}</div>
           </div>
           <div class="md:col-span-2 text-right md:text-left">
             <div class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">STATUS</div>
-            <div class="text-xs font-bold ${isWin ? 'text-emerald-400' : 'text-error'} uppercase tracking-widest">${isWin ? 'VICTORY' : 'DEFEAT'}</div>
+            <div class="text-xs font-bold ${isWin ? 'text-good' : 'text-error'} uppercase tracking-widest">${isWin ? 'VICTORY' : 'DEFEAT'}</div>
           </div>
           <div class="hidden md:flex md:col-span-2 justify-end gap-2">
             <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">analytics</span>
@@ -5504,32 +4997,32 @@ function renderEventList(events) {
     div.className = 'flex items-center gap-2 px-2 py-1 rounded bg-surface-container-highest/50';
     let icon = '', color = '', label = '';
     if (ev.type === 'kill') {
-      icon = 'gps_fixed'; color = 'text-emerald-400';
+      icon = 'gps_fixed'; color = 'text-good';
       label = `Killed ${esc(ev.victim)} — ${esc(ev.weapon||'?')}${ev.headshot ? ' HS' : ''}`;
     } else if (ev.type === 'player_death') {
       icon = 'dangerous'; color = 'text-error';
       label = `Died to ${esc(ev.killer)} — ${esc(ev.weapon||'?')}`;
     } else if (ev.type === 'death') {
-      icon = 'skull'; color = 'text-red-400/60';
+      icon = 'skull'; color = 'text-bad/60';
       label = `${esc(ev.name)} killed (enemy pos)`;
     } else if (ev.type === 'killer_pos') {
-      icon = 'warning'; color = 'text-orange-400';
+      icon = 'warning'; color = 'text-warn';
       label = `${esc(ev.name)} (killed you from here)`;
     } else if (ev.type === 'flash_victim') {
-      icon = 'flash_on'; color = 'text-yellow-300';
+      icon = 'flash_on'; color = 'text-caution';
       const dur = ev.duration ? ev.duration.toFixed(1) + 's' : '';
       label = `⚡ ${esc(ev.name)} flashed${dur ? ' ' + dur : ''}`;
     } else if (ev.type === 'he_victim') {
-      icon = 'explosion'; color = 'text-red-400';
+      icon = 'explosion'; color = 'text-bad';
       const dmg = ev.damage ? ev.damage + 'dmg' : '';
       label = `💥 ${esc(ev.name)} HE${dmg ? ' ' + dmg : ''}`;
     } else if (ev.type === 'molotov_victim') {
-      icon = 'local_fire_department'; color = 'text-orange-400';
+      icon = 'local_fire_department'; color = 'text-warn';
       const dmg = ev.damage ? ev.damage + 'dmg' : '';
       label = `🔥 ${esc(ev.name)} molotov${dmg ? ' ' + dmg : ''}`;
     } else if (ev.type === 'grenade') {
       const nadeIcons = { flash: 'flash_on', he: 'explosion', molotov: 'local_fire_department', smoke: 'cloud' };
-      const nadeColors = { flash: 'text-yellow-300', he: 'text-red-400', molotov: 'text-orange-400', smoke: 'text-slate-300' };
+      const nadeColors = { flash: 'text-caution', he: 'text-bad', molotov: 'text-warn', smoke: 'text-on-surface-variant' };
       const nadeLabels = { flash: 'Flash', he: 'HE', molotov: 'Molotov', smoke: 'Smoke' };
       icon = nadeIcons[ev.nade_type] || 'bomb';
       color = nadeColors[ev.nade_type] || 'text-on-surface-variant';
@@ -5843,14 +5336,14 @@ async function replayLoadRound(roundNum) {
 function replayBuildPlayerList(players) {
   const ctEl = document.getElementById('replay-ct-players');
   const tEl = document.getElementById('replay-t-players');
-  ctEl.innerHTML = '<div class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Counter-Terrorists</div>';
-  tEl.innerHTML = '<div class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest mb-1">Terrorists</div>';
+  ctEl.innerHTML = '<div class="text-[10px] font-bold text-info uppercase tracking-widest mb-1">Counter-Terrorists</div>';
+  tEl.innerHTML = '<div class="text-[10px] font-bold text-caution uppercase tracking-widest mb-1">Terrorists</div>';
 
   for (const [sid, info] of Object.entries(players)) {
     const div = document.createElement('div');
     div.className = 'flex items-center gap-2 px-2 py-1 rounded';
     div.id = 'rp-player-' + sid;
-    const color = info.team === 3 ? 'bg-blue-500' : 'bg-yellow-500';
+    const color = info.team === 3 ? 'bg-info' : 'bg-caution';
     div.innerHTML = '<div class="w-2.5 h-2.5 rounded-full ' + color + ' flex-shrink-0"></div>' +
       '<span class="text-xs text-on-surface truncate">' + replayEscape(info.name) + '</span>' +
       '<span class="ml-auto text-[10px] text-on-surface-variant rp-hp" data-sid="' + sid + '">100</span>';
@@ -6150,8 +5643,8 @@ function replayAddKill(ev, players) {
   const feed = document.getElementById('replay-kill-feed');
   const aName = players[ev.attacker]?.name || '?';
   const vName = players[ev.victim]?.name || '?';
-  const aC = players[ev.attacker]?.team === 3 ? 'text-blue-400' : 'text-yellow-400';
-  const vC = players[ev.victim]?.team === 3 ? 'text-blue-400' : 'text-yellow-400';
+  const aC = players[ev.attacker]?.team === 3 ? 'text-info' : 'text-caution';
+  const vC = players[ev.victim]?.team === 3 ? 'text-info' : 'text-caution';
   const hs = ev.headshot ? ' <span class="text-error">HS</span>' : '';
   const div = document.createElement('div');
   div.className = 'kill-feed-item flex items-center gap-1 py-0.5';
@@ -6167,9 +5660,9 @@ function replayAddGrenade(ev, players) {
   const feed = document.getElementById('replay-kill-feed');
   const throwerName = players[ev.thrower]?.name || '';
   const throwerTeam = players[ev.thrower]?.team;
-  const tC = throwerTeam === 3 ? 'text-blue-400' : throwerTeam === 2 ? 'text-yellow-400' : 'text-on-surface-variant';
+  const tC = throwerTeam === 3 ? 'text-info' : throwerTeam === 2 ? 'text-caution' : 'text-on-surface-variant';
   const labels = { flash: '⚡ Flash', he: '💥 HE', smoke: '💨 Smoke', molotov: '🔥 Molotov' };
-  const colors = { flash: 'text-yellow-200', he: 'text-red-400', smoke: 'text-green-400', molotov: 'text-orange-400' };
+  const colors = { flash: 'text-caution', he: 'text-bad', smoke: 'text-good', molotov: 'text-warn' };
   const label = labels[ev.grenade] || ev.grenade;
   const nC = colors[ev.grenade] || 'text-on-surface-variant';
   const div = document.createElement('div');

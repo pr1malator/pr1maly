@@ -1,27 +1,100 @@
-/* pr1maly — Theme toggle
-   Persists to localStorage, respects system preference on first visit. */
+/* pr1maly — Themes
+   Persists to localStorage, respects system preference on first visit.
+
+   Each theme declares whether it sits on a light background. Nothing infers it
+   from the name: theme.css keys its structural rules — ghost borders, ambient
+   shadows, white-overlay substitutes — off data-scheme, so a new light theme
+   inherits all of that by saying so here rather than by being called "light". */
+var THEMES = [
+  { id: 'midnight', label: 'Midnight', light: false, swatch: '#cc97ff' },
+  { id: 'gray',     label: 'Gray',     light: true,  swatch: '#6d4ea3' },
+  { id: 'intense',  label: 'Intense',  light: false, swatch: '#00e5ff' },
+  { id: 'pro',      label: 'Pro',      light: true,  swatch: '#ff2e63' },
+];
+var DEFAULT_THEME = 'midnight';
+
+/* The toggle only ever wrote "dark" or "light". Map those onto the themes they
+   became so an existing preference survives the upgrade. */
+var _LEGACY = { dark: 'midnight', light: 'gray' };
+
+function _themeById(id) {
+  for (var i = 0; i < THEMES.length; i++) {
+    if (THEMES[i].id === id) return THEMES[i];
+  }
+  return null;
+}
+
+function currentTheme() {
+  return document.documentElement.getAttribute('data-theme') || DEFAULT_THEME;
+}
+
+function _applyTheme(id) {
+  var theme = _themeById(id) || _themeById(DEFAULT_THEME);
+  document.documentElement.setAttribute('data-theme', theme.id);
+  document.documentElement.setAttribute('data-scheme', theme.light ? 'light' : 'dark');
+  return theme;
+}
+
 (function() {
   var saved = localStorage.getItem('pr1maly-theme');
-  if (saved) {
-    document.documentElement.setAttribute('data-theme', saved);
+  if (saved && _LEGACY[saved]) saved = _LEGACY[saved];
+  if (saved && _themeById(saved)) {
+    _applyTheme(saved);
   } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-    document.documentElement.setAttribute('data-theme', 'light');
+    _applyTheme('gray');
+  } else {
+    _applyTheme(DEFAULT_THEME);
   }
 })();
 
-function toggleTheme() {
-  var current = document.documentElement.getAttribute('data-theme');
-  var next = current === 'light' ? 'dark' : 'light';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('pr1maly-theme', next);
+/* Changing the theme reloads the page, which is heavier than it looks like it
+   should be and is nonetheless the honest fix.
+
+   Everything driven by CSS re-colours the instant the variables change. The
+   charts do not: they are painted onto canvases with colours read out of those
+   variables at draw time, so a canvas keeps whatever pixels it was given until
+   something redraws it. Switching theme without a reload left every strip
+   chart, scatter, radar, minimap and economy timeline sitting in the previous
+   theme's palette, on a page that had otherwise changed around them.
+
+   The alternative is a redraw hook on every page that owns a canvas, which is
+   a contract five pages have to remember to honour. A reload cannot forget.
+   The theme is applied before reloading so the new colours are already in
+   place while the page comes back, rather than flashing the old ones. */
+function setTheme(id, opts) {
+  var theme = _applyTheme(id);
+  localStorage.setItem('pr1maly-theme', theme.id);
   updateThemeIcon();
   _refreshTC();
+  document.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
+  if (!(opts && opts.noReload)) {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
+    location.reload();
+  }
+}
+
+/* Kept so the existing button keeps working: it now steps through the list
+   rather than flipping between two. */
+function toggleTheme() {
+  var ids = THEMES.map(function(t) { return t.id; });
+  var next = ids[(ids.indexOf(currentTheme()) + 1) % ids.length];
+  setTheme(next);
 }
 
 function updateThemeIcon() {
-  var isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  var icons = document.querySelectorAll('.theme-toggle-icon');
-  icons.forEach(function(el) { el.textContent = isLight ? 'dark_mode' : 'light_mode'; });
+  var theme = _themeById(currentTheme()) || _themeById(DEFAULT_THEME);
+  document.querySelectorAll('.theme-toggle-icon').forEach(function(el) {
+    el.textContent = theme.light ? 'dark_mode' : 'light_mode';
+  });
+  document.querySelectorAll('.theme-name').forEach(function(el) {
+    el.textContent = theme.label;
+  });
+  document.querySelectorAll('.theme-option').forEach(function(el) {
+    var on = el.dataset.theme === theme.id;
+    el.setAttribute('aria-current', on ? 'true' : 'false');
+    var tick = el.querySelector('.theme-option-tick');
+    if (tick) tick.style.visibility = on ? 'visible' : 'hidden';
+  });
 }
 
 /* --- TC: Theme Colors for canvas / Chart.js ---
@@ -67,10 +140,93 @@ function _refreshTC() {
     gridText:  g('chart-grid-text'),
     track:     g('chart-track'),
     avgStroke: g('chart-avg-stroke'),
-    isLight:   document.documentElement.getAttribute('data-theme') === 'light'
+    /* Read from the scheme, not the theme name — there is more than one light
+       theme now, and drawing code that asks this is asking about the
+       background it is painting on, not which palette is selected. */
+    isLight:   document.documentElement.getAttribute('data-scheme') === 'light'
   };
 }
 window.TC = {};
+
+/* --- Theme menu ----------------------------------------------------------
+   Built here rather than in each page's markup: five pages carry the theme
+   button, and a list of themes that has to be edited in five places is a list
+   that will disagree with itself by the third one. */
+var _themeMenu = null;
+
+function _buildThemeMenu() {
+  var menu = document.createElement('div');
+  menu.id = 'theme-menu';
+  menu.setAttribute('role', 'menu');
+  menu.style.cssText =
+    'position:fixed;z-index:300;display:none;min-width:150px;padding:6px;' +
+    'border-radius:12px;font-family:inherit;' +
+    'background:rgb(var(--c-surface-container-high));' +
+    'border:1px solid rgb(var(--c-outline-variant));' +
+    'box-shadow:0 8px 32px rgba(0,0,0,0.35);';
+
+  THEMES.forEach(function(t) {
+    var item = document.createElement('button');
+    item.className = 'theme-option';
+    item.dataset.theme = t.id;
+    item.setAttribute('role', 'menuitem');
+    item.style.cssText =
+      'display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;' +
+      'border:0;border-radius:8px;background:transparent;cursor:pointer;' +
+      'font-size:11px;font-weight:700;letter-spacing:0.08em;' +
+      'text-transform:uppercase;color:rgb(var(--c-on-surface));';
+    item.onmouseenter = function() { item.style.background = 'rgb(var(--c-surface-container-highest))'; };
+    item.onmouseleave = function() { item.style.background = 'transparent'; };
+    item.onclick = function() { setTheme(t.id); closeThemeMenu(); };
+
+    var dot = document.createElement('span');
+    dot.style.cssText =
+      'width:12px;height:12px;border-radius:50%;flex:none;background:' + t.swatch +
+      ';box-shadow:0 0 0 1px rgb(var(--c-outline-variant));';
+    var label = document.createElement('span');
+    label.textContent = t.label;
+    var tick = document.createElement('span');
+    tick.className = 'material-symbols-outlined theme-option-tick';
+    tick.textContent = 'check';
+    tick.style.cssText = 'margin-left:auto;font-size:14px;color:rgb(var(--c-primary));';
+
+    item.appendChild(dot);
+    item.appendChild(label);
+    item.appendChild(tick);
+    menu.appendChild(item);
+  });
+
+  document.body.appendChild(menu);
+  return menu;
+}
+
+function closeThemeMenu() {
+  if (_themeMenu) _themeMenu.style.display = 'none';
+}
+
+function toggleThemeMenu(btn) {
+  if (!_themeMenu) _themeMenu = _buildThemeMenu();
+  if (_themeMenu.style.display === 'block') { closeThemeMenu(); return; }
+
+  var r = (btn || document.querySelector('[data-theme-button]')).getBoundingClientRect();
+  _themeMenu.style.display = 'block';
+  // Measure after showing, then keep it on screen — the sidebar collapses and
+  // the button sits near the bottom on short viewports.
+  var h = _themeMenu.offsetHeight;
+  var w = _themeMenu.offsetWidth;
+  _themeMenu.style.left = Math.min(r.left, window.innerWidth - w - 8) + 'px';
+  _themeMenu.style.top = Math.max(8, Math.min(r.top, window.innerHeight - h - 8)) + 'px';
+  updateThemeIcon();
+}
+
+document.addEventListener('click', function(e) {
+  if (!_themeMenu || _themeMenu.style.display !== 'block') return;
+  if (_themeMenu.contains(e.target) || e.target.closest('[data-theme-button]')) return;
+  closeThemeMenu();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeThemeMenu();
+});
 
 /* Update icon + chart colors on DOMContentLoaded */
 document.addEventListener('DOMContentLoaded', function() {

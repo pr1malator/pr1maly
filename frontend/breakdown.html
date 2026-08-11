@@ -6,9 +6,10 @@
 <title>pr1maly // PERFORMANCE_ANALYTICS</title>
 <link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
 <link rel="icon" type="image/png" href="img/logo-big.png"/>
-<link rel="stylesheet" href="theme.css"/>
-<script src="theme.js?v=2"></script>
+<link rel="stylesheet" href="theme.css?v=3"/>
+<script src="theme.js?v=3"></script>
 <script src="reanalyze.js?v=1"></script>
+<script src="charts.js?v=1"></script>
 <script>
 /* Map-icon helpers come from theme.js. This page is served no-store but a
    browser can still be holding an older theme.js than the HTML it is running
@@ -138,7 +139,7 @@ if (typeof mapIconHtml !== 'function') {
 </head>
 <body class="bg-background text-on-background font-body selection:bg-primary selection:text-on-primary-container">
 <!-- SideNavBar -->
-<aside id="sidebar" class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container shadow-2xl shadow-purple-900/20 border-r border-white/5 pt-6 z-40">
+<aside id="sidebar" class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container shadow-2xl shadow-primary/20 border-r border-white/5 pt-6 z-40">
 <div class="sidebar-header px-6 py-4 mb-8">
 <div class="flex items-center gap-3">
 <div class="sidebar-logo w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
@@ -151,11 +152,11 @@ if (typeof mapIconHtml !== 'function') {
 </div>
 </div>
 <nav class="flex-1 space-y-1">
-<a class="bg-gradient-to-r from-purple-500/20 to-transparent border-l-4 border-cyan-400 text-cyan-400 py-4 px-6 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest group" href="breakdown.html">
+<a class="bg-gradient-to-r from-primary/20 to-transparent border-l-4 border-accent text-accent py-4 px-6 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest group" href="breakdown.html">
 <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="insights">insights</span>
 <span class="sidebar-label">Trend</span>
             </a>
-<a class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="match-breakdown.html">
+<a class="text-muted py-4 px-6 hover:bg-white/5 hover:text-primary flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="match-breakdown.html">
 <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="sports_esports">sports_esports</span>
 <span class="sidebar-label">Matches</span>
             </a>
@@ -176,11 +177,11 @@ if (typeof mapIconHtml !== 'function') {
 <span id="auto-sync-dot" class="hidden w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
 </button>
 <div class="space-y-1">
-<button onclick="openSettingsModal()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
+<button onclick="openSettingsModal()" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
 <span class="material-symbols-outlined text-sm">settings</span> <span class="sidebar-label">Settings</span>
 </button>
-<button onclick="toggleTheme()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Toggle light/dark mode">
-<span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme</span>
+<button data-theme-button onclick="toggleThemeMenu(this)" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Choose a theme">
+<span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme<span class="theme-name text-outline normal-case font-normal ml-1"></span></span>
 </button>
 </div>
 </div>
@@ -265,18 +266,57 @@ if (typeof mapIconHtml !== 'function') {
       <!-- AIM Rating -->
       <div class="p-4 flex flex-col border-t border-white/5">
         <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">AIM Rating</p>
-        <p id="overall-aim" class="text-2xl font-headline font-bold text-amber-400">—</p>
+        <p id="overall-aim" class="text-2xl font-headline font-bold text-caution">—</p>
         <p id="overall-aim-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
         <canvas id="overall-aim-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
       </div>
       <!-- Utility Rating -->
       <div class="p-4 flex flex-col border-t border-white/5">
         <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">Utility Rating</p>
-        <p id="overall-util" class="text-2xl font-headline font-bold text-emerald-400">—</p>
+        <p id="overall-util" class="text-2xl font-headline font-bold text-good">—</p>
         <p id="overall-util-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
         <canvas id="overall-util-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- CAREER AI ASSESSMENT — every match, no map filter -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="ai-overall-section" class="mb-6 hidden">
+  <div class="bg-surface-container rounded-xl p-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div>
+        <h2 class="font-headline font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-lg">neurology</span>
+          Career Patterns
+          <span id="ai-overall-badge" class="hidden text-[9px] font-bold text-secondary/70 uppercase tracking-widest items-center gap-1"><span class="material-symbols-outlined text-xs">smart_toy</span>AI</span>
+        </h2>
+        <p class="text-[10px] text-on-surface-variant mt-0.5">Habits and map strengths across every match</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <select id="ai-overall-provider-select" class="bg-surface-container-highest text-[10px] text-on-surface-variant border border-white/10 rounded-full px-3 py-1 focus:ring-0 focus:border-secondary/30 appearance-none uppercase tracking-widest">
+          <option value="">Select AI</option>
+        </select>
+        <select id="ai-overall-model-select" class="bg-surface-container-highest text-[10px] text-on-surface-variant border border-white/10 rounded-full px-3 py-1 focus:ring-0 focus:border-secondary/30 appearance-none uppercase tracking-widest">
+          <option value="">Model</option>
+        </select>
+        <button onclick="openAISettings()" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg transition-colors" title="AI Settings">settings</button>
+        <button id="ai-overall-btn" onclick="analyzeOverallWithAI()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all text-primary text-[10px] font-bold uppercase tracking-widest group" title="Read every analysed match for habits in aim, utility and round behaviour, and which maps you actually perform on">
+          <span class="material-symbols-outlined text-sm group-hover:animate-pulse">smart_toy</span>
+          <span id="ai-overall-btn-text">AI Analyze</span>
+        </button>
+      </div>
+    </div>
+    <p id="ai-overall-headline" class="hidden text-xs leading-relaxed p-4 mb-4 bg-primary/10 border border-primary/25 rounded-xl text-on-surface"></p>
+    <div id="ai-overall-empty" class="text-xs text-on-surface-variant leading-relaxed p-5 bg-surface-container-highest rounded-xl border border-white/5">
+      Run the assessment to have every analysed match read at once: the habits in aim,
+      utility and round behaviour that hold across your play, and which maps the numbers
+      say you are actually good on. Select a map above to assess that map's roles instead.
+    </div>
+    <div id="ai-overall-cards" class="hidden grid md:grid-cols-2 xl:grid-cols-4 gap-4 items-start"></div>
+    <p id="ai-overall-meta" class="text-[9px] text-outline uppercase tracking-widest mt-3"></p>
   </div>
 </section>
 
@@ -314,8 +354,8 @@ if (typeof mapIconHtml !== 'function') {
     </div>
     <!-- Win/loss legend -->
     <div class="flex items-center gap-4 px-4 pt-3 pb-0">
-      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Win</span></div>
-      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Loss</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-good inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Win</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-bad inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Loss</span></div>
       <div class="flex items-center gap-3 ml-2">
         <div class="flex items-center gap-1.5"><span class="inline-block w-6 h-px bg-white/20"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Per match</span></div>
         <div class="flex items-center gap-1.5"><span class="inline-block w-6 h-0.5 bg-white/60"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">5-match avg</span></div>
@@ -457,14 +497,14 @@ if (typeof mapIconHtml !== 'function') {
       <!-- AIM Rating -->
       <div class="p-4 flex flex-col border-t border-white/5">
         <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">AIM Rating</p>
-        <p id="map-perf-aim" class="text-2xl font-headline font-bold text-amber-400">—</p>
+        <p id="map-perf-aim" class="text-2xl font-headline font-bold text-caution">—</p>
         <p id="map-perf-aim-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
         <canvas id="map-perf-aim-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
       </div>
       <!-- Utility Rating -->
       <div class="p-4 flex flex-col border-t border-white/5">
         <p class="text-[9px] font-bold text-outline uppercase tracking-tighter mb-1">Utility Rating</p>
-        <p id="map-perf-util" class="text-2xl font-headline font-bold text-emerald-400">—</p>
+        <p id="map-perf-util" class="text-2xl font-headline font-bold text-good">—</p>
         <p id="map-perf-util-range" class="text-[9px] text-on-surface-variant mt-0.5">—</p>
         <canvas id="map-perf-util-strip" class="w-full mt-2" height="18" style="height:18px"></canvas>
       </div>
@@ -488,8 +528,8 @@ if (typeof mapIconHtml !== 'function') {
       <p class="text-[9px] text-on-surface-variant/60 uppercase tracking-widest">Uses same metric &amp; timescale as the main trend chart above</p>
     </div>
     <div class="flex items-center gap-4 px-4 pt-3 pb-0">
-      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Win</span></div>
-      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Loss</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-good inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Win</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-bad inline-block"></span><span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Loss</span></div>
     </div>
     <div class="p-4 pt-2">
       <canvas id="map-trend-chart" class="w-full" height="180" style="height:180px;display:block"></canvas>
@@ -498,95 +538,108 @@ if (typeof mapIconHtml !== 'function') {
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════ -->
-<!-- CT/T EFFECTIVENESS (bottom-left, col-span-6) — only when map selected -->
+<!-- CT/T EFFECTIVENESS (full width) — only when map selected -->
+<!-- Both sides sit side by side rather than stacked: the same six numbers in
+     half the height, and CT against T is the comparison the card is for. -->
 <!-- ═══════════════════════════════════════════════════════════════════ -->
-<section id="side-stats-section" class="md:col-span-6 bg-surface-container rounded-xl p-6 hidden">
-<h2 class="font-headline font-bold uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
+<section id="side-stats-section" class="md:col-span-12 bg-surface-container rounded-xl p-5 hidden">
+<h2 class="font-headline font-bold uppercase tracking-widest text-sm mb-3 flex items-center gap-2">
   <span class="material-symbols-outlined text-secondary text-lg">balance</span>
   <span id="side-stats-title">Side Effectiveness</span>
 </h2>
-<div class="space-y-6">
+<div class="grid md:grid-cols-2 gap-4">
   <!-- CT Side -->
-  <div class="p-5 bg-surface-container-highest rounded-xl border border-secondary/20">
-    <div class="flex items-center gap-3 mb-4">
-      <span class="material-symbols-outlined text-3xl text-secondary" style="font-variation-settings: 'FILL' 1;">shield</span>
-      <div>
-        <p class="font-bold text-sm uppercase tracking-widest text-secondary">CT Side</p>
-        <p class="text-[10px] text-on-surface-variant">Counter-Terrorist</p>
+  <div class="p-4 bg-surface-container-highest rounded-xl border border-secondary/20">
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-xl text-secondary" style="font-variation-settings: 'FILL' 1;">shield</span>
+        <p class="font-bold text-xs uppercase tracking-widest text-secondary">CT Side</p>
+      </div>
+      <div class="flex gap-3 text-[9px] text-on-surface-variant">
+        <span id="side-ct-rounds">0 rounds</span>
+        <span id="side-ct-kd">0K / 0D</span>
       </div>
     </div>
-    <div class="grid grid-cols-3 gap-4 mb-4">
+    <div class="grid grid-cols-3 gap-4 mb-3">
       <div>
         <p class="text-[9px] font-bold text-outline uppercase">Win Rate</p>
-        <p id="side-ct-winrate" class="text-2xl font-bold text-secondary">—</p>
+        <p id="side-ct-winrate" class="text-xl font-bold text-secondary">—</p>
       </div>
       <div>
         <p class="text-[9px] font-bold text-outline uppercase">ADR</p>
-        <p id="side-ct-adr" class="text-2xl font-bold">—</p>
+        <p id="side-ct-adr" class="text-xl font-bold">—</p>
       </div>
       <div>
         <p class="text-[9px] font-bold text-outline uppercase">Survival</p>
-        <p id="side-ct-survival" class="text-2xl font-bold">—</p>
+        <p id="side-ct-survival" class="text-xl font-bold">—</p>
       </div>
     </div>
     <div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
       <div id="side-ct-bar" class="h-full bg-secondary rounded-full transition-all duration-700" style="width: 0%"></div>
     </div>
-    <div class="flex justify-between mt-2 text-[9px] text-on-surface-variant">
-      <span id="side-ct-rounds">0 rounds</span>
-      <span id="side-ct-kd">0K / 0D</span>
-    </div>
   </div>
   <!-- T Side -->
-  <div class="p-5 bg-surface-container-highest rounded-xl border border-tertiary/20">
-    <div class="flex items-center gap-3 mb-4">
-      <span class="material-symbols-outlined text-3xl text-tertiary" style="font-variation-settings: 'FILL' 1;">swords</span>
-      <div>
-        <p class="font-bold text-sm uppercase tracking-widest text-tertiary">T Side</p>
-        <p class="text-[10px] text-on-surface-variant">Terrorist</p>
+  <div class="p-4 bg-surface-container-highest rounded-xl border border-tertiary/20">
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-xl text-tertiary" style="font-variation-settings: 'FILL' 1;">swords</span>
+        <p class="font-bold text-xs uppercase tracking-widest text-tertiary">T Side</p>
+      </div>
+      <div class="flex gap-3 text-[9px] text-on-surface-variant">
+        <span id="side-t-rounds">0 rounds</span>
+        <span id="side-t-kd">0K / 0D</span>
       </div>
     </div>
-    <div class="grid grid-cols-3 gap-4 mb-4">
+    <div class="grid grid-cols-3 gap-4 mb-3">
       <div>
         <p class="text-[9px] font-bold text-outline uppercase">Win Rate</p>
-        <p id="side-t-winrate" class="text-2xl font-bold text-tertiary">—</p>
+        <p id="side-t-winrate" class="text-xl font-bold text-tertiary">—</p>
       </div>
       <div>
         <p class="text-[9px] font-bold text-outline uppercase">ADR</p>
-        <p id="side-t-adr" class="text-2xl font-bold">—</p>
+        <p id="side-t-adr" class="text-xl font-bold">—</p>
       </div>
       <div>
         <p class="text-[9px] font-bold text-outline uppercase">Survival</p>
-        <p id="side-t-survival" class="text-2xl font-bold">—</p>
+        <p id="side-t-survival" class="text-xl font-bold">—</p>
       </div>
     </div>
     <div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
       <div id="side-t-bar" class="h-full bg-tertiary rounded-full transition-all duration-700" style="width: 0%"></div>
-    </div>
-    <div class="flex justify-between mt-2 text-[9px] text-on-surface-variant">
-      <span id="side-t-rounds">0 rounds</span>
-      <span id="side-t-kd">0K / 0D</span>
     </div>
   </div>
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════ -->
-<!-- CT/T ROLES (bottom-right, col-span-6) — only when map selected -->
+<!-- CT/T ROLES + PATTERNS (full width) — only when map selected -->
 <!-- ═══════════════════════════════════════════════════════════════════ -->
-<section id="side-roles-section" class="md:col-span-6 bg-surface-container rounded-xl p-6 hidden">
-<div class="flex items-center justify-between mb-6">
+<section id="side-roles-section" class="md:col-span-12 bg-surface-container rounded-xl p-6 hidden">
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
   <h2 class="font-headline font-bold uppercase tracking-widest text-sm flex items-center gap-2">
     <span class="material-symbols-outlined text-primary text-lg">person_celebrate</span>
     <span id="side-roles-title">Side Roles</span>
+    <span id="ai-role-badge" class="hidden text-[9px] font-bold text-secondary/70 uppercase tracking-widest items-center gap-1"><span class="material-symbols-outlined text-xs">smart_toy</span>AI</span>
   </h2>
-  <button id="ai-role-btn" onclick="analyzeRolesWithAI()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all text-primary text-[10px] font-bold uppercase tracking-widest group" title="Let AI analyze your roles based on positioning data">
-    <span class="material-symbols-outlined text-sm group-hover:animate-pulse">smart_toy</span>
-    <span id="ai-role-btn-text">AI Analyze</span>
-  </button>
-  <span id="ai-role-badge" class="hidden text-[9px] font-bold text-secondary/70 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-xs">smart_toy</span>AI</span>
+  <div class="flex items-center gap-2">
+    <select id="ai-provider-select" class="bg-surface-container text-[10px] text-on-surface-variant border border-white/10 rounded-full px-3 py-1 focus:ring-0 focus:border-secondary/30 appearance-none uppercase tracking-widest">
+      <option value="">Select AI</option>
+    </select>
+    <select id="ai-model-select" class="bg-surface-container text-[10px] text-on-surface-variant border border-white/10 rounded-full px-3 py-1 focus:ring-0 focus:border-secondary/30 appearance-none uppercase tracking-widest">
+      <option value="">Model</option>
+    </select>
+    <button onclick="openAISettings()" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg transition-colors" title="AI Settings">settings</button>
+    <button id="ai-role-btn" onclick="analyzeWithAI()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all text-primary text-[10px] font-bold uppercase tracking-widest group" title="Read this map's positions and measurements in one pass: roles, plus aim, utility and behaviour tendencies">
+      <span class="material-symbols-outlined text-sm group-hover:animate-pulse">smart_toy</span>
+      <span id="ai-role-btn-text">AI Analyze</span>
+    </button>
+  </div>
 </div>
-<div class="space-y-6">
+<p id="ai-assessment-headline" class="hidden text-xs leading-relaxed p-4 mb-4 bg-primary/10 border border-primary/25 rounded-xl text-on-surface"></p>
+<div class="space-y-4">
+<!-- The two roles side by side: at full width they read as a pair, and the
+     radars no longer push the patterns below them off the screen. -->
+<div class="grid md:grid-cols-2 gap-4">
   <!-- CT Role -->
   <div class="p-5 bg-surface-container-highest rounded-xl border border-secondary/20">
     <div class="flex items-center gap-4 mb-3">
@@ -646,17 +699,28 @@ if (typeof mapIconHtml !== 'function') {
     </div>
   </div>
 </div>
+
+<!-- Patterns: how they play, as opposed to where. Same assessment, same call,
+     so it lives under the roles it explains — three across at full width. -->
+<div id="ai-patterns-empty" class="text-xs text-on-surface-variant leading-relaxed p-5 bg-surface-container-highest rounded-xl border border-white/5">
+  Roles above are inferred from positions. Run the AI assessment to name them properly
+  and to read the measured aim, utility and round behaviour for habits — the tendencies
+  behind the numbers rather than the numbers themselves.
+</div>
+<div id="ai-patterns-cards" class="hidden grid md:grid-cols-3 gap-4 items-start"></div>
+<p id="ai-patterns-meta" class="text-[9px] text-outline uppercase tracking-widest"></p>
+</div>
 </section>
 
 </div>
 </main>
 <!-- BottomNavBar (Mobile) -->
 <nav class="fixed lg:hidden bottom-0 w-full z-50 flex justify-around items-center px-6 pb-6 pt-3 bg-background/90 backdrop-blur-lg border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] rounded-t-3xl">
-<a class="flex flex-col items-center justify-center text-cyan-400 bg-cyan-400/10 rounded-xl px-4 py-1 tap-highlight-transparent scale-100 transition-transform" href="breakdown.html">
+<a class="flex flex-col items-center justify-center text-accent bg-accent/10 rounded-xl px-4 py-1 tap-highlight-transparent scale-100 transition-transform" href="breakdown.html">
 <span class="material-symbols-outlined" data-icon="insights">insights</span>
 <span class="font-headline text-[10px] font-bold uppercase mt-1">Trend</span>
 </a>
-<a class="flex flex-col items-center justify-center text-slate-500 active:bg-purple-500/10 transition-transform scale-90 active:scale-100" href="match-breakdown.html">
+<a class="flex flex-col items-center justify-center text-muted active:bg-primary/10 transition-transform scale-90 active:scale-100" href="match-breakdown.html">
 <span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
 <span class="font-headline text-[10px] font-bold uppercase mt-1">Matches</span>
 </a>
@@ -708,7 +772,7 @@ if (typeof mapIconHtml !== 'function') {
           <p class="text-[11px] text-on-surface-variant leading-relaxed">Watch rounds on the radar with player movement, grenades, kill lines, and flash effects.</p>
         </div>
         <div class="p-4 rounded-xl bg-surface-container-highest border border-white/5">
-          <span class="material-symbols-outlined text-cyan-400 mb-2 block">psychology</span>
+          <span class="material-symbols-outlined text-accent mb-2 block">psychology</span>
           <h3 class="font-headline text-sm font-bold mb-1">AI Insights</h3>
           <p class="text-[11px] text-on-surface-variant leading-relaxed">Get AI-powered tactical analysis, role identification, and improvement suggestions.</p>
         </div>
@@ -734,7 +798,7 @@ if (typeof mapIconHtml !== 'function') {
         <!-- Player list (shown after .info parsed) -->
         <div id="ob-players-section" class="hidden">
           <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Players found in this match</p>
-          <p class="text-[10px] text-on-surface-variant mb-3">Click <span class="text-primary font-bold">Set as Me</span> to mark your account, or <span class="text-cyan-400 font-bold">Add Friend</span> to tag teammates.</p>
+          <p class="text-[10px] text-on-surface-variant mb-3">Click <span class="text-primary font-bold">Set as Me</span> to mark your account, or <span class="text-accent font-bold">Add Friend</span> to tag teammates.</p>
           <div id="ob-players-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
         </div>
 
@@ -742,7 +806,7 @@ if (typeof mapIconHtml !== 'function') {
         <div id="ob-selections-summary" class="hidden p-4 rounded-xl bg-surface-container-highest border border-white/5">
           <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Your setup</p>
           <div id="ob-my-account" class="text-xs text-on-surface-variant mb-1"></div>
-          <div id="ob-my-friends" class="text-xs text-cyan-400"></div>
+          <div id="ob-my-friends" class="text-xs text-accent"></div>
         </div>
       </div>
     </div>
@@ -934,7 +998,7 @@ if (typeof mapIconHtml !== 'function') {
           <input id="new-friend-steamid" type="text" placeholder="Steam ID 64" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
           <input id="new-friend-name" type="text" placeholder="Name (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
         </div>
-        <button onclick="addFriend()" class="mt-3 w-full bg-gradient-to-r from-cyan-500/80 to-cyan-500/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
+        <button onclick="addFriend()" class="mt-3 w-full bg-gradient-to-r from-accent/80 to-accent/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
           Add Friend
         </button>
         <div id="friend-status" class="text-xs mt-2"></div>
@@ -1287,7 +1351,7 @@ function renderFriendsList(friends) {
   list.innerHTML = friends.map(f => `
     <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest border border-transparent group">
       <div class="flex-1 min-w-0">
-        <div class="font-bold text-sm text-cyan-400">${esc(f.name || 'Unnamed')}</div>
+        <div class="font-bold text-sm text-accent">${esc(f.name || 'Unnamed')}</div>
         <div class="text-[9px] text-on-surface-variant/50 font-mono">${esc(f.steam_id)}</div>
       </div>
       <div class="flex gap-1">
@@ -1307,7 +1371,7 @@ async function addFriend() {
       body: JSON.stringify({ steam_id: steamId, name })
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
-    statusEl.textContent = 'Friend added!'; statusEl.className = 'text-xs text-cyan-400 mt-2';
+    statusEl.textContent = 'Friend added!'; statusEl.className = 'text-xs text-accent mt-2';
     document.getElementById('new-friend-steamid').value = '';
     document.getElementById('new-friend-name').value = '';
     loadFriends();
@@ -1331,24 +1395,95 @@ async function loadAIConfig() {
     _aiProviders = await providersRes.json();
     _selectedProvider = _aiConfig.active_provider || Object.keys(_aiProviders)[0];
     renderAISettings();
+    renderAISelector();
   } catch (err) { console.error('Failed to load AI config:', err); }
 }
 
+// /api/ai/providers returns {key: {label, models, default_model}} and
+// /api/ai/config masks keys as api_key_set / api_key_masked. This read the
+// provider entry as a bare array of model names and the config as if it still
+// carried the raw key: the model dropdown threw on .map of an object, which
+// aborted the rest of the function, so the model list and the system
+// instructions never rendered and a configured key always read "No key set".
 function renderAISettings() {
   if (!_aiProviders || !_aiConfig) return;
   const tabsEl = document.getElementById('ai-provider-tabs');
-  tabsEl.innerHTML = Object.keys(_aiProviders).map(p => {
-    const isActive = p === _selectedProvider;
-    return `<button onclick="selectAIProvider('${p}')" class="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${isActive ? 'bg-primary text-on-primary-fixed' : 'bg-surface-container-highest text-on-surface-variant hover:bg-white/10'}">${p}</button>`;
+  tabsEl.innerHTML = Object.entries(_aiProviders).map(([key, p]) => {
+    const isActive = key === _selectedProvider;
+    const hasKey = _aiConfig.providers?.[key]?.api_key_set;
+    return `<button onclick="selectAIProvider('${key}')" class="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${isActive ? 'bg-primary text-on-primary-fixed' : 'bg-surface-container-highest text-on-surface-variant hover:bg-white/10'}">${esc(p.label || key)}${hasKey ? ' ✓' : ''}</button>`;
   }).join('');
+
   const prov = _aiConfig.providers?.[_selectedProvider] || {};
-  document.getElementById('ai-key-input').value = prov.api_key || '';
-  document.getElementById('ai-key-status').textContent = prov.api_key ? 'Key configured' : 'No key set';
+  const status = document.getElementById('ai-key-status');
+  // The key never comes back from the server, so the input starts empty and a
+  // blank save leaves the stored key alone.
+  document.getElementById('ai-key-input').value = '';
+  if (prov.api_key_set) {
+    status.textContent = 'Key set: ' + (prov.api_key_masked || '••••');
+    status.className = 'text-[9px] text-secondary mt-1';
+  } else {
+    status.textContent = 'No key configured';
+    status.className = 'text-[9px] text-on-surface-variant mt-1';
+  }
+
   const modelSel = document.getElementById('ai-settings-model');
-  const models = _aiProviders[_selectedProvider] || [];
-  modelSel.innerHTML = models.map(m => `<option value="${m}" ${m === _aiConfig.active_model ? 'selected' : ''}>${m}</option>`).join('');
+  const models = _aiProviders[_selectedProvider]?.models || [];
+  const active = _aiConfig.active_model || prov.default_model
+    || _aiProviders[_selectedProvider]?.default_model || models[0];
+  modelSel.innerHTML = models.map(m =>
+    `<option value="${esc(m)}" ${m === active ? 'selected' : ''}>${esc(m)}</option>`
+  ).join('');
   document.getElementById('ai-system-instructions').value = _aiConfig.system_instructions || '';
 }
+
+// The provider/model pickers beside each AI Analyze button, listing only
+// providers that actually have a key — picking one without a key would just
+// buy a 400 from the endpoint. The map card and the career card each carry
+// their own pair; only one of the two is on screen at a time.
+const AI_SELECTORS = [
+  { prov: 'ai-provider-select', model: 'ai-model-select' },
+  { prov: 'ai-overall-provider-select', model: 'ai-overall-model-select' },
+];
+
+function renderAISelector() {
+  for (const sel of AI_SELECTORS) renderAISelectorPair(sel.prov, sel.model);
+}
+
+function renderAISelectorPair(provId, modelId) {
+  const provSel = document.getElementById(provId);
+  const modelSel = document.getElementById(modelId);
+  if (!provSel || !modelSel || !_aiProviders || !_aiConfig) return;
+
+  const usable = Object.entries(_aiProviders)
+    .filter(([key]) => _aiConfig.providers?.[key]?.api_key_set);
+  if (!usable.length) {
+    provSel.innerHTML = '<option value="">No API keys</option>';
+    modelSel.innerHTML = '<option value="">—</option>';
+    return;
+  }
+  provSel.innerHTML = usable.map(([key, p]) =>
+    `<option value="${esc(key)}" ${key === _aiConfig.active_provider ? 'selected' : ''}>${esc(p.label || key)}</option>`
+  ).join('');
+  renderAIModelOptions(provId, modelId);
+}
+
+function renderAIModelOptions(provId, modelId) {
+  const provSel = document.getElementById(provId || 'ai-provider-select');
+  const modelSel = document.getElementById(modelId || 'ai-model-select');
+  if (!provSel || !modelSel || !_aiProviders) return;
+  const prov = provSel.value;
+  const models = _aiProviders[prov]?.models || [];
+  const active = (prov === _aiConfig?.active_provider && _aiConfig?.active_model)
+    || _aiConfig?.providers?.[prov]?.default_model
+    || _aiProviders[prov]?.default_model
+    || models[0];
+  modelSel.innerHTML = models.map(m =>
+    `<option value="${esc(m)}" ${m === active ? 'selected' : ''}>${esc(m)}</option>`
+  ).join('');
+}
+
+function openAISettings() { openSettingsModal('ai'); }
 
 function selectAIProvider(provider) {
   _selectedProvider = provider;
@@ -1358,19 +1493,26 @@ function selectAIProvider(provider) {
 async function saveAISettings() {
   const statusEl = document.getElementById('ai-settings-status');
   try {
-    const cfg = { ..._aiConfig };
-    cfg.active_provider = _selectedProvider;
-    cfg.active_model = document.getElementById('ai-settings-model').value;
-    cfg.system_instructions = document.getElementById('ai-system-instructions').value;
-    if (!cfg.providers) cfg.providers = {};
-    if (!cfg.providers[_selectedProvider]) cfg.providers[_selectedProvider] = {};
-    cfg.providers[_selectedProvider].api_key = document.getElementById('ai-key-input').value;
+    const model = document.getElementById('ai-settings-model').value;
+    const key = document.getElementById('ai-key-input').value.trim();
+    // Send only what this panel edits. Echoing the whole config back would
+    // return the masked provider entries the GET handed out, and the PUT
+    // replies {status: ok} rather than the config — reading that back into
+    // _aiConfig left the panel unable to render until a page reload.
+    const body = {
+      active_provider: _selectedProvider,
+      active_model: model,
+      system_instructions: document.getElementById('ai-system-instructions').value,
+      providers: { [_selectedProvider]: { default_model: model } },
+    };
+    if (key) body.providers[_selectedProvider].api_key = key;
+
     const res = await fetch(API + '/ai/config', {
       method: 'PUT', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(cfg)
+      body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error('Failed to save');
-    _aiConfig = await res.json();
+    await loadAIConfig();
     statusEl.textContent = 'Saved!'; statusEl.className = 'text-xs text-center mt-3 text-secondary';
     statusEl.classList.remove('hidden');
     setTimeout(() => statusEl.classList.add('hidden'), 2000);
@@ -1737,18 +1879,9 @@ let _overallPerf = null;
 let _selectedPlayerIds = new Set(); // empty = show all
 
 // --- Trend chart state ---
+// The metric list and view state moved to charts.js with the chart that
+// reads them. This one is the page's own loaded data.
 let _trendDataPoints = [];
-let _trendTimescale = 'all'; // 'all' | 5 | 10 | 20
-let _trendMetrics = new Set(['rating', 'kd']); // enabled metric keys
-
-const TREND_METRICS = [
-  { key: 'rating', label: 'Rating', color: () => TC.purple  || '#cc97ff', getValue: d => d.hltv_rating },
-  { key: 'adr',    label: 'ADR',    color: () => TC.cyan    || '#53ddfc', getValue: d => d.adr },
-  { key: 'kd',     label: 'K/D',    color: () => TC.onText  || '#dee5ff', getValue: d => (d.deaths || 0) > 0 ? (d.kills || 0) / d.deaths : (d.kills || 0) },
-  { key: 'kast',   label: 'KAST%',  color: () => TC.sky     || '#7dd3fc', getValue: d => d.kast },
-  { key: 'aim',    label: 'Aim',    color: () => TC.amber   || '#fbbf24', getValue: d => d.aim_rating },
-  { key: 'util',   label: 'Utility',color: () => TC.success || '#34d399', getValue: d => d.utility_rating },
-];
 
 // --- Build API query string helper ---
 function _buildParams(mapFilter) {
@@ -1843,110 +1976,7 @@ function _renderTrendTimescaleButtons() {
   });
 }
 
-function drawTrendChart(dataPoints, canvasId = 'trend-chart') {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
 
-  let pts = [...(dataPoints || [])];
-  if (_trendTimescale !== 'all' && typeof _trendTimescale === 'number') pts = pts.slice(-_trendTimescale);
-
-  const n = pts.length;
-  const dpr = window.devicePixelRatio || 2;
-  const w = canvas.offsetWidth || 600;
-  const h = 200;
-  canvas.width = w * dpr; canvas.height = h * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, w, h);
-
-  if (n < 2) {
-    ctx.fillStyle = TC.gridText || 'rgba(255,255,255,0.2)';
-    ctx.font = '11px Manrope, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Not enough data to show trend', w / 2, h / 2);
-    return;
-  }
-
-  const pad = { top: 18, right: 14, bottom: 26, left: 14 };
-  const cw = w - pad.left - pad.right;
-  const ch = h - pad.top - pad.bottom;
-  const getX = i => pad.left + (n > 1 ? (i / (n - 1)) * cw : cw / 2);
-
-  // Grid lines
-  ctx.strokeStyle = TC.grid || 'rgba(255,255,255,0.05)';
-  ctx.lineWidth = 1;
-  for (let g = 0; g <= 4; g++) {
-    const gy = pad.top + (ch / 4) * g;
-    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(pad.left + cw, gy); ctx.stroke();
-  }
-
-  // Win / loss markers above chart
-  pts.forEach((d, i) => {
-    const won = (d.match_result || '').toLowerCase() === 'win';
-    ctx.fillStyle = won ? '#34d39999' : '#f8717199';
-    ctx.beginPath(); ctx.arc(getX(i), pad.top - 6, 3, 0, Math.PI * 2); ctx.fill();
-  });
-
-  // Draw each enabled metric
-  for (const metric of TREND_METRICS) {
-    if (!_trendMetrics.has(metric.key)) continue;
-    const vals = pts.map(d => metric.getValue(d));
-    const valid = vals.filter(v => v != null && !isNaN(v));
-    if (!valid.length) continue;
-
-    const minV = Math.min(...valid);
-    const maxV = Math.max(...valid);
-    const range = maxV - minV || 1;
-    const color = metric.color();
-    const getY = v => v == null || isNaN(v) ? null : pad.top + ch * (1 - (v - minV) / range);
-
-    // Raw thin line
-    ctx.beginPath(); ctx.strokeStyle = color + '55'; ctx.lineWidth = 1;
-    let first = true;
-    for (let i = 0; i < n; i++) {
-      const y = getY(vals[i]);
-      if (y == null) { first = true; continue; }
-      first ? ctx.moveTo(getX(i), y) : ctx.lineTo(getX(i), y);
-      first = false;
-    }
-    ctx.stroke();
-
-    // 5-match rolling average — thick solid line
-    const win5 = vals.map((_, i) => {
-      const sl = vals.slice(Math.max(0, i - 4), i + 1).filter(v => v != null && !isNaN(v));
-      return sl.length ? sl.reduce((a, b) => a + b, 0) / sl.length : null;
-    });
-    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
-    first = true;
-    for (let i = 0; i < n; i++) {
-      const y = getY(win5[i]);
-      if (y == null) { first = true; continue; }
-      first ? ctx.moveTo(getX(i), y) : ctx.lineTo(getX(i), y);
-      first = false;
-    }
-    ctx.stroke();
-
-    // Dots at raw values
-    for (let i = 0; i < n; i++) {
-      const y = getY(vals[i]);
-      if (y == null) continue;
-      ctx.beginPath(); ctx.arc(getX(i), y, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = color; ctx.fill();
-    }
-  }
-
-  // X-axis date labels
-  ctx.fillStyle = TC.gridText || 'rgba(255,255,255,0.3)';
-  ctx.font = '8px Manrope, sans-serif';
-  const fmt = d => d ? d.slice(0, 10) : '';
-  ctx.textAlign = 'left';  ctx.fillText(fmt(pts[0].date), pad.left, h - 4);
-  ctx.textAlign = 'right'; ctx.fillText(fmt(pts[n - 1].date), pad.left + cw, h - 4);
-  if (n > 5) {
-    const mi = Math.floor(n / 2);
-    ctx.textAlign = 'center';
-    ctx.fillText(fmt(pts[mi].date), getX(mi), h - 4);
-  }
-}
 
 const ACTIVE_DUTY_MAPS = [
   { id: 'de_dust2',   name: 'Dust II',   icon: 'wb_sunny' },
@@ -2001,50 +2031,7 @@ function clearMapSelection() {
 }
 
 // --- Distribution strip chart ---
-function drawDistStrip(canvasId, values, avg, color) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas || !values.length) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  canvas.width = w * 2; canvas.height = h * 2;
-  ctx.scale(2, 2);
-  ctx.clearRect(0, 0, w, h);
 
-  const minV = Math.min(...values);
-  const maxV = Math.max(...values);
-  const pad = 4;
-  const usable = w - pad * 2;
-  const range = maxV - minV || 1;
-
-  // Background track
-  ctx.fillStyle = TC.track || 'rgba(255,255,255,0.04)';
-  ctx.beginPath();
-  ctx.roundRect(0, h / 2 - 2, w, 4, 2);
-  ctx.fill();
-
-  // Dots for each match value
-  const r = Math.min(4, Math.max(2.5, 60 / values.length));
-  for (const v of values) {
-    const x = pad + ((v - minV) / range) * usable;
-    ctx.globalAlpha = 0.5;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, h / 2, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Average marker
-  const avgX = pad + ((avg - minV) / range) * usable;
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(avgX, h / 2, r + 1.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = TC.avgStroke || '#fff';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-}
 
 // --- Render performance panel (shared logic for overall & map-specific) ---
 function _renderPerfPanel(prefix, trends, perf) {
@@ -2212,6 +2199,7 @@ async function loadPerformance(mapFilter) {
     renderMapPerformance(trends, perf, mapFilter);
     renderSideStats(perf, mapFilter);
     renderSideRoles(perf, mapFilter);
+    renderOverallAssessment(mapFilter);
   } catch (err) { console.error('Failed to load performance:', err); }
 }
 
@@ -2262,20 +2250,36 @@ function renderSideRoles(perf, mapFilter) {
 
   const el = id => document.getElementById(id);
   const mapName = mapFilter.replace('de_', '').charAt(0).toUpperCase() + mapFilter.replace('de_', '').slice(1);
-  el('side-roles-title').textContent = mapName + ' — Side Roles';
+  el('side-roles-title').textContent = mapName + ' — Roles & Patterns';
 
-  // Show heuristic roles first
-  applyRoleData(perf.ct_role, perf.t_role, false);
+  // Heuristic roles first; the AI assessment refines them if one exists.
+  _heuristicRoles = { ct: perf.ct_role || {}, t: perf.t_role || {} };
+  applyRoleData(_heuristicRoles.ct, _heuristicRoles.t, false);
+  applyPatternData(null);
 
-  // Then check for persisted AI roles
-  fetch(API + '/performance/ai-roles?maps=' + encodeURIComponent(mapFilter))
+  fetch(API + '/performance/ai-assessment?maps=' + encodeURIComponent(mapFilter))
     .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      if (data && data.ct_role && data.ct_role.name) {
-        applyRoleData(data.ct_role, data.t_role, true);
-      }
-    })
+    .then(data => { if (data) applyAssessment(data); })
     .catch(() => {});
+}
+
+let _heuristicRoles = { ct: {}, t: {} };
+
+// One assessment covers both halves, so one function applies it.
+function applyAssessment(data) {
+  if (data.ct_role && data.ct_role.name) {
+    // The model supplies name, icon and description. Opening-duel counts and
+    // the radar axes stay from the heuristic pass, which measured them — the
+    // model was never given them to return, so overwriting wiped both.
+    applyRoleData(
+      { ..._heuristicRoles.ct, ...data.ct_role },
+      { ..._heuristicRoles.t, ...(data.t_role || {}) },
+      true,
+    );
+  }
+  if (data.headline || (data.aim && data.aim.name)) {
+    applyPatternData(data);
+  }
 }
 
 function applyRoleData(ctRole, tRole, isAI) {
@@ -2304,125 +2308,116 @@ function applyRoleData(ctRole, tRole, isAI) {
 }
 
 // --- Radar chart for 5-axis role assessment ---
-function drawRoleRadar(canvasId, axes, color) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, w, h);
 
-  const labels = ['Aggression', 'Trading', 'Isolation', 'Survival', 'Sniper'];
-  const keys = ['aggression', 'trading', 'isolation', 'survival', 'sniper'];
-  const values = keys.map(k => (axes[k] || 0) / 100);
-  const n = labels.length;
-  const cx = w / 2;
-  const cy = h / 2;
-  const R = Math.min(cx, cy) - 28;
-  const angleStep = (Math.PI * 2) / n;
-  const startAngle = -Math.PI / 2; // top
 
-  // Grid rings
-  for (let ring = 1; ring <= 4; ring++) {
-    const r = R * ring / 4;
-    ctx.beginPath();
-    for (let i = 0; i <= n; i++) {
-      const a = startAngle + i * angleStep;
-      const x = cx + Math.cos(a) * r;
-      const y = cy + Math.sin(a) * r;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.strokeStyle = TC.grid || 'rgba(255,255,255,' + (ring === 4 ? 0.12 : 0.06) + ')';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+// --- AI Patterns ---
+// Roles answer "where does this player play"; patterns answer "how". Same map
+// filter, same persisted-then-refresh flow as the role card above.
+//
+// The career card renders the same way over the same shape, with a fourth
+// section: across maps there are no roles to name — callouts belong to the map
+// they came from — so the comparison of the maps themselves takes their place.
+const PATTERN_SECTIONS = [
+  { key: 'aim',       label: 'Aim',       accent: 'secondary' },
+  { key: 'utility',   label: 'Utility',   accent: 'tertiary' },
+  { key: 'behaviour', label: 'Behaviour', accent: 'primary' },
+];
+const OVERALL_SECTIONS = PATTERN_SECTIONS.concat(
+  [{ key: 'maps', label: 'Map Pool', accent: 'secondary' }]
+);
+
+const MAP_PATTERN_IDS = {
+  empty: 'ai-patterns-empty', cards: 'ai-patterns-cards',
+  meta: 'ai-patterns-meta', headline: 'ai-assessment-headline', badge: null,
+};
+const OVERALL_PATTERN_IDS = {
+  empty: 'ai-overall-empty', cards: 'ai-overall-cards',
+  meta: 'ai-overall-meta', headline: 'ai-overall-headline', badge: 'ai-overall-badge',
+};
+
+function applyPatternData(data, ids, sections) {
+  ids = ids || MAP_PATTERN_IDS;
+  sections = sections || PATTERN_SECTIONS;
+  const empty = document.getElementById(ids.empty);
+  const cardsEl = document.getElementById(ids.cards);
+  const headline = document.getElementById(ids.headline);
+  const badge = ids.badge ? document.getElementById(ids.badge) : null;
+  if (badge) badge.classList.toggle('hidden', !data);
+  if (!empty || !cardsEl) return;
+
+  if (!data) {
+    empty.classList.remove('hidden');
+    cardsEl.classList.add('hidden');
+    headline.classList.add('hidden');
+    document.getElementById(ids.meta).textContent = '';
+    return;
   }
 
-  // Axis lines + labels
-  ctx.font = '600 8px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  for (let i = 0; i < n; i++) {
-    const a = startAngle + i * angleStep;
-    const xEnd = cx + Math.cos(a) * R;
-    const yEnd = cy + Math.sin(a) * R;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(xEnd, yEnd);
-    ctx.strokeStyle = TC.grid || 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+  empty.classList.add('hidden');
+  cardsEl.classList.remove('hidden');
+  headline.textContent = data.headline || '';
+  headline.classList.toggle('hidden', !data.headline);
 
-    // Label
-    const labelR = R + 16;
-    const lx = cx + Math.cos(a) * labelR;
-    const ly = cy + Math.sin(a) * labelR;
-    ctx.fillStyle = TC.gridText || 'rgba(255,255,255,0.45)';
-    ctx.fillText(labels[i], lx, ly);
-  }
+  const cards = sections.map(sec => {
+    const p = data[sec.key] || {};
+    if (!p.name && !p.description) return '';
+    const bullets = (p.tendencies || []).length
+      ? '<ul class="mt-3 space-y-1">' + p.tendencies.map(t =>
+          `<li class="text-[11px] text-on-surface-variant flex gap-2"><span class="text-${sec.accent}">›</span><span>${esc(t)}</span></li>`
+        ).join('') + '</ul>'
+      : '';
+    return `
+      <div class="p-4 bg-surface-container-highest rounded-xl border border-${sec.accent}/20">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="h-9 w-9 rounded-lg bg-surface-container flex items-center justify-center border border-${sec.accent}/30">
+            <span class="material-symbols-outlined text-${sec.accent} text-lg">${esc(p.icon || 'insights')}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <span class="text-[9px] font-bold text-${sec.accent} uppercase tracking-widest">${sec.label}</span>
+            <p class="text-sm font-bold truncate">${esc(p.name || '—')}</p>
+          </div>
+        </div>
+        <p class="text-xs text-on-surface-variant leading-relaxed">${esc(p.description || '')}</p>
+        ${bullets}
+      </div>`;
+  }).join('');
+  cardsEl.innerHTML = cards;
 
-  // Data polygon (filled)
-  ctx.beginPath();
-  for (let i = 0; i < n; i++) {
-    const a = startAngle + i * angleStep;
-    const v = Math.max(values[i], 0.04); // minimum visibility
-    const x = cx + Math.cos(a) * R * v;
-    const y = cy + Math.sin(a) * R * v;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  }
-  ctx.closePath();
-  ctx.fillStyle = color + '18'; // ~10% opacity
-  ctx.fill();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Data points
-  for (let i = 0; i < n; i++) {
-    const a = startAngle + i * angleStep;
-    const v = Math.max(values[i], 0.04);
-    const x = cx + Math.cos(a) * R * v;
-    const y = cy + Math.sin(a) * R * v;
-    ctx.beginPath();
-    ctx.arc(x, y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.strokeStyle = TC.dotStroke || '#0a1628';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Value label near point
-    const valR = Math.max(v * R + 10, 14);
-    const vx = cx + Math.cos(a) * valR;
-    const vy = cy + Math.sin(a) * valR;
-    ctx.fillStyle = color;
-    ctx.font = 'bold 8px system-ui, sans-serif';
-    ctx.fillText(Math.round(axes[keys[i]] || 0), vx, vy);
-  }
+  const meta = [];
+  if (data.matches) meta.push(data.matches + ' matches, ' + (data.rounds || 0) + ' rounds');
+  if (data.model) meta.push(data.model);
+  document.getElementById(ids.meta).textContent = meta.join(' · ');
 }
 
-async function analyzeRolesWithAI() {
-  if (!activeMap) return;
-  const btn = document.getElementById('ai-role-btn');
-  const btnText = document.getElementById('ai-role-btn-text');
+// One button, one call. Roles and patterns were two endpoints and two
+// requests, which split what is really one question — where the player plays
+// and how — across two prompts that could not see each other's data.
+//
+// The same runner drives the career card: same endpoint, no map filter, and
+// the response rendered into the other set of elements.
+async function runAssessment({ btnId, btnTextId, provId, modelId, maps, onResult }) {
+  const btn = document.getElementById(btnId);
+  const btnText = document.getElementById(btnTextId);
   btn.disabled = true;
   btn.classList.add('opacity-60');
   btnText.textContent = 'Analyzing...';
   try {
-    const res = await fetch(API + '/performance/ai-roles?maps=' + encodeURIComponent(activeMap), { method: 'POST' });
+    const params = new URLSearchParams();
+    if (maps) params.set('maps', maps);
+    // Honour the selector next to the button; blank falls back to the
+    // configured default server-side.
+    const prov = document.getElementById(provId)?.value;
+    const model = document.getElementById(modelId)?.value;
+    if (prov) params.set('provider', prov);
+    if (model) params.set('model', model);
+
+    const res = await fetch(API + '/performance/ai-assessment?' + params, { method: 'POST' });
     if (!res.ok) {
-      const err = await res.json();
+      const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || 'AI analysis failed');
     }
-    const data = await res.json();
-    // Use shared render function
-    applyRoleData(data.ct_role, data.t_role, true);
-    // Show AI badge
-    btnText.textContent = 'AI \u2713';
+    onResult(await res.json());
+    btnText.textContent = 'AI ✓';
     btn.classList.remove('opacity-60');
     btn.classList.add('border-secondary/50', 'text-secondary');
     setTimeout(() => {
@@ -2432,6 +2427,7 @@ async function analyzeRolesWithAI() {
     }, 3000);
   } catch (err) {
     btnText.textContent = err.message.length > 30 ? 'Failed' : err.message;
+    btn.title = err.message;
     btn.classList.remove('opacity-60');
     btn.classList.add('border-error/50', 'text-error');
     setTimeout(() => {
@@ -2440,6 +2436,43 @@ async function analyzeRolesWithAI() {
       btn.disabled = false;
     }, 4000);
   }
+}
+
+function analyzeWithAI() {
+  if (!activeMap) return;
+  return runAssessment({
+    btnId: 'ai-role-btn', btnTextId: 'ai-role-btn-text',
+    provId: 'ai-provider-select', modelId: 'ai-model-select',
+    maps: activeMap, onResult: applyAssessment,
+  });
+}
+
+function analyzeOverallWithAI() {
+  return runAssessment({
+    btnId: 'ai-overall-btn', btnTextId: 'ai-overall-btn-text',
+    provId: 'ai-overall-provider-select', modelId: 'ai-overall-model-select',
+    maps: null,
+    onResult: data => applyPatternData(data, OVERALL_PATTERN_IDS, OVERALL_SECTIONS),
+  });
+}
+
+// The career card shows whenever no map is selected — the same condition that
+// hides the per-map one.
+function renderOverallAssessment(mapFilter) {
+  const section = document.getElementById('ai-overall-section');
+  if (!section) return;
+  if (mapFilter) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+
+  applyPatternData(null, OVERALL_PATTERN_IDS, OVERALL_SECTIONS);
+  fetch(API + '/performance/ai-assessment')
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data && (data.headline || (data.aim && data.aim.name))) {
+        applyPatternData(data, OVERALL_PATTERN_IDS, OVERALL_SECTIONS);
+      }
+    })
+    .catch(() => {});
 }
 
 // --- Sidebar collapse ---
@@ -2666,8 +2699,8 @@ function renderObPlayers() {
       ? 'bg-primary text-on-primary-container'
       : 'bg-surface-container-highest text-primary border border-primary/30 hover:bg-primary/10';
     const friendBtnClass = isFriend
-      ? 'bg-cyan-400/20 text-cyan-400'
-      : 'bg-surface-container-highest text-cyan-400 border border-cyan-400/30 hover:bg-cyan-400/10';
+      ? 'bg-accent/20 text-accent'
+      : 'bg-surface-container-highest text-accent border border-accent/30 hover:bg-accent/10';
     return `<div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest/50 border border-white/5">
       <div class="flex-1 min-w-0 text-xs">${label}</div>
       <button type="button" onclick="obSetMe(${i})" class="text-[9px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider transition-all ${meBtnClass}">
@@ -3830,6 +3863,16 @@ if (typeof switchSettingsTab === 'function') {
 // The fetcher ships separately from the app (build-release.ps1 excludes it),
 // so hide the entry point entirely when it is not installed rather than
 // offering a button that only leads to an error.
+document.addEventListener('DOMContentLoaded', () => {
+  // The selectors beside the AI Analyze buttons need the provider list, which
+  // used to load only when the settings modal was opened.
+  loadAIConfig();
+  for (const sel of AI_SELECTORS) {
+    document.getElementById(sel.prov)
+      ?.addEventListener('change', () => renderAIModelOptions(sel.prov, sel.model));
+  }
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const s = await (await fetch(STEAM_API + '/steam/status')).json();

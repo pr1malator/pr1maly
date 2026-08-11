@@ -6,8 +6,8 @@
 <title>pr1maly // CS2 Analytics</title>
 <link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
 <link rel="icon" type="image/png" href="img/logo-big.png"/>
-<link rel="stylesheet" href="theme.css"/>
-<script src="theme.js?v=2"></script>
+<link rel="stylesheet" href="theme.css?v=3"/>
+<script src="theme.js?v=3"></script>
 <script src="reanalyze.js?v=1"></script>
 <script>
 /* Map-icon helpers come from theme.js. This page is served no-store but a
@@ -135,7 +135,7 @@ if (typeof mapIconHtml !== 'function') {
 </head>
 <body class="bg-background text-on-background font-body selection:bg-primary selection:text-on-primary-container">
 <!-- SideNavBar -->
-<aside id="sidebar" class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container shadow-2xl shadow-purple-900/20 border-r border-white/5 pt-6 z-40">
+<aside id="sidebar" class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container shadow-2xl shadow-primary/20 border-r border-white/5 pt-6 z-40">
 <div class="sidebar-header px-6 py-4 mb-8">
 <div class="flex items-center gap-3">
 <div class="sidebar-logo w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
@@ -148,11 +148,11 @@ if (typeof mapIconHtml !== 'function') {
 </div>
 </div>
 <nav class="flex-1 space-y-1">
-<a class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="breakdown.html">
+<a class="text-muted py-4 px-6 hover:bg-white/5 hover:text-primary flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="breakdown.html">
 <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="insights">insights</span>
 <span class="sidebar-label">Trend</span>
             </a>
-<a class="text-slate-500 py-4 px-6 hover:bg-white/5 hover:text-purple-300 flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="match-breakdown.html">
+<a class="text-muted py-4 px-6 hover:bg-white/5 hover:text-primary flex items-center gap-4 font-headline text-sm font-bold uppercase tracking-widest transition-all group" href="match-breakdown.html">
 <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="sports_esports">sports_esports</span>
 <span class="sidebar-label">Matches</span>
             </a>
@@ -162,11 +162,11 @@ if (typeof mapIconHtml !== 'function') {
                 Upload Demo
             </button>
 <div class="space-y-1">
-<button onclick="openSettingsModal()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
+<button onclick="openSettingsModal()" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
 <span class="material-symbols-outlined text-sm">settings</span> <span class="sidebar-label">Settings</span>
 </button>
-<button onclick="toggleTheme()" class="text-slate-500 py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Toggle light/dark mode">
-<span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme</span>
+<button data-theme-button onclick="toggleThemeMenu(this)" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Choose a theme">
+<span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme<span class="theme-name text-outline normal-case font-normal ml-1"></span></span>
 </button>
 </div>
 </div>
@@ -389,11 +389,11 @@ if (typeof mapIconHtml !== 'function') {
 </main>
 <!-- BottomNavBar (Mobile Only) -->
 <nav class="fixed lg:hidden bottom-0 w-full z-50 flex justify-around items-center px-6 pb-6 pt-3 bg-background/90 backdrop-blur-lg border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] rounded-t-3xl">
-<a class="flex flex-col items-center justify-center text-slate-500 active:bg-purple-500/10 transition-transform scale-90 active:scale-100" href="breakdown.html">
+<a class="flex flex-col items-center justify-center text-muted active:bg-primary/10 transition-transform scale-90 active:scale-100" href="breakdown.html">
 <span class="material-symbols-outlined" data-icon="insights">insights</span>
 <span class="font-headline text-[10px] font-bold uppercase mt-1">Trend</span>
 </a>
-<a class="flex flex-col items-center justify-center text-slate-500 active:bg-purple-500/10 transition-transform scale-90 active:scale-100" href="match-breakdown.html">
+<a class="flex flex-col items-center justify-center text-muted active:bg-primary/10 transition-transform scale-90 active:scale-100" href="match-breakdown.html">
 <span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
 <span class="font-headline text-[10px] font-bold uppercase mt-1">Matches</span>
 </a>
@@ -526,7 +526,7 @@ if (typeof mapIconHtml !== 'function') {
           <input id="new-friend-steamid" type="text" placeholder="Steam ID 64" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
           <input id="new-friend-name" type="text" placeholder="Name (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
         </div>
-        <button onclick="addFriend()" class="mt-3 w-full bg-gradient-to-r from-cyan-500/80 to-cyan-500/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
+        <button onclick="addFriend()" class="mt-3 w-full bg-gradient-to-r from-accent/80 to-accent/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
           Add Friend
         </button>
         <div id="friend-status" class="text-xs mt-2"></div>
@@ -714,7 +714,7 @@ function renderFriendsList(friends) {
   list.innerHTML = friends.map(f => `
     <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest border border-transparent group">
       <div class="flex-1 min-w-0">
-        <div class="font-bold text-sm text-cyan-400">${esc(f.name || 'Unnamed')}</div>
+        <div class="font-bold text-sm text-accent">${esc(f.name || 'Unnamed')}</div>
         <div class="text-[9px] text-on-surface-variant/50 font-mono">${esc(f.steam_id)}</div>
       </div>
       <div class="flex gap-1">
@@ -734,7 +734,7 @@ async function addFriend() {
       body: JSON.stringify({ steam_id: steamId, name })
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
-    statusEl.textContent = 'Friend added!'; statusEl.className = 'text-xs text-cyan-400 mt-2';
+    statusEl.textContent = 'Friend added!'; statusEl.className = 'text-xs text-accent mt-2';
     document.getElementById('new-friend-steamid').value = '';
     document.getElementById('new-friend-name').value = '';
     loadFriends();
@@ -1092,7 +1092,7 @@ function renderRecentMatches(matches) {
     const result = m.match_result === 'Victory' ? 'VICTORY' : m.match_result === 'Defeat' ? 'DEFEAT' : (m.match_result || '').toUpperCase();
     const isPartial = !!m.partial_import;
     const partialBadge = isPartial
-      ? '<div class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-400/15 text-amber-300 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"><span class="material-symbols-outlined text-[10px]">warning</span>Partial Import</div>'
+      ? '<div class="mt-1 inline-flex items-center gap-1 rounded-full bg-caution/15 text-caution px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"><span class="material-symbols-outlined text-[10px]">warning</span>Partial Import</div>'
       : '';
     // Say so when a row's numbers came from an older analyzer, otherwise two
     // matches side by side can be measured differently with nothing to show it.

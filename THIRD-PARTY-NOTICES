@@ -149,3 +149,26 @@ licensor.
 
 Counter-Strike and Valve are trademarks of Valve Corporation. pr1maly is not
 affiliated with, endorsed by, or sponsored by Valve Corporation.
+
+
+Demo fetcher (fetcher/) — Node dependencies
+-------------------------------------------
+
+The optional Steam demo fetcher declares the packages below. Their code is not
+included in this distribution: `npm install` retrieves it from the npm registry
+at install time. They are listed so the licence terms you will be running under
+are visible before you install anything.
+
+  globaloffensive    MIT         https://github.com/DoctorMcKay/node-globaloffensive
+  steam-user         MIT         https://github.com/DoctorMcKay/node-steam-user
+  steam-session      MIT         https://github.com/DoctorMcKay/node-steam-session
+  unbzip2-stream     MIT         https://github.com/regular/unbzip2-stream
+  qrcode             MIT         https://github.com/soldair/node-qrcode
+  qrcode-terminal    Apache-2.0  https://github.com/gtanner/qrcode-terminal
+
+Each retains its own copyright and licence terms, and each brings transitive
+dependencies of its own; `npm ls` and the packages' own LICENSE files are the
+authoritative record once installed.
+
+The fetcher talks to Steam using published community libraries and your own
+credentials. It is not a Valve product and Valve does not endorse it.

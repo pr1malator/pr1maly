@@ -6,7 +6,7 @@
 <title>Callout Calibration Tool</title>
 <link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
 <link rel="icon" type="image/png" href="img/logo-big.png"/>
-<script src="theme.js?v=2"></script>
+<script src="theme.js?v=3"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #0a1628; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; }
@@ -38,26 +38,26 @@
   #theme-toggle-cal:hover { border-color: #fbbf24; color: #fbbf24; }
 
   /* Light mode overrides — Pastel Tactical Editorial */
-  [data-theme="light"] body { background: #f7fafc; color: #2b3437; }
-  [data-theme="light"] #sidebar { background: #eff4f7; border-right-color: rgba(170,179,183,0.18); }
-  [data-theme="light"] #sidebar h2 { color: #6d4ea3; }
-  [data-theme="light"] #map-select { background: #ffffff; color: #2b3437; border-color: rgba(170,179,183,0.18); }
-  [data-theme="light"] .callout-item:hover { background: #e8edf0; }
-  [data-theme="light"] .callout-item.active { background: #dde3e7; border-color: #6d4ea3; }
-  [data-theme="light"] .callout-item .coords { color: #5a6365; }
-  [data-theme="light"] .callout-item .dot.pending { background: #aab3b7; }
-  [data-theme="light"] .callout-item .dot.placed { background: #00796b; }
-  [data-theme="light"] #current-callout { color: #6d4ea3; background: #ffffff; }
-  [data-theme="light"] #instructions { color: #5a6365; }
-  [data-theme="light"] #output-section #output-btn { background: #00796b; color: #ffffff; }
-  [data-theme="light"] #output-section #output-btn:hover { background: #00695c; }
-  [data-theme="light"] #output-section #reset-btn { background: #ba1a1a; }
-  [data-theme="light"] #output-section #undo-btn { background: #6d4ea3; }
-  [data-theme="light"] #output-area { background: #ffffff; border-color: rgba(170,179,183,0.18); color: #00796b; }
-  [data-theme="light"] #map-area { background: #f0f3f5; }
-  [data-theme="light"] .progress { color: #5a6365; }
-  [data-theme="light"] #theme-toggle-cal { border-color: rgba(170,179,183,0.18); color: #5a6365; }
-  [data-theme="light"] #theme-toggle-cal:hover { border-color: #6d4ea3; color: #6d4ea3; }
+  [data-scheme="light"] body { background: #f7fafc; color: #2b3437; }
+  [data-scheme="light"] #sidebar { background: #eff4f7; border-right-color: rgba(170,179,183,0.18); }
+  [data-scheme="light"] #sidebar h2 { color: #6d4ea3; }
+  [data-scheme="light"] #map-select { background: #ffffff; color: #2b3437; border-color: rgba(170,179,183,0.18); }
+  [data-scheme="light"] .callout-item:hover { background: #e8edf0; }
+  [data-scheme="light"] .callout-item.active { background: #dde3e7; border-color: #6d4ea3; }
+  [data-scheme="light"] .callout-item .coords { color: #5a6365; }
+  [data-scheme="light"] .callout-item .dot.pending { background: #aab3b7; }
+  [data-scheme="light"] .callout-item .dot.placed { background: #00796b; }
+  [data-scheme="light"] #current-callout { color: #6d4ea3; background: #ffffff; }
+  [data-scheme="light"] #instructions { color: #5a6365; }
+  [data-scheme="light"] #output-section #output-btn { background: #00796b; color: #ffffff; }
+  [data-scheme="light"] #output-section #output-btn:hover { background: #00695c; }
+  [data-scheme="light"] #output-section #reset-btn { background: #ba1a1a; }
+  [data-scheme="light"] #output-section #undo-btn { background: #6d4ea3; }
+  [data-scheme="light"] #output-area { background: #ffffff; border-color: rgba(170,179,183,0.18); color: #00796b; }
+  [data-scheme="light"] #map-area { background: #f0f3f5; }
+  [data-scheme="light"] .progress { color: #5a6365; }
+  [data-scheme="light"] #theme-toggle-cal { border-color: rgba(170,179,183,0.18); color: #5a6365; }
+  [data-scheme="light"] #theme-toggle-cal:hover { border-color: #6d4ea3; color: #6d4ea3; }
 </style>
 </head>
 <body>
@@ -95,7 +95,7 @@
     <button id="reset-btn" onclick="resetAll()">Reset All</button>
     <button id="output-btn" onclick="exportJSON()">Export JSON</button>
     <textarea id="output-area" readonly placeholder="JSON output will appear here..."></textarea>
-    <button id="theme-toggle-cal" onclick="toggleTheme()">Toggle Theme</button>
+    <button id="theme-toggle-cal" data-theme-button onclick="toggleThemeMenu(this)">Theme: <span class="theme-name"></span></button>
   </div>
 </div>
 

@@ -13,8 +13,10 @@ time — all stored locally with no external services required.
 - **Round-by-round enriched data**: economy, buy type, kill/death callout
   positions, opening duels, bomb events, utility usage
 - **Aim & movement analysis**: aim score (0–100), counterstrafe detection,
-  stance breakdown, per-weapon movement penalties, reaction time, crosshair
-  placement quality, time-to-kill efficiency
+  peek speed (how much speed was carried into the duel, and whether the
+  counterstrafe held up at it), stance breakdown, per-weapon movement
+  penalties, reaction time, crosshair placement quality, time-to-kill
+  efficiency
 - **Utility analysis**: grenades bought vs thrown vs wasted, flash efficiency
   (enemies flashed, blind duration, team flash penalty), HE/molotov damage per
   throw, smoke zone coverage, utility rating (0–100)
@@ -38,6 +40,15 @@ time — all stored locally with no external services required.
 - **Friends list**: friends highlighted on scoreboards
 - **Sync folder**: point at your CS2 replays directory, scan for new demos per
   player, selectively import
+<!-- >>> steam-fetcher — stripped from the public release by build-release.ps1 -->
+- **Manual Fetch from Steam** *(optional)*: download demos directly from Valve
+  instead of saving each one in-game — check for new matches and pull the
+  backlog on demand. One-time setup lives in **Settings → Steam**. Requires the
+  separate Node companion in `fetcher/`
+- **Auto-Sync** *(optional)*: leave it on and it works through your backlog
+  unattended — one demo downloaded, analysed, then a configurable pause
+  (default 5 minutes) before the next. Pauses by itself while CS2 is running
+<!-- <<< steam-fetcher -->
 - **Storage management**: a demo costs ~280 MB on disk but ~1.3 MB once
   analysed. Keep a rolling window of recent demos for re-analysis and reclaim
   the rest — **Settings → Storage**, with a live preview of what each retention
@@ -202,6 +213,7 @@ dashboard or by navigating to `match-breakdown.html?id=<match_id>`.
 - **Side analysis**: CT vs T score, win rates, ADR, survival, pistol round
   badges
 - **Aim analysis**: overall aim score (0–100), counterstrafe/movement analysis,
+  peek speed with the counterstrafe rate split by how fast the peek was,
   stance breakdown (standing, counterstrafing, running), per-weapon movement
   penalty
 - **AI match chat**: ask an LLM questions about the match — pre-built prompts
@@ -290,8 +302,12 @@ Or edit `data/ai_config.json` directly (created on first use).
   builds a detailed context with round-by-round narratives including economy,
   kill/death positions with callouts, utility usage, clutch info, and trade
   details
-- **AI role assessment**: request AI to analyze your CT and T roles on a
-  specific map based on all your positioning data (`POST /api/performance/ai-roles?maps=de_mirage`)
+- **AI assessment**: one request reads a map's positional data and its measured
+  aim, utility and round behaviour together, naming both the roles played on
+  each side and the habits behind the numbers
+  (`POST /api/performance/ai-assessment?maps=de_mirage`). Run without a map, it
+  becomes the career assessment: the same habits across every match, plus which
+  maps the numbers say you actually perform on
 - **Dashboard insights**: the performance page shows AI-generated tactical
   feedback
 
@@ -388,8 +404,8 @@ Interactive Swagger docs are at **http://localhost:8000/docs**.
 |--------|----------|-------------|
 | `GET` | `/api/trends` | Trend data with averages; optional `?maps=dust2,mirage` filter |
 | `GET` | `/api/performance` | Aggregated performance: HS%, side stats, opening duels, clutches, roles, multi-kills; optional `?maps=` |
-| `POST` | `/api/performance/ai-roles` | AI-powered role assessment for a map (`?maps=de_mirage`) |
-| `GET` | `/api/performance/ai-roles` | Get persisted AI role assessments (`?maps=de_mirage`) |
+| `POST` | `/api/performance/ai-assessment` | AI roles + playing patterns for a map (`?maps=de_mirage`); without `maps`, the career assessment over every match (patterns + map pool, no roles). Optional `&provider=&model=` |
+| `GET` | `/api/performance/ai-assessment` | Get the persisted assessment (`?maps=de_mirage`, or no `maps` for the career one) |
 
 ### Minimap
 
@@ -442,6 +458,69 @@ are never touched.
 heavily-played account cannot push another account's demos out of it. Turn it
 off for a single global window, which bounds total disk use more tightly.
 
+<!-- >>> steam-fetcher — stripped from the public release by build-release.ps1 -->
+### Fetch from Steam *(optional)*
+
+Setup (API key, per-account codes, QR sign-in) is in **Settings → Steam**. The
+sidebar carries the two actions: **Manual Fetch from Steam** and **Auto-Sync**.
+
+One Web API key covers every account — it is an API credential, not per-account
+authentication (that is the per-account auth code). But a key is *issued* by one
+specific Steam account, and nothing in the key says which, so **Settings → Steam**
+records the issuing account alongside it and shows the key's last four
+characters. That is what tells you whose profile to regenerate it from when it
+stops working. `STEAM_API_KEY` in the environment overrides the stored key, and
+the UI says so rather than showing a stale owner.
+
+**Manual Fetch → Download Demos** lists every account the ledger knows about with
+its outstanding count and a per-account tick box, so one run can cover a subset.
+Excluding an account holds its matches back without forgetting them; the pending
+total and the button label update as you tick. Whether an account is *tracked* at
+all stays in **Settings → Steam**, since that decides if its history is recorded.
+
+Requires the Node companion in `fetcher/`. Returns availability info rather than
+failing when it is absent, so the app works normally without it.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/steam/status` | Setup state: Node present, accounts signed in / configured, matches outstanding |
+| `PUT` | `/api/steam/api-key` | Store the Steam Web API key (one key covers all accounts) |
+| `PUT` | `/api/steam/accounts/{name}` | Store an account's match-sharing auth code and starting share code |
+| `POST` | `/api/steam/auth/{name}` | Start a QR sign-in; the QR image is returned via `/api/steam/job` events |
+| `POST` | `/api/steam/check` | Look for matches played since the last check (no Steam session needed) |
+| `POST` | `/api/steam/download` | Download demos for everything outstanding |
+| `GET` | `/api/steam/job` | Poll the running (or last) job for live output |
+| `POST` | `/api/steam/job/cancel` | Stop the running job (used when a QR sign-in is dismissed) |
+| `GET` | `/api/steam/auto-sync` | Auto-Sync settings and live state |
+| `PUT` | `/api/steam/auto-sync` | Turn Auto-Sync on/off, set the interval and the CS2 pause |
+| `GET` | `/api/steam/presence` | Whether a tracked account is in CS2 right now |
+
+#### Auto-Sync
+
+The buttons above run one burst: check, then pull the whole backlog. Auto-Sync
+is the same work at a trickle — **one match per cycle**, downloaded and then
+analysed, with a gap in between (default 5 minutes; `0` runs them back to back).
+Nothing is batched, so switching it off never leaves half a backlog in an
+unknown state.
+
+It shares the single job slot with the buttons, so the two never collide: a job
+you start by hand takes priority and Auto-Sync waits for it.
+
+**CS2 detection.** The app runs in a container and cannot see host processes, so
+it asks Steam instead — `GetPlayerSummaries` reports `gameid` for accounts whose
+*Game details* privacy is public. While a tracked account is in CS2, Auto-Sync
+holds off: a 280 MB download mid-match costs you ping, and the fetcher's own
+Game Coordinator login can drop you out of the game. If privacy hides the field
+the UI says so and carries on rather than guessing. The behaviour is opt-out
+(**Pause while CS2 is running**).
+
+Auto-Sync never disables itself over an error — a Steam outage or one
+unparseable demo should not silently end a background job you expect to still be
+running. Failures back off exponentially (1 min → 30 min ceiling), and a demo
+that fails to parse three times is set aside so the rest of the queue can carry
+on. If it was left on, it resumes on startup.
+
+<!-- <<< steam-fetcher -->
 ### Replay
 
 | Method | Endpoint | Description |
@@ -490,7 +569,7 @@ not stored — only the extracted statistics.
 ## Project Structure
 
 ```
-pr1mealazyer/
+pr1maly/
 ├── api.py                # FastAPI REST backend (Layer 4)
 ├── requirements.txt
 ├── Dockerfile
@@ -503,7 +582,12 @@ pr1mealazyer/
 │   ├── ai_config.json    # AI provider keys & settings
 │   ├── ai_roles.json     # Persisted AI role assessments
 │   ├── sync_config.json  # Sync folder path configuration
-│   └── storage_config.json    # Demo retention settings
+│   ├── storage_config.json    # Demo retention settings
+<!-- >>> steam-fetcher — stripped from the public release by build-release.ps1 -->
+│   ├── auto_sync.json         # Auto-Sync settings (survives restarts)
+│   ├── steam_tokens.json      # Steam refresh tokens (fetcher, owner-only)
+│   └── steam_sharecodes.json  # Match ledger + Web API key (fetcher, owner-only)
+<!-- <<< steam-fetcher -->
 ├── frontend/
 │   ├── performance.html  # Main dashboard
 │   ├── breakdown.html    # Aggregated performance breakdown

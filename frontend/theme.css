@@ -65,6 +65,28 @@
   --c-inverse-surface: 250 248 255;
   --c-inverse-on-surface: 77 85 107;
 
+  /* --- Status colours: the meaning, not the hue ---------------------------
+     The markup used to reach straight into Tailwind's palette for these —
+     text-emerald-400 for a kill, bg-orange-400 for T side, and so on — which
+     left the theme no way to speak. Light mode patched what it could with a
+     block of !important rules covering the text utilities, and the ~106 fill
+     and border usages it did not cover kept rendering dark-mode neon on a
+     pastel background.
+
+     Naming them by role instead means a theme sets seven values and every
+     badge, chip and border follows. The dark values below are exactly the
+     Tailwind colours those classes resolved to, so this rename does not move
+     dark mode; light mode gains the fills it never had.
+
+     Channels, not hex, so Tailwind's /20 opacity suffix keeps working. */
+  --s-good: 52 211 153;        /* emerald-400 — success, kill, used  */
+  --s-bad: 248 113 113;        /* red-400     — death, wasted, fail  */
+  --s-caution: 251 191 36;     /* amber-400   — top tier, flash      */
+  --s-warn: 251 146 60;        /* orange-400  — T side, coasted      */
+  --s-info: 96 165 250;        /* blue-400    — middle tier, neutral */
+  --s-accent: 34 211 238;      /* cyan-400    — CT side, highlight   */
+  --s-muted: 100 116 139;      /* slate-500   — de-emphasised text   */
+
   /* Sidebar-specific */
   --sidebar-bg: 15 25 48;
   --sidebar-border: rgba(255,255,255,0.05);
@@ -142,7 +164,7 @@
 }
 
 /* --- Light mode — "Pastel Tactical Editorial" palette --- */
-[data-theme="light"] {
+[data-theme="gray"] {
   /* Core surfaces — warm off-white → white card stacking */
   --c-background: 247 250 252;           /* #f7fafc */
   --c-surface: 247 250 252;
@@ -208,6 +230,21 @@
 
   --c-inverse-surface: 48 54 57;
   --c-inverse-on-surface: 242 246 248;
+
+  /* --- Status colours, darkened for a pastel background -------------------
+     The values the old !important block already used for the text utilities,
+     so text keeps the colour it had. Two are pulled apart deliberately:
+     "good" and "accent" both collapsed onto the same teal, which made a kill
+     and a CT badge the same colour, and orange shared the coral used for
+     amber, which did the same to T side and the top tier. They are the
+     distinctions these colours exist to carry. */
+  --s-good: 0 121 107;         /* #00796b — teal, as before          */
+  --s-bad: 186 26 26;          /* #ba1a1a — error red, as before     */
+  --s-caution: 142 77 57;      /* #8e4d39 — coral, as before         */
+  --s-warn: 160 74 31;         /* #a04a1f — burnt orange, split out  */
+  --s-info: 29 78 216;         /* #1d4ed8 — blue, as before          */
+  --s-accent: 14 116 144;      /* #0e7490 — deep cyan, split out     */
+  --s-muted: 85 96 99;         /* #556063 — as before                */
 
   /* Sidebar — light tonal shift */
   --sidebar-bg: 239 244 247;
@@ -291,48 +328,295 @@
    ======================================================================== */
 
 /* White overlays → ghost-style tonal shifts (design doc: "No-Line Rule") */
-[data-theme="light"] .bg-white\/5  { background-color: rgba(170,179,183,0.06) !important; }
-[data-theme="light"] .bg-white\/10 { background-color: rgba(170,179,183,0.10) !important; }
-[data-theme="light"] .border-white\/5  { border-color: rgba(170,179,183,0.12) !important; }
-[data-theme="light"] .border-white\/10 { border-color: rgba(170,179,183,0.18) !important; }
-[data-theme="light"] .divide-white\/5 > * + * { border-color: rgba(170,179,183,0.12) !important; }
-[data-theme="light"] .hover\:bg-white\/5:hover { background-color: rgba(170,179,183,0.08) !important; }
-[data-theme="light"] .hover\:bg-white\/20:hover { background-color: rgba(170,179,183,0.12) !important; }
-[data-theme="light"] .shadow-purple-900\/20 { --tw-shadow-color: rgba(109,78,163,0.08) !important; }
+[data-scheme="light"] .bg-white\/5  { background-color: rgba(170,179,183,0.06) !important; }
+[data-scheme="light"] .bg-white\/10 { background-color: rgba(170,179,183,0.10) !important; }
+[data-scheme="light"] .border-white\/5  { border-color: rgba(170,179,183,0.12) !important; }
+[data-scheme="light"] .border-white\/10 { border-color: rgba(170,179,183,0.18) !important; }
+[data-scheme="light"] .divide-white\/5 > * + * { border-color: rgba(170,179,183,0.12) !important; }
+[data-scheme="light"] .hover\:bg-white\/5:hover { background-color: rgba(170,179,183,0.08) !important; }
+[data-scheme="light"] .hover\:bg-white\/20:hover { background-color: rgba(170,179,183,0.12) !important; }
+[data-scheme="light"] .shadow-purple-900\/20 { --tw-shadow-color: rgba(109,78,163,0.08) !important; }
 
 /* Ambient shadow — 24px blur, 6% opacity (design doc Elevation §4) */
-[data-theme="light"] .shadow-lg { box-shadow: 0 4px 24px rgba(43,52,55,0.06) !important; }
+[data-scheme="light"] .shadow-lg { box-shadow: 0 4px 24px rgba(43,52,55,0.06) !important; }
 
-/* Text: map bright dark-mode Tailwind colors → design doc palette */
-[data-theme="light"] .text-emerald-400 { color: #00796b !important; }  /* secondary teal */
-[data-theme="light"] .text-blue-400   { color: #1d4ed8 !important; }
-[data-theme="light"] .text-yellow-400 { color: #8e4d39 !important; }  /* tertiary coral */
-[data-theme="light"] .text-red-400    { color: #ba1a1a !important; }  /* error */
-[data-theme="light"] .text-cyan-400   { color: #00796b !important; }  /* secondary teal */
-[data-theme="light"] .text-purple-300 { color: #6d4ea3 !important; }  /* primary lavender */
-[data-theme="light"] .text-green-400  { color: #00796b !important; }  /* secondary teal */
-[data-theme="light"] .text-orange-400 { color: #8e4d39 !important; }  /* tertiary coral */
-[data-theme="light"] .text-pink-400   { color: #8e4d39 !important; }  /* tertiary coral */
-[data-theme="light"] .text-amber-400  { color: #8e4d39 !important; }  /* tertiary coral */
-[data-theme="light"] .text-indigo-400 { color: #6d4ea3 !important; }  /* primary lavender */
-[data-theme="light"] .text-sky-400    { color: #1d4ed8 !important; }
-[data-theme="light"] .text-teal-400   { color: #00796b !important; }  /* secondary teal */
-[data-theme="light"] .text-rose-400   { color: #ba1a1a !important; }  /* error */
-[data-theme="light"] .text-violet-400 { color: #6d4ea3 !important; }  /* primary lavender */
-[data-theme="light"] .text-lime-400   { color: #00796b !important; }  /* secondary teal */
-[data-theme="light"] .text-fuchsia-400 { color: #8e4d39 !important; } /* tertiary coral */
-[data-theme="light"] .text-slate-500  { color: #556063 !important; }  /* on-surface-variant */
-
-/* Border accent colors → design doc palette */
-[data-theme="light"] .border-cyan-400   { border-color: #00796b !important; }
-[data-theme="light"] .border-emerald-400 { border-color: #00796b !important; }
+/* The block that used to live here mapped eighteen Tailwind palette classes to
+   this theme's colours with !important, one rule per class. It covered only
+   the text utilities; the fills and borders using the same palette — around a
+   hundred of them — got no override at all and rendered dark-mode neon on a
+   pastel background.
+   The markup now names the role (text-good, bg-warn/20, border-accent) and
+   both themes set --s-* above, so there is nothing left to override. A new
+   theme supplies seven values rather than a copy of this block. */
 
 /* Gradient — sidebar active uses primary lavender tint */
-[data-theme="light"] .from-purple-500\/20 { --tw-gradient-from: rgba(109,78,163,0.08) !important; }
+[data-scheme="light"] .from-purple-500\/20 { --tw-gradient-from: rgba(109,78,163,0.08) !important; }
 
 /* Silk-finish gradient for primary CTAs (design doc §2 Signature Textures) */
-[data-theme="light"] .bg-gradient-to-r.from-primary.to-primary-dim {
+[data-scheme="light"] .bg-gradient-to-r.from-primary.to-primary-dim {
   background: linear-gradient(135deg, #6d4ea3, #c2a0fc) !important;
 }
 
 /* Chart.js canvas background (handled via JS) */
+
+/* ========================================================================
+   Additional themes
+   Generated from a five-colour palette each: background, primary, secondary,
+   tertiary and error. Surfaces are tonal steps off the background, and any
+   colour that lands on text is pushed until it clears 4.5:1 against both the
+   page and the card it sits on — checking only the page shipped four values
+   at about 4.1:1. Fill tokens (-container, -fixed) keep the palette exactly
+   as given, since a button is judged against its own label.
+
+   The status colours are deliberately identical to the scheme's other theme:
+   good is green and bad is red whichever theme is on, because that is a
+   vocabulary rather than decoration.
+   ======================================================================== */
+
+[data-theme="intense"] {
+  --c-background: 27 27 27;
+  --c-surface: 27 27 27;
+  --c-surface-dim: 27 27 27;
+  --c-surface-bright: 72 72 72;
+  --c-surface-container-lowest: 18 18 18;
+  --c-surface-container-low: 31 31 31;
+  --c-surface-container: 40 40 40;
+  --c-surface-container-high: 47 47 47;
+  --c-surface-container-highest: 54 54 54;
+  --c-surface-variant: 54 54 54;
+  --c-surface-tint: 179 113 255;
+  --c-on-surface: 242 242 242;
+  --c-on-surface-variant: 152 152 152;
+  --c-on-background: 242 242 242;
+  --c-primary: 179 113 255;
+  --c-primary-dim: 152 62 255;
+  --c-primary-container: 155 73 255;
+  --c-primary-fixed: 155 73 255;
+  --c-primary-fixed-dim: 138 42 255;
+  --c-on-primary: 255 255 255;
+  --c-on-primary-container: 255 255 255;
+  --c-on-primary-fixed: 242 242 242;
+  --c-on-primary-fixed-variant: 255 255 255;
+  --c-inverse-primary: 119 1 255;
+  --c-secondary: 0 229 255;
+  --c-secondary-dim: 0 183 204;
+  --c-secondary-container: 0 229 255;
+  --c-secondary-fixed: 0 229 255;
+  --c-secondary-fixed-dim: 0 202 224;
+  --c-on-secondary: 0 37 41;
+  --c-on-secondary-container: 0 37 41;
+  --c-on-secondary-fixed: 0 14 16;
+  --c-on-secondary-fixed-variant: 0 74 82;
+  --c-tertiary: 204 255 0;
+  --c-tertiary-dim: 163 204 0;
+  --c-tertiary-container: 204 255 0;
+  --c-tertiary-fixed: 204 255 0;
+  --c-tertiary-fixed-dim: 180 224 0;
+  --c-on-tertiary: 33 41 0;
+  --c-on-tertiary-container: 33 41 0;
+  --c-on-tertiary-fixed: 12 16 0;
+  --c-on-tertiary-fixed-variant: 66 82 0;
+  --c-error: 255 92 92;
+  --c-error-dim: 255 41 41;
+  --c-error-container: 255 92 92;
+  --c-on-error: 255 255 255;
+  --c-on-error-container: 255 255 255;
+  --c-outline: 124 124 124;
+  --c-outline-variant: 87 87 87;
+  --c-inverse-surface: 242 242 242;
+  --c-inverse-on-surface: 27 27 27;
+  --s-good: 52 211 153;
+  --s-bad: 248 113 113;
+  --s-caution: 251 191 36;
+  --s-warn: 251 146 60;
+  --s-info: 96 165 250;
+  --s-accent: 34 211 238;
+  --s-muted: 133 146 166;
+  --sidebar-bg: 40 40 40;
+  --sidebar-border: rgba(255,255,255,0.05);
+  --mobile-nav-bg: rgba(27,27,27,0.9);
+  --glass-bg: rgba(54,54,54,0.6);
+  --glow-primary: rgba(179,113,255,0.2);
+  --glow-secondary: rgba(0,229,255,0.2);
+  --glow-tertiary: rgba(204,255,0,0.2);
+  --stat-glow-secondary: rgba(0,229,255,0.4);
+  --stat-glow-tertiary: rgba(204,255,0,0.4);
+  --speed-btn-bg: rgba(0,229,255,0.2);
+  --speed-btn-color: #00E5FF;
+  --speed-btn-border: rgba(0,229,255,0.3);
+  --rr-ct-bg: rgba(34,211,238,0.25);
+  --rr-ct-color: #22d3ee;
+  --rr-t-bg: rgba(251,146,60,0.25);
+  --rr-t-color: #fb923c;
+  --rr-win-color: #34d399;
+  --rr-loss-color: #f87171;
+  --rr-num-color: #c7c7c7;
+  --rr-btn-border: rgba(255,255,255,0.08);
+  --rr-btn-bg: rgba(255,255,255,0.03);
+  --rr-btn-hover-border: rgba(0,229,255,0.3);
+  --rr-btn-hover-bg: rgba(0,229,255,0.06);
+  --rr-btn-active-border: rgba(0,229,255,0.5);
+  --rr-btn-active-bg: rgba(0,229,255,0.12);
+  --rr-btn-active-shadow: 0 0 8px rgba(0,229,255,0.15);
+  --chart-bg: #282828;
+  --chart-canvas-bg: #1f1f1f;
+  --chart-ct: #60a5fa;
+  --chart-ct-dot: #388ff9;
+  --chart-ct-name: #91c1fc;
+  --chart-t: #fbbf24;
+  --chart-t-dot: #f2b004;
+  --chart-t-name: #fcce56;
+  --chart-hp-good: #34d399;
+  --chart-hp-warn: #fbbf24;
+  --chart-kill: #34d399;
+  --chart-death: #f87171;
+  --chart-success: #34d399;
+  --chart-fail: #f87171;
+  --chart-error: #f87171;
+  --chart-amber: #fbbf24;
+  --chart-orange: #fb923c;
+  --chart-molotov: #fb923c;
+  --chart-cyan: #22d3ee;
+  --chart-sky: #60a5fa;
+  --chart-purple: #b371ff;
+  --chart-purple-alt: #9d48ff;
+  --chart-pink: #CCFF00;
+  --chart-smoke: #919191;
+  --chart-on-text: #F2F2F2;
+  --chart-dot-stroke: #1B1B1B;
+  --chart-buy-full: #b371ff;
+  --chart-buy-half: #9d48ff;
+  --chart-buy-force: #00E5FF;
+  --chart-buy-pistol: #fb923c;
+  --chart-flash: #fbbf24;
+  --chart-he: #f87171;
+  --chart-pre-aim: #34d399;
+  --chart-grid: rgba(255,255,255,0.06);
+  --chart-grid-text: rgba(255,255,255,0.45);
+  --chart-track: rgba(255,255,255,0.05);
+  --chart-avg-stroke: #F2F2F2;
+}
+
+[data-theme="pro"] {
+  --c-background: 234 234 234;
+  --c-surface: 234 234 234;
+  --c-surface-dim: 234 234 234;
+  --c-surface-bright: 198 198 198;
+  --c-surface-container-lowest: 241 241 241;
+  --c-surface-container-low: 230 230 230;
+  --c-surface-container: 223 223 223;
+  --c-surface-container-high: 218 218 218;
+  --c-surface-container-highest: 213 213 213;
+  --c-surface-variant: 213 213 213;
+  --c-surface-tint: 191 0 47;
+  --c-on-surface: 37 42 52;
+  --c-on-surface-variant: 95 98 103;
+  --c-on-background: 37 42 52;
+  --c-primary: 191 0 47;
+  --c-primary-dim: 222 0 55;
+  --c-primary-container: 255 46 99;
+  --c-primary-fixed: 255 46 99;
+  --c-primary-fixed-dim: 255 15 76;
+  --c-on-primary: 255 255 255;
+  --c-on-primary-container: 255 255 255;
+  --c-on-primary-fixed: 242 242 242;
+  --c-on-primary-fixed-variant: 255 255 255;
+  --c-inverse-primary: 255 48 99;
+  --c-secondary: 6 107 105;
+  --c-secondary-dim: 8 136 133;
+  --c-secondary-container: 8 217 214;
+  --c-secondary-fixed: 8 217 214;
+  --c-secondary-fixed-dim: 7 187 185;
+  --c-on-secondary: 255 255 255;
+  --c-on-secondary-container: 0 10 10;
+  --c-on-secondary-fixed: 242 242 242;
+  --c-on-secondary-fixed-variant: 255 255 255;
+  --c-tertiary: 130 92 0;
+  --c-tertiary-dim: 161 114 0;
+  --c-tertiary-container: 255 211 105;
+  --c-tertiary-fixed: 255 211 105;
+  --c-tertiary-fixed-dim: 255 202 74;
+  --c-on-tertiary: 255 255 255;
+  --c-on-tertiary-container: 146 103 0;
+  --c-on-tertiary-fixed: 242 242 242;
+  --c-on-tertiary-fixed-variant: 255 255 255;
+  --c-error: 191 29 71;
+  --c-error-dim: 218 33 81;
+  --c-error-container: 200 30 74;
+  --c-on-error: 255 255 255;
+  --c-on-error-container: 255 255 255;
+  --c-outline: 145 148 152;
+  --c-outline-variant: 179 180 183;
+  --c-inverse-surface: 37 42 52;
+  --c-inverse-on-surface: 234 234 234;
+  --s-good: 0 111 98;
+  --s-bad: 186 26 26;
+  --s-caution: 142 77 57;
+  --s-warn: 160 74 31;
+  --s-info: 29 78 216;
+  --s-accent: 12 101 126;
+  --s-muted: 85 96 99;
+  --sidebar-bg: 223 223 223;
+  --sidebar-border: rgba(37,42,52,0.15);
+  --mobile-nav-bg: rgba(234,234,234,0.9);
+  --glass-bg: rgba(213,213,213,0.8);
+  --glow-primary: rgba(191,0,47,0.2);
+  --glow-secondary: rgba(6,107,105,0.2);
+  --glow-tertiary: rgba(130,92,0,0.2);
+  --stat-glow-secondary: rgba(6,107,105,0.4);
+  --stat-glow-tertiary: rgba(130,92,0,0.4);
+  --speed-btn-bg: rgba(6,107,105,0.2);
+  --speed-btn-color: #066b69;
+  --speed-btn-border: rgba(6,107,105,0.3);
+  --rr-ct-bg: rgba(14,116,144,0.25);
+  --rr-ct-color: #0e7490;
+  --rr-t-bg: rgba(160,74,31,0.25);
+  --rr-t-color: #a04a1f;
+  --rr-win-color: #00796b;
+  --rr-loss-color: #ba1a1a;
+  --rr-num-color: #4c5058;
+  --rr-btn-border: rgba(37,42,52,0.08);
+  --rr-btn-bg: rgba(37,42,52,0.03);
+  --rr-btn-hover-border: rgba(6,107,105,0.3);
+  --rr-btn-hover-bg: rgba(6,107,105,0.06);
+  --rr-btn-active-border: rgba(6,107,105,0.5);
+  --rr-btn-active-bg: rgba(6,107,105,0.12);
+  --rr-btn-active-shadow: 0 0 8px rgba(6,107,105,0.15);
+  --chart-bg: #dfdfdf;
+  --chart-canvas-bg: #e6e6e6;
+  --chart-ct: #1d4ed8;
+  --chart-ct-dot: #1841b4;
+  --chart-ct-name: #153799;
+  --chart-t: #8e4d39;
+  --chart-t-dot: #713d2d;
+  --chart-t-name: #5b3125;
+  --chart-hp-good: #00796b;
+  --chart-hp-warn: #8e4d39;
+  --chart-kill: #00796b;
+  --chart-death: #ba1a1a;
+  --chart-success: #00796b;
+  --chart-fail: #ba1a1a;
+  --chart-error: #ba1a1a;
+  --chart-amber: #8e4d39;
+  --chart-orange: #a04a1f;
+  --chart-molotov: #a04a1f;
+  --chart-cyan: #0e7490;
+  --chart-sky: #1d4ed8;
+  --chart-purple: #bf002f;
+  --chart-purple-alt: #960025;
+  --chart-pink: #825c00;
+  --chart-smoke: #7e8086;
+  --chart-on-text: #252A34;
+  --chart-dot-stroke: #EAEAEA;
+  --chart-buy-full: #bf002f;
+  --chart-buy-half: #960025;
+  --chart-buy-force: #066b69;
+  --chart-buy-pistol: #a04a1f;
+  --chart-flash: #8e4d39;
+  --chart-he: #ba1a1a;
+  --chart-pre-aim: #00796b;
+  --chart-grid: rgba(37,42,52,0.18);
+  --chart-grid-text: rgba(37,42,52,0.55);
+  --chart-track: rgba(37,42,52,0.06);
+  --chart-avg-stroke: #252A34;
+}

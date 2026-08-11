@@ -18,6 +18,7 @@ from src.processor import (
     _collect_all_steam_ids,
     _calculate_aim_stats,
     _first_shot_tick,
+    _get_round_damage_taken,
     _median,
     _compute_hltv_rating,
     _count_multikill_rounds,
@@ -876,11 +877,11 @@ def test_small_samples_are_shrunk_toward_the_better_evidenced_component():
 # ---------------------------------------------------------------------------
 
 
-def _mov_kill(weapon, quality, *, crouched=False):
+def _mov_kill(weapon, quality, *, crouched=False, peek=200.0):
     return {
         "weapon": weapon,
         "movement": {
-            "shot_speed": 0.0, "pre_speed": 200.0, "stop_ticks": 3,
+            "shot_speed": 0.0, "pre_speed": peek, "stop_ticks": 3,
             "window_span": 32, "crouched": crouched,
             "movement_quality": quality, "movement_direction": "still",
         },
@@ -934,6 +935,218 @@ def test_movement_reports_crouch_state():
     df["ducked"] = True
     result = _analyze_movement(df, ATTACKER_ID, 100)
     assert result["crouched"] is True
+
+
+# ---------------------------------------------------------------------------
+# Peek speed
+# ---------------------------------------------------------------------------
+
+
+def test_peek_speed_measures_the_run_up_not_the_shot():
+    """The speed carried into the duel, which the shot itself no longer shows.
+
+    A clean counter-strafe fires at 0 u/s whether the player walked out or came
+    in at full sprint; only the peak beforehand separates the two.
+    """
+    speeds = {t: 250.0 for t in range(68, 96)}
+    speeds.update({96: 200.0, 97: 120.0, 98: 60.0, 99: 20.0, 100: 0.0})
+    aim = _calculate_aim_stats([_round_with([{
+        "weapon": "AK-47",
+        "movement": _analyze_movement(_make_velocity_df(speeds), ATTACKER_ID, 100),
+    }])])
+
+    assert aim["peek"]["median"] == 250.0
+    assert aim["movement"]["median"] == 0.0     # what the shot alone reports
+    assert aim["peek"]["n"] == 1
+
+
+def test_peek_speed_separates_held_angles_from_full_speed_peeks():
+    kills = [
+        _mov_kill("AK-47", "standing", peek=20.0),        # held the angle
+        _mov_kill("AK-47", "standing", peek=60.0),        # a shuffle, no stop needed
+        _mov_kill("AK-47", "counter-strafed", peek=140.0),
+        _mov_kill("AK-47", "counter-strafed", peek=220.0),  # full-speed peek
+    ]
+    peek = _calculate_aim_stats([_round_with(kills)])["peek"]
+
+    assert peek["held_pct"] == 50.0
+    assert peek["full_pct"] == 25.0
+    assert peek["max"] == 220.0
+
+
+def test_peek_distribution_covers_the_same_regions_the_chart_shades():
+    """The legend beside the chart names the bands drawn on it.
+
+    Every engagement lands in exactly one region, the regions are the ones the
+    axis declares, and the two headline percentages are read off those same
+    counts rather than measured a second way — otherwise a legend could total
+    something other than 100% of the sample it sits under.
+    """
+    from src.processor import _AIM_THRESHOLDS
+
+    kills = (
+        [_mov_kill("AK-47", "standing", peek=20.0)] * 5          # held
+        + [_mov_kill("AK-47", "counter-strafed", peek=100.0)] * 4   # walk
+        + [_mov_kill("AK-47", "counter-strafed", peek=150.0)] * 9   # half
+        + [_mov_kill("AK-47", "stopped", peek=200.0)] * 12          # full
+    )
+    peek = _calculate_aim_stats([_round_with(kills)])["peek"]
+    by_zone = peek["by_zone"]
+
+    assert [z["label"] for z in by_zone] == [
+        z["label"] for z in _AIM_THRESHOLDS["peek"]["zones"]
+    ]
+    assert [z["n"] for z in by_zone] == [5, 4, 9, 12]
+    assert sum(z["n"] for z in by_zone) == peek["n"] == 30
+    assert sum(z["pct"] for z in by_zone) == 100.0
+    assert peek["held_pct"] == by_zone[0]["pct"]
+    assert peek["full_pct"] == by_zone[-1]["pct"]
+
+
+def test_peek_speed_is_reported_but_never_graded():
+    """There is no good or bad peek speed without knowing the intent.
+
+    Walking out is right when holding an angle and wrong when entering a site,
+    and the demo does not say which the player meant.  So it ships without
+    bands and must not move the rating: two matches identical apart from how
+    fast the player entered every duel have to score the same.
+    """
+    from src.processor import _AIM_RATING_WEIGHTS, _AIM_THRESHOLDS
+
+    fast = _calculate_aim_stats([_round_with(
+        [_mov_kill("AK-47", "counter-strafed", peek=240.0)] * 6
+    )])
+    slow = _calculate_aim_stats([_round_with(
+        [_mov_kill("AK-47", "counter-strafed", peek=100.0)] * 6
+    )])
+
+    assert fast["peek"]["median"] == 240.0
+    assert slow["peek"]["median"] == 100.0
+    assert fast["peek"]["diagnostic_only"] is True
+    assert fast["aim_rating"] == slow["aim_rating"]
+    assert "peek" not in _AIM_RATING_WEIGHTS
+    assert _AIM_THRESHOLDS["peek"]["bounds"] == []
+
+
+def test_counterstrafe_rate_split_by_peek_speed():
+    """The pooled rate hides the case worth acting on.
+
+    Stopping cleanly off a walk and coasting off every full-speed peek averages
+    out to the same 50% as being uniformly inconsistent, but only the first has
+    a specific thing to practise.
+    """
+    kills = [
+        _mov_kill("AK-47", "counter-strafed", peek=100.0),
+        _mov_kill("AK-47", "counter-strafed", peek=120.0),
+        _mov_kill("AK-47", "stopped", peek=210.0),
+        _mov_kill("AK-47", "stopped", peek=230.0),
+    ]
+    mv = _calculate_aim_stats([_round_with(kills)])["movement"]
+    by_bucket = {b["bucket"]: b for b in mv["counterstrafe_by_peek"]}
+
+    assert mv["counterstrafe_rate"] == 50.0     # the number that hides it
+    assert by_bucket["walk"]["rate"] == 100.0
+    assert by_bucket["full"]["rate"] == 0.0
+    assert by_bucket["full"]["attempts"] == 2
+    assert by_bucket["half"]["attempts"] == 0
+    assert by_bucket["half"]["rate"] is None    # not zero: nothing was measured
+
+
+def test_peek_buckets_exclude_engagements_that_needed_no_stop():
+    """Below the accuracy threshold nothing had to be cancelled.
+
+    Those are held angles rather than peeks, and the counter-strafe
+    classifier never calls them a stop either, so no bucket may claim them.
+    """
+    from src.processor import _ACCURATE_SPEED, _PEEK_BUCKETS, _peek_bucket
+
+    assert _peek_bucket(_ACCURATE_SPEED - 1) is None
+    assert _peek_bucket(_ACCURATE_SPEED) == "walk"
+    # The floor is written as a literal because _ACCURATE_SPEED is defined
+    # further down the module; this is what keeps the two in step.
+    assert _PEEK_BUCKETS[0][2] == _ACCURATE_SPEED
+
+
+def test_peek_zones_match_the_counterstrafe_buckets():
+    """The chart regions and the breakdown rows must mean the same thing.
+
+    A point sitting in the "Full speed" region of the peek axis has to be one
+    of the engagements counted in the full-speed row underneath it, so both
+    read from one table rather than two sets of numbers that can drift apart.
+    """
+    from src.processor import _AIM_THRESHOLDS, _PEEK_BUCKETS
+
+    zones = _AIM_THRESHOLDS["peek"]["zones"]
+
+    # One region below the buckets for the held angles that never needed a stop.
+    assert zones[0] == {"at": 0.0, "label": "Held"}
+    assert [(z["at"], z["label"]) for z in zones[1:]] == [
+        (lo, label) for _key, label, lo, _hi in _PEEK_BUCKETS
+    ]
+    # Regions are not tiers: the axis stays ungraded.
+    assert _AIM_THRESHOLDS["peek"]["bounds"] == []
+    assert _AIM_THRESHOLDS["peek"]["range"] == [0, 250]
+
+
+def test_peek_speed_available_as_a_scatter_axis():
+    """Peek speed against counter-strafe is the comparison it exists for."""
+    kills = [_mov_kill("AK-47", "counter-strafed", peek=180.0) for _ in range(3)]
+    aim = _calculate_aim_stats([_round_with(kills)])
+
+    plotted = [(e["peek"], e["stop_ticks"]) for e in aim["encounters"] if "peek" in e]
+    assert plotted == [(180.0, 3)] * 3
+    assert "peek" in aim["thresholds"]
+
+
+# ---------------------------------------------------------------------------
+# Damage absorbed
+# ---------------------------------------------------------------------------
+
+
+def _hurt_rows(rows, with_armor=True):
+    cols = ["round", "user_steamid", "attacker_steamid", "dmg_health"]
+    if with_armor:
+        cols.append("dmg_armor")
+    return pd.DataFrame(rows, columns=cols)
+
+
+def test_damage_taken_counts_only_what_the_player_absorbed():
+    """The player as victim, never as attacker.
+
+    Reading the wrong side of player_hurt would mark a vest as used in exactly
+    the rounds the player was winning fights untouched.
+    """
+    df = _hurt_rows([
+        {"round": 5, "user_steamid": STEAM_ID, "attacker_steamid": "999", "dmg_health": 27, "dmg_armor": 6},
+        {"round": 5, "user_steamid": STEAM_ID, "attacker_steamid": "999", "dmg_health": 15, "dmg_armor": 3},
+        {"round": 5, "user_steamid": "999", "attacker_steamid": STEAM_ID, "dmg_health": 80, "dmg_armor": 20},
+        {"round": 6, "user_steamid": STEAM_ID, "attacker_steamid": "999", "dmg_health": 50, "dmg_armor": 10},
+    ])
+    assert _get_round_damage_taken(df, STEAM_ID, 5) == {"health": 42, "armor": 9}
+
+
+def test_damage_taken_reports_an_untouched_round_as_zero():
+    df = _hurt_rows([
+        {"round": 5, "user_steamid": STEAM_ID, "attacker_steamid": "999", "dmg_health": 27, "dmg_armor": 6},
+    ])
+    assert _get_round_damage_taken(df, STEAM_ID, 7) == {"health": 0, "armor": 0}
+
+
+def test_damage_taken_leaves_armour_unknown_when_the_demo_omits_it():
+    """None, not 0.
+
+    A vest that absorbed nothing and a demo that cannot say are different
+    things, and only the first should draw as a wasted $650.
+    """
+    df = _hurt_rows([
+        {"round": 5, "user_steamid": STEAM_ID, "attacker_steamid": "999", "dmg_health": 27},
+    ], with_armor=False)
+    taken = _get_round_damage_taken(df, STEAM_ID, 5)
+
+    assert taken["health"] == 27
+    assert taken["armor"] is None
+    assert _get_round_damage_taken(df, STEAM_ID, 9)["armor"] is None
+    assert _get_round_damage_taken(pd.DataFrame(), STEAM_ID, 5)["armor"] is None
 
 
 # ---------------------------------------------------------------------------
@@ -1205,11 +1418,18 @@ def test_counterstrafe_band_matches_the_classifier():
 
 
 def test_thresholds_are_shipped_to_the_frontend():
-    """The scatter reads these rather than keeping a third copy."""
+    """The scatter reads these rather than keeping a third copy.
+
+    A metric carries either three bounds or none at all: none marks it as
+    ungraded, which the charts render as a plain axis with no tier labels.
+    Anything in between would leave a chart guessing how many bands to draw.
+    """
     aim = _calculate_aim_stats([_round_with([_kill(preaim=5.0)])])
-    assert set(aim["thresholds"]) >= {"movement", "preaim", "ttk", "reaction", "stop_ticks"}
-    for meta in aim["thresholds"].values():
-        assert len(meta["bounds"]) == 3
+    assert set(aim["thresholds"]) >= {
+        "movement", "peek", "preaim", "ttk", "reaction", "stop_ticks",
+    }
+    for name, meta in aim["thresholds"].items():
+        assert len(meta["bounds"]) in (0, 3), name
         assert "label" in meta and "unit" in meta
 
 

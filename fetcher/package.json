@@ -1,0 +1,25 @@
+{
+  "name": "pr1maly-fetcher",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fetches CS2 match demos from Valve for the accounts tracked by pr1maly.",
+  "license": "MIT",
+  "scripts": {
+    "auth": "node auth.js",
+    "start": "node fetch.js",
+    "status": "node auth.js --status",
+    "codes": "node sharecodes.js",
+    "walk": "node sharecodes.js --walk"
+  },
+  "dependencies": {
+    "globaloffensive": "^3.1.2",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "steam-session": "^1.9.2",
+    "steam-user": "^5.2.0",
+    "unbzip2-stream": "^1.4.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -52,6 +52,18 @@ from src.parser import _build_freeze_end_map
 #      substituting 50 for anything unmeasured.
 #   8  Impact: kills and deaths priced by how far they moved the round, against
 #      a win-probability table measured from the local demo corpus.
+#  19  Peek speed reports its full distribution across the regions of its own
+#      axis, not just the two outer percentages, so the chart legend can name
+#      every band drawn on it.  Version 18 matches carry peek data but no such
+#      breakdown and render the legend empty until re-run.  Rounds also record
+#      the damage the player absorbed, split health vs armour, which is what
+#      separates a vest that stopped bullets from $650 spent on nothing.
+#  18  Peek speed reported as a metric of its own.  The speed carried into
+#      each duel was already measured per shot and then discarded; it is now
+#      aggregated, plottable per encounter, and the counter-strafe rate is
+#      additionally split by how fast the peek was.  No existing number
+#      changed value — stored matches simply carry no peek data at all until
+#      they are re-run.
 #  17  Self-flashes excluded from the per-round flash instances too, not
 #      just the totals — they were putting the player on their own
 #      friendly-flash chart and inflating per-round enemy blind time.
@@ -85,7 +97,7 @@ from src.parser import _build_freeze_end_map
 #      different sets. Scatter data now excludes the same outliers the
 #      aggregates do, and carries stop_ticks so counter-strafe is plottable.
 # ---------------------------------------------------------------------------
-ANALYZER_VERSION = 17
+ANALYZER_VERSION = 19
 
 
 # ---------------------------------------------------------------------------
@@ -559,6 +571,34 @@ _LOW_PENALTY_WEAPONS: set[str] = {
 }
 
 
+# Peek-speed bands: was the counter-strafe held together at speed, or only on
+# the slow peeks where there was time for it?  They label the regions of the
+# peek-speed axis on the charts as well as splitting the counter-strafe rate.
+#
+# The floor is _ACCURATE_SPEED — below it the player never had to stop at all,
+# and no engagement enters the counter-strafe denominator.  (Written as a
+# literal because _ACCURATE_SPEED is defined further down and so cannot be
+# referenced at import time; a test pins the two together.)
+#
+# The upper split is at 180 u/s.  A rifle caps a player at 215-225 rather than
+# the 250 a knife allows, so 180 is roughly 80% of the fastest a peek with an
+# AK or M4 in hand can be — the range where the stop has to be timed to the
+# tick.  The lower split at 130 sits just above shift-walk speed (~112), which
+# separates a peek taken at a walk from one taken with real commitment.
+_PEEK_BUCKETS: list[tuple[str, str, float, float]] = [
+    ("walk", "Walk", 85.0, 130.0),
+    ("half", "Half speed", 130.0, 180.0),
+    ("full", "Full speed", 180.0, float("inf")),
+]
+
+def _peek_bucket(speed: float) -> str | None:
+    """Which ``_PEEK_BUCKETS`` band *speed* falls in, or None if below them all."""
+    for key, _label, lo, hi in _PEEK_BUCKETS:
+        if lo <= speed < hi:
+            return key
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Aim metric bands — the single source of truth
 #
@@ -584,6 +624,26 @@ _AIM_THRESHOLDS: dict[str, dict[str, Any]] = {
         "bounds": [15, 40, 100], "lower_better": True,
         "range": [0, 250],
     },
+    # Peek speed ships with no bounds because it carries no verdict on its own:
+    # approaching slowly is right when holding an angle and wrong when entering
+    # a site, and nothing in the demo says which one the player meant to do.
+    # Charts therefore draw it as a plain axis, and whatever grading appears on
+    # a chart it is plotted against comes from the *other* metric — which is the
+    # comparison that actually means something.
+    #
+    # ``zones`` name the regions of that axis instead.  They are categories,
+    # not grades — which kind of peek this was, at the same speeds the
+    # counter-strafe cross-tab splits on, so a point's position on the chart
+    # and its row in the breakdown mean the same thing.  Charts must colour
+    # them as a speed ramp, never in the tier palette.
+    "peek": {
+        "label": "Peek Speed", "unit": "u/s",
+        "bounds": [], "lower_better": True,
+        "range": [0, 250],
+        "zones": [{"at": 0.0, "label": "Held"}] + [
+            {"at": lo, "label": label} for _key, label, lo, _hi in _PEEK_BUCKETS
+        ],
+    },
     # The middle bound must stay equal to _COUNTERSTRAFE_MAX_TICKS, which is
     # defined further down and so cannot be referenced at import time.  A test
     # pins the two together.
@@ -591,6 +651,15 @@ _AIM_THRESHOLDS: dict[str, dict[str, Any]] = {
         "label": "Counter-strafe", "unit": "ticks",
         "bounds": [3, 7, 15], "lower_better": True,
         "range": [0, 32],
+    },
+    # Not a per-encounter measurement like the rest — an encounter is either a
+    # clean stop or it is not — so this never appears on the scatter.  It lives
+    # here so the benchmark badge and the per-peek-speed breakdown grade the
+    # rate against one set of numbers instead of two.
+    "counterstrafe": {
+        "label": "Counter-strafe Rate", "unit": "%",
+        "bounds": [80, 60, 35], "lower_better": False,
+        "range": [0, 100],
     },
     "preaim": {
         "label": "Crosshair Placement", "unit": "°",
@@ -617,6 +686,26 @@ _AIM_THRESHOLDS: dict[str, dict[str, Any]] = {
 
 def _aim_bounds(metric: str) -> list[float]:
     return _AIM_THRESHOLDS[metric]["bounds"]
+
+
+# The regions of the peek-speed axis, in ascending order.  The chart shades and
+# labels these, and the per-match distribution below is reported against the
+# same list, so the legend beside a chart names exactly the bands drawn on it.
+_PEEK_ZONES: list[dict[str, Any]] = _AIM_THRESHOLDS["peek"]["zones"]
+
+
+def _peek_zone_index(speed: float) -> int:
+    """Which ``_PEEK_ZONES`` region *speed* falls in — what kind of peek it was.
+
+    Unlike ``_peek_bucket`` this never returns None: the bottom region covers
+    the speeds that never needed a stop, which are held angles rather than
+    peeks but still belong somewhere in the distribution.
+    """
+    index = 0
+    for i, zone in enumerate(_PEEK_ZONES):
+        if speed >= zone["at"]:
+            index = i
+    return index
 
 
 # Engagement times at or beyond this are not telling us about aim any more —
@@ -719,7 +808,9 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
     Returns a dict with:
       - movement: {speeds: [...], weapons: [...], median, avg, min, max, n,
                    confidence, standing_pct, counterstrafed_pct, stopped_pct,
-                   running_pct, low_penalty_weapons: [...]}
+                   running_pct, low_penalty_weapons: [...],
+                   counterstrafe_by_peek: [...]}
+      - peek: speed carried into the duel; diagnostic only, never graded
       - preaim: {errors: [...], median, avg, ..., excellent_pct, good_pct,
                  moderate_pct, poor_pct}
       - ttk: {values: [...], median, avg, ..., excluded_outliers}  (seconds)
@@ -728,6 +819,10 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
       - aim_rating_inputs: per-component score, n and the weight it earned
     """
     shot_speeds: list[float] = []
+    # Peak speed in the half second before the shot — how fast the player
+    # entered the duel.  Kept parallel to the lists around it so the
+    # counter-strafe cross-tab can zip the two together.
+    peek_speeds: list[float] = []
     kill_weapons: list[str] = []
     movement_qualities: list[str] = []
     movement_crouched: list[bool] = []
@@ -771,11 +866,13 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
             mv = k.get("movement")
             if mv:
                 shot_speeds.append(mv["shot_speed"])
+                peek_speeds.append(mv["pre_speed"])
                 movement_qualities.append(mv["movement_quality"])
                 movement_crouched.append(bool(mv.get("crouched")))
                 kill_weapons.append(weapon)
                 outcomes_mov.append(outcome)
                 enc["movement"] = mv["shot_speed"]
+                enc["peek"] = mv["pre_speed"]
                 if mv.get("stop_ticks") is not None:
                     enc["stop_ticks"] = mv["stop_ticks"]
 
@@ -847,11 +944,13 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
             mv = d.get("movement")
             if mv:
                 shot_speeds.append(mv["shot_speed"])
+                peek_speeds.append(mv["pre_speed"])
                 movement_qualities.append(mv["movement_quality"])
                 movement_crouched.append(bool(mv.get("crouched")))
                 kill_weapons.append(d.get("weapon", ""))
                 outcomes_mov.append(outcome)
                 enc["movement"] = mv["shot_speed"]
+                enc["peek"] = mv["pre_speed"]
                 if mv.get("stop_ticks") is not None:
                     enc["stop_ticks"] = mv["stop_ticks"]
 
@@ -923,16 +1022,31 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
         # needed a stop.  Reporting counter-strafes as a share of *all*
         # engagements buried the signal — running and standing shots, which
         # say nothing about stopping ability, made up most of the denominator.
+        #
+        # The same engagements are also split by how fast the peek was.  The
+        # overall rate hides the question worth asking: a player who stops
+        # cleanly off a walk and coasts off every full-speed peek scores the
+        # same as one who is merely inconsistent, and only the first has a
+        # specific thing to practise.
         cs_attempts = 0
         cs_good = 0
-        for q, w, crouch in zip(movement_qualities, kill_weapons, movement_crouched):
+        cs_by_peek: dict[str, list[int]] = {k: [0, 0] for k, _, _, _ in _PEEK_BUCKETS}
+        for q, w, crouch, peak in zip(
+            movement_qualities, kill_weapons, movement_crouched, peek_speeds,
+        ):
             if crouch or w not in _COUNTERSTRAFE_WEAPONS:
                 continue
-            if q == "counter-strafed":
-                cs_attempts += 1
+            if q not in ("counter-strafed", "stopped"):
+                continue
+            good = q == "counter-strafed"
+            cs_attempts += 1
+            if good:
                 cs_good += 1
-            elif q == "stopped":
-                cs_attempts += 1
+            bucket = _peek_bucket(peak)
+            if bucket:
+                cs_by_peek[bucket][0] += 1
+                if good:
+                    cs_by_peek[bucket][1] += 1
 
         movement = {
             **_summarise(shot_speeds, 1),
@@ -947,12 +1061,62 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
             "counterstrafe_attempts": cs_attempts,
             "counterstrafe_good": cs_good,
             "counterstrafe_rate": round(cs_good / cs_attempts * 100, 1) if cs_attempts else None,
+            "counterstrafe_by_peek": [
+                {
+                    "bucket": key,
+                    "label": label,
+                    "min": lo,
+                    "max": None if hi == float("inf") else hi,
+                    "attempts": cs_by_peek[key][0],
+                    "good": cs_by_peek[key][1],
+                    "rate": round(cs_by_peek[key][1] / cs_by_peek[key][0] * 100, 1)
+                    if cs_by_peek[key][0] else None,
+                }
+                for key, label, lo, hi in _PEEK_BUCKETS
+            ],
             "standing_pct": round(standing / n_mov * 100, 1) if n_mov else 0,
             "counterstrafed_pct": round(cs / n_mov * 100, 1) if n_mov else 0,
             "stopped_pct": round(stopped / n_mov * 100, 1) if n_mov else 0,
             "running_pct": round(running / n_mov * 100, 1) if n_mov else 0,
             "running_total": running,
             "running_low_penalty": running_low,
+        }
+
+    # How fast the player was moving on the way into the duel, measured as the
+    # peak speed over the half second ending at the first shot.  Reported, never
+    # graded and never fed into the rating: a slow approach is correct when
+    # holding an angle and wrong when entering a site, and the demo does not say
+    # which the player intended.  Its value is as the x-axis for the metrics
+    # that *are* graded — above all the counter-strafe, which is the technique
+    # that has to absorb whatever speed the peek carried in.
+    peek = {}
+    if peek_speeds:
+        n_peek = len(peek_speeds)
+        zone_counts = [0] * len(_PEEK_ZONES)
+        for s in peek_speeds:
+            zone_counts[_peek_zone_index(s)] += 1
+        by_zone = [
+            {
+                "label": zone["label"],
+                "at": zone["at"],
+                "n": count,
+                "pct": round(count / n_peek * 100, 1),
+            }
+            for zone, count in zip(_PEEK_ZONES, zone_counts)
+        ]
+        peek = {
+            **_summarise(peek_speeds, 1),
+            "values": [round(s, 1) for s in peek_speeds],
+            "outcomes": outcomes_mov,
+            "diagnostic_only": True,
+            # The share of engagements in each region of the axis, so a legend
+            # can name the same bands the chart shades.
+            "by_zone": by_zone,
+            # Headline shortcuts, read off the same counts rather than
+            # recomputed: the bottom region is a held angle (never fast enough
+            # to need a stop) and the top one is a committed full-speed peek.
+            "held_pct": by_zone[0]["pct"],
+            "full_pct": by_zone[-1]["pct"],
         }
 
     preaim = {}
@@ -1103,6 +1267,7 @@ def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any
         "thresholds": _AIM_THRESHOLDS,
         "aim_rating_inputs": rating_inputs,
         "movement": movement,
+        "peek": peek,
         "preaim": preaim,
         "ttk": ttk,
         "reaction": reaction,
@@ -1339,7 +1504,7 @@ def compute_benchmarks(
                 "value": cs_rate,
                 "n": cs_n,
                 "confidence": _confidence(cs_n),
-                "tier": _classify_tier_higher_better(cs_rate, 80, 60, 35),
+                "tier": _classify_tier_higher_better(cs_rate, *_aim_bounds("counterstrafe")),
                 "unit": "% of rifle stops",
             }
 
@@ -3348,6 +3513,9 @@ def build_enriched_rounds(
             map_name=map_name,
         )
 
+        # --- Damage absorbed (tells a used vest from a wasted one) ---
+        round_data["damage_taken"] = _get_round_damage_taken(hurt_df, sid, r)
+
         # --- Bomb events ---
         round_data["bomb"] = _get_round_bomb(
             bomb_planted_df, bomb_defused_df, bomb_exploded_df, sid, r
@@ -3449,6 +3617,43 @@ def _get_round_economy(
     return result
 
 
+def _get_round_damage_taken(
+    hurt_df: pd.DataFrame, sid: str, rnd: int,
+) -> dict[str, Any]:
+    """Damage the player absorbed this round, split into health and armour.
+
+    The armour figure is what makes a kevlar purchase readable as spent or
+    wasted: a vest that never stopped a bullet cost $650 for nothing, and the
+    economy timeline has no other way to tell those two rounds apart.
+
+    ``dmg_armor`` is a standard ``player_hurt`` field but not every demo build
+    carries it.  When it is missing the key is reported as None rather than 0,
+    so a consumer can tell "the vest absorbed nothing" from "this demo cannot
+    say" instead of drawing an unused vest either way.
+    """
+    result: dict[str, Any] = {"health": 0, "armor": None}
+    if hurt_df is None or hurt_df.empty or "round" not in hurt_df.columns:
+        return result
+
+    victim_col = _find_id_col(hurt_df, ("user_steamid", "steamid"))
+    if not victim_col:
+        return result
+
+    taken = hurt_df[
+        (hurt_df["round"] == rnd) & (hurt_df[victim_col].astype(str) == sid)
+    ]
+    if taken.empty:
+        if "dmg_armor" in hurt_df.columns:
+            result["armor"] = 0
+        return result
+
+    if "dmg_health" in taken.columns:
+        result["health"] = int(taken["dmg_health"].fillna(0).sum())
+    if "dmg_armor" in taken.columns:
+        result["armor"] = int(taken["dmg_armor"].fillna(0).sum())
+    return result
+
+
 def _lookup_position(
     positions_df: pd.DataFrame, steam_id: str, tick: int,
 ) -> tuple[float, float] | None:
@@ -3498,7 +3703,8 @@ def _analyze_movement(
 
     Returns a dict with:
       - shot_speed: speed at the shot tick (units/s)
-      - pre_speed: peak speed in the window before the shot
+      - pre_speed: peak speed in the window before the shot — the speed the
+        player carried into the duel, reported as "peek speed"
       - stop_ticks: ticks from the last running-speed sample to the shot,
         or None if the player never exceeded the accuracy threshold
       - window_span: ticks of history actually available (< window when the
