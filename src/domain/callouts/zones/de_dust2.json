@@ -1,0 +1,222 @@
+{
+  "map": "de_dust2",
+  "_order_matters": "Zones are tested in order and the first match wins, so a specific zone must come before the larger one that encloses it.",
+  "zones": [
+    {
+      "label": "A Site",
+      "min_x": 900,
+      "max_x": 1500,
+      "min_y": 2100,
+      "max_y": 2800,
+      "area": "A site"
+    },
+    {
+      "label": "A Short (Cat)",
+      "min_x": 500,
+      "max_x": 1000,
+      "min_y": 1400,
+      "max_y": 2100,
+      "area": "A site"
+    },
+    {
+      "label": "A Long",
+      "min_x": 1200,
+      "max_x": 2200,
+      "min_y": 200,
+      "max_y": 1400,
+      "area": "A site"
+    },
+    {
+      "label": "A Long Doors",
+      "min_x": 1200,
+      "max_x": 2200,
+      "min_y": -500,
+      "max_y": 200,
+      "area": "A site"
+    },
+    {
+      "label": "A Pit",
+      "min_x": 1500,
+      "max_x": 2000,
+      "min_y": 2200,
+      "max_y": 2800,
+      "area": "A site"
+    },
+    {
+      "label": "A Car",
+      "min_x": 1300,
+      "max_x": 1800,
+      "min_y": 1800,
+      "max_y": 2200,
+      "area": "A site"
+    },
+    {
+      "label": "Goose",
+      "min_x": 700,
+      "max_x": 1000,
+      "min_y": 2400,
+      "max_y": 2800,
+      "area": "A site"
+    },
+    {
+      "label": "A Ramp",
+      "min_x": 500,
+      "max_x": 900,
+      "min_y": 2100,
+      "max_y": 2600,
+      "area": "A site"
+    },
+    {
+      "label": "CT Spawn",
+      "min_x": 200,
+      "max_x": 900,
+      "min_y": 2800,
+      "max_y": 3400,
+      "area": "A site"
+    },
+    {
+      "label": "Mid Doors",
+      "min_x": -50,
+      "max_x": 500,
+      "min_y": -50,
+      "max_y": 500,
+      "area": "Mid"
+    },
+    {
+      "label": "Xbox",
+      "min_x": 100,
+      "max_x": 500,
+      "min_y": 500,
+      "max_y": 900,
+      "area": "Mid"
+    },
+    {
+      "label": "Mid",
+      "min_x": -50,
+      "max_x": 500,
+      "min_y": 500,
+      "max_y": 1400,
+      "area": "Mid"
+    },
+    {
+      "label": "Catwalk",
+      "min_x": 200,
+      "max_x": 700,
+      "min_y": 1400,
+      "max_y": 2100,
+      "area": "Mid"
+    },
+    {
+      "label": "Lower Tunnels",
+      "min_x": -800,
+      "max_x": -200,
+      "min_y": -800,
+      "max_y": 50,
+      "area": "Mid"
+    },
+    {
+      "label": "Upper Tunnels",
+      "min_x": -800,
+      "max_x": 0,
+      "min_y": -1200,
+      "max_y": -800,
+      "area": "Mid"
+    },
+    {
+      "label": "B Site",
+      "min_x": -800,
+      "max_x": 50,
+      "min_y": 1400,
+      "max_y": 2200,
+      "area": "B site"
+    },
+    {
+      "label": "B Tunnels",
+      "min_x": -1400,
+      "max_x": -600,
+      "min_y": 400,
+      "max_y": 1200,
+      "area": "B site"
+    },
+    {
+      "label": "B Doors",
+      "min_x": -600,
+      "max_x": 100,
+      "min_y": 1200,
+      "max_y": 1600,
+      "area": "B site"
+    },
+    {
+      "label": "B Window",
+      "min_x": -500,
+      "max_x": 50,
+      "min_y": 2200,
+      "max_y": 2700,
+      "area": "B site"
+    },
+    {
+      "label": "B Back Site",
+      "min_x": -800,
+      "max_x": -200,
+      "min_y": 2200,
+      "max_y": 2800,
+      "area": "B site"
+    },
+    {
+      "label": "B Car",
+      "min_x": -200,
+      "max_x": 200,
+      "min_y": 1800,
+      "max_y": 2200,
+      "area": "B site"
+    },
+    {
+      "label": "T Spawn",
+      "min_x": -400,
+      "max_x": 400,
+      "min_y": -2400,
+      "max_y": -1600,
+      "area": "T side"
+    },
+    {
+      "label": "T Mid",
+      "min_x": -200,
+      "max_x": 400,
+      "min_y": -1200,
+      "max_y": -500,
+      "area": "T side"
+    },
+    {
+      "label": "Outside Long",
+      "min_x": 800,
+      "max_x": 1700,
+      "min_y": -1200,
+      "max_y": -200,
+      "area": "T side"
+    },
+    {
+      "label": "A Side",
+      "min_x": 500,
+      "max_x": 2400,
+      "min_y": 1200,
+      "max_y": 3500,
+      "area": "Fallback"
+    },
+    {
+      "label": "B Side",
+      "min_x": -1500,
+      "max_x": 200,
+      "min_y": 1200,
+      "max_y": 3000,
+      "area": "Fallback"
+    },
+    {
+      "label": "Mid Area",
+      "min_x": -200,
+      "max_x": 700,
+      "min_y": -200,
+      "max_y": 1400,
+      "area": "Fallback"
+    }
+  ]
+}

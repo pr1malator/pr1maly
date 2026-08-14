@@ -8,110 +8,12 @@
 <link rel="icon" type="image/png" href="img/logo-big.png"/>
 <link rel="stylesheet" href="theme.css?v=3"/>
 <script src="theme.js?v=3"></script>
-<script src="reanalyze.js?v=1"></script>
 <script src="charts.js?v=1"></script>
-<script>
-/* Map-icon helpers come from theme.js. This page is served no-store but a
-   browser can still be holding an older theme.js than the HTML it is running
-   — that is exactly what happened when the helpers were first added, and it
-   blanked the map grid and the match list with a ReferenceError.
-
-   Whole sections should not hinge on one shared file being in step, so the
-   degraded forms are defined here when theme.js did not supply them. They
-   render the plain text tile the UI used before icons existed. */
-if (typeof mapIconUrl !== 'function') {
-  window.mapIconUrl = function () { return ''; };
-}
-if (typeof mapAbbrev !== 'function') {
-  window.mapAbbrev = function (n) {
-    return String(n || '').replace(/^(de|cs|ar|gg|dm)_/, '').substring(0, 3).toUpperCase();
-  };
-}
-if (typeof mapLabel !== 'function') {
-  window.mapLabel = function (n) {
-    var b = String(n || '').replace(/^(de|cs|ar|gg|dm)_/, '');
-    return b ? b.charAt(0).toUpperCase() + b.slice(1) : '';
-  };
-}
-if (typeof mapIconHtml !== 'function') {
-  window.mapIconHtml = function (n, sizeClass, extraClass) {
-    return '<div class="' + (sizeClass || 'w-10 h-10') + ' rounded bg-surface-container-highest ' +
-      'flex items-center justify-center font-bold text-[10px] text-on-surface-variant shrink-0 ' +
-      (extraClass || '') + '">' + mapAbbrev(n) + '</div>';
-  };
-}
-</script>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              "secondary-container": "rgb(var(--c-secondary-container) / <alpha-value>)",
-              "on-secondary-fixed-variant": "rgb(var(--c-on-secondary-fixed-variant) / <alpha-value>)",
-              "tertiary-fixed-dim": "rgb(var(--c-tertiary-fixed-dim) / <alpha-value>)",
-              "surface-container-low": "rgb(var(--c-surface-container-low) / <alpha-value>)",
-              "primary-fixed": "rgb(var(--c-primary-fixed) / <alpha-value>)",
-              "on-tertiary-container": "rgb(var(--c-on-tertiary-container) / <alpha-value>)",
-              "error-dim": "rgb(var(--c-error-dim) / <alpha-value>)",
-              "secondary-fixed-dim": "rgb(var(--c-secondary-fixed-dim) / <alpha-value>)",
-              "on-error": "rgb(var(--c-on-error) / <alpha-value>)",
-              "inverse-primary": "rgb(var(--c-inverse-primary) / <alpha-value>)",
-              "surface-tint": "rgb(var(--c-surface-tint) / <alpha-value>)",
-              "surface-variant": "rgb(var(--c-surface-variant) / <alpha-value>)",
-              "tertiary-fixed": "rgb(var(--c-tertiary-fixed) / <alpha-value>)",
-              "tertiary-container": "rgb(var(--c-tertiary-container) / <alpha-value>)",
-              "primary-fixed-dim": "rgb(var(--c-primary-fixed-dim) / <alpha-value>)",
-              "on-primary": "rgb(var(--c-on-primary) / <alpha-value>)",
-              "error-container": "rgb(var(--c-error-container) / <alpha-value>)",
-              "on-tertiary-fixed": "rgb(var(--c-on-tertiary-fixed) / <alpha-value>)",
-              "surface-container-lowest": "rgb(var(--c-surface-container-lowest) / <alpha-value>)",
-              "on-primary-fixed": "rgb(var(--c-on-primary-fixed) / <alpha-value>)",
-              "on-primary-fixed-variant": "rgb(var(--c-on-primary-fixed-variant) / <alpha-value>)",
-              "on-secondary-container": "rgb(var(--c-on-secondary-container) / <alpha-value>)",
-              "surface-container-high": "rgb(var(--c-surface-container-high) / <alpha-value>)",
-              "surface-dim": "rgb(var(--c-surface-dim) / <alpha-value>)",
-              "primary": "rgb(var(--c-primary) / <alpha-value>)",
-              "on-tertiary-fixed-variant": "rgb(var(--c-on-tertiary-fixed-variant) / <alpha-value>)",
-              "background": "rgb(var(--c-background) / <alpha-value>)",
-              "outline-variant": "rgb(var(--c-outline-variant) / <alpha-value>)",
-              "on-secondary-fixed": "rgb(var(--c-on-secondary-fixed) / <alpha-value>)",
-              "secondary-fixed": "rgb(var(--c-secondary-fixed) / <alpha-value>)",
-              "primary-dim": "rgb(var(--c-primary-dim) / <alpha-value>)",
-              "surface-bright": "rgb(var(--c-surface-bright) / <alpha-value>)",
-              "surface-container": "rgb(var(--c-surface-container) / <alpha-value>)",
-              "primary-container": "rgb(var(--c-primary-container) / <alpha-value>)",
-              "on-error-container": "rgb(var(--c-on-error-container) / <alpha-value>)",
-              "secondary-dim": "rgb(var(--c-secondary-dim) / <alpha-value>)",
-              "on-tertiary": "rgb(var(--c-on-tertiary) / <alpha-value>)",
-              "on-surface-variant": "rgb(var(--c-on-surface-variant) / <alpha-value>)",
-              "tertiary-dim": "rgb(var(--c-tertiary-dim) / <alpha-value>)",
-              "error": "rgb(var(--c-error) / <alpha-value>)",
-              "surface": "rgb(var(--c-surface) / <alpha-value>)",
-              "tertiary": "rgb(var(--c-tertiary) / <alpha-value>)",
-              "on-secondary": "rgb(var(--c-on-secondary) / <alpha-value>)",
-              "on-background": "rgb(var(--c-on-background) / <alpha-value>)",
-              "on-surface": "rgb(var(--c-on-surface) / <alpha-value>)",
-              "on-primary-container": "rgb(var(--c-on-primary-container) / <alpha-value>)",
-              "inverse-surface": "rgb(var(--c-inverse-surface) / <alpha-value>)",
-              "secondary": "rgb(var(--c-secondary) / <alpha-value>)",
-              "outline": "rgb(var(--c-outline) / <alpha-value>)",
-              "surface-container-highest": "rgb(var(--c-surface-container-highest) / <alpha-value>)",
-              "inverse-on-surface": "rgb(var(--c-inverse-on-surface) / <alpha-value>)"
-            },
-            fontFamily: {
-              "headline": ["Space Grotesk", "sans-serif"],
-              "body": ["Manrope", "sans-serif"],
-              "label": ["Space Grotesk", "sans-serif"]
-            },
-            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-          },
-        },
-      }
-    </script>
+<script src="js/map-icon-fallbacks.js?v=1"></script>
+<script src="vendor/tailwind.js"></script>
+<link rel="stylesheet" href="vendor/text.css"/>
+<link rel="stylesheet" href="vendor/symbols.css"/>
+<script src="js/tailwind-config.js?v=1"></script>
 <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -162,30 +64,30 @@ if (typeof mapIconHtml !== 'function') {
             </a>
 </nav>
 <div class="sidebar-actions p-6 space-y-4">
-<button onclick="openUploadModal()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+<button data-action="openUploadModal" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
                 Upload Demo
             </button>
-<button onclick="openSyncModal()" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-secondary/30 hover:text-secondary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+<button data-action="openSyncModal" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-secondary/30 hover:text-secondary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
 <span class="material-symbols-outlined text-sm">sync</span> <span class="sidebar-label">Sync Folder</span>
 </button>
-<button onclick="openSteamModal()" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+<button data-action="openSteamModal" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
 <span class="material-symbols-outlined text-sm">cloud_download</span> <span class="sidebar-label">Manual Fetch from Steam</span>
 </button>
-<button onclick="openAutoSyncModal()" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-tertiary/30 hover:text-tertiary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+<button data-action="openAutoSyncModal" class="w-full bg-surface-container-highest py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-tertiary/30 hover:text-tertiary hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
 <span class="material-symbols-outlined text-sm">autorenew</span> <span class="sidebar-label">Auto-Sync</span>
 <!-- Lit while the loop is running, so its state is legible without opening it. -->
 <span id="auto-sync-dot" class="hidden w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
 </button>
 <div class="space-y-1">
-<button onclick="openSettingsModal()" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
+<button data-action="openSettingsModal" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full">
 <span class="material-symbols-outlined text-sm">settings</span> <span class="sidebar-label">Settings</span>
 </button>
-<button data-theme-button onclick="toggleThemeMenu(this)" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Choose a theme">
+<button data-theme-button data-action="toggleThemeMenu" class="text-muted py-2 flex items-center gap-3 text-xs font-bold uppercase hover:text-primary transition-colors w-full" title="Choose a theme">
 <span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span> <span class="sidebar-label">Theme<span class="theme-name text-outline normal-case font-normal ml-1"></span></span>
 </button>
 </div>
 </div>
-<button id="sidebar-toggle" onclick="toggleSidebar()" class="mx-auto mb-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-highest border border-white/10 text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors" title="Collapse sidebar">
+<button id="sidebar-toggle" data-action="toggleSidebar" class="mx-auto mb-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-highest border border-white/10 text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors" title="Collapse sidebar">
 <span class="material-symbols-outlined text-base">chevron_left</span>
 </button>
 </aside>
@@ -199,7 +101,7 @@ if (typeof mapIconHtml !== 'function') {
   <div class="bg-surface-container rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
     <span class="material-symbols-outlined text-sm text-on-surface-variant">people</span>
     <span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest shrink-0">Players:</span>
-    <button id="pf-all" onclick="togglePlayerFilter(null)" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all">All</button>
+    <button id="pf-all" data-action="togglePlayerFilter" data-args='[null]' class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all">All</button>
     <div id="pf-chips" class="flex gap-2 flex-wrap"></div>
   </div>
 </div>
@@ -302,8 +204,8 @@ if (typeof mapIconHtml !== 'function') {
         <select id="ai-overall-model-select" class="bg-surface-container-highest text-[10px] text-on-surface-variant border border-white/10 rounded-full px-3 py-1 focus:ring-0 focus:border-secondary/30 appearance-none uppercase tracking-widest">
           <option value="">Model</option>
         </select>
-        <button onclick="openAISettings()" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg transition-colors" title="AI Settings">settings</button>
-        <button id="ai-overall-btn" onclick="analyzeOverallWithAI()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all text-primary text-[10px] font-bold uppercase tracking-widest group" title="Read every analysed match for habits in aim, utility and round behaviour, and which maps you actually perform on">
+        <button data-action="openAISettings" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg transition-colors" title="AI Settings">settings</button>
+        <button id="ai-overall-btn" data-action="analyzeOverallWithAI" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all text-primary text-[10px] font-bold uppercase tracking-widest group" title="Read every analysed match for habits in aim, utility and round behaviour, and which maps you actually perform on">
           <span class="material-symbols-outlined text-sm group-hover:animate-pulse">smart_toy</span>
           <span id="ai-overall-btn-text">AI Analyze</span>
         </button>
@@ -336,19 +238,19 @@ if (typeof mapIconHtml !== 'function') {
       <div class="flex flex-col gap-2 items-end">
         <!-- Timescale buttons -->
         <div class="flex gap-1">
-          <button id="ts-all" onclick="setTrendTimescale('all')" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all">All</button>
-          <button id="ts-20" onclick="setTrendTimescale(20)" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">L20</button>
-          <button id="ts-10" onclick="setTrendTimescale(10)" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">L10</button>
-          <button id="ts-5"  onclick="setTrendTimescale(5)"  class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">L5</button>
+          <button id="ts-all" data-action="setTrendTimescale" data-args='["all"]' class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all">All</button>
+          <button id="ts-20" data-action="setTrendTimescale" data-args='[20]' class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">L20</button>
+          <button id="ts-10" data-action="setTrendTimescale" data-args='[10]' class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">L10</button>
+          <button id="ts-5"  data-action="setTrendTimescale" data-args='[5]'  class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">L5</button>
         </div>
         <!-- Metric toggles -->
         <div class="flex gap-1 flex-wrap justify-end">
-          <button id="tm-rating" onclick="toggleTrendMetric('rating')" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all">Rating</button>
-          <button id="tm-adr"    onclick="toggleTrendMetric('adr')"    class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">ADR</button>
-          <button id="tm-kd"     onclick="toggleTrendMetric('kd')"     class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all">K/D</button>
-          <button id="tm-kast"   onclick="toggleTrendMetric('kast')"   class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">KAST%</button>
-          <button id="tm-aim"    onclick="toggleTrendMetric('aim')"    class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">Aim</button>
-          <button id="tm-util"   onclick="toggleTrendMetric('util')"   class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">Utility</button>
+          <button id="tm-rating" data-action="toggleTrendMetric" data-args='["rating"]' class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all">Rating</button>
+          <button id="tm-adr"    data-action="toggleTrendMetric" data-args='["adr"]'    class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">ADR</button>
+          <button id="tm-kd"     data-action="toggleTrendMetric" data-args='["kd"]'     class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all">K/D</button>
+          <button id="tm-kast"   data-action="toggleTrendMetric" data-args='["kast"]'   class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">KAST%</button>
+          <button id="tm-aim"    data-action="toggleTrendMetric" data-args='["aim"]'    class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">Aim</button>
+          <button id="tm-util"   data-action="toggleTrendMetric" data-args='["util"]'   class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all">Utility</button>
         </div>
       </div>
     </div>
@@ -379,7 +281,7 @@ if (typeof mapIconHtml !== 'function') {
     <span class="material-symbols-outlined text-primary text-lg">map</span>
     Map Selection
   </h2>
-  <button id="map-clear-btn" class="hidden text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-error transition-colors px-3 py-1" onclick="clearMapSelection()">
+  <button id="map-clear-btn" class="hidden text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-error transition-colors px-3 py-1" data-action="clearMapSelection">
     <span class="material-symbols-outlined text-xs align-middle mr-1">close</span>Clear
   </button>
 </div>
@@ -628,8 +530,8 @@ if (typeof mapIconHtml !== 'function') {
     <select id="ai-model-select" class="bg-surface-container text-[10px] text-on-surface-variant border border-white/10 rounded-full px-3 py-1 focus:ring-0 focus:border-secondary/30 appearance-none uppercase tracking-widest">
       <option value="">Model</option>
     </select>
-    <button onclick="openAISettings()" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg transition-colors" title="AI Settings">settings</button>
-    <button id="ai-role-btn" onclick="analyzeWithAI()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all text-primary text-[10px] font-bold uppercase tracking-widest group" title="Read this map's positions and measurements in one pass: roles, plus aim, utility and behaviour tendencies">
+    <button data-action="openAISettings" class="material-symbols-outlined text-on-surface-variant hover:text-primary text-lg transition-colors" title="AI Settings">settings</button>
+    <button id="ai-role-btn" data-action="analyzeWithAI" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all text-primary text-[10px] font-bold uppercase tracking-widest group" title="Read this map's positions and measurements in one pass: roles, plus aim, utility and behaviour tendencies">
       <span class="material-symbols-outlined text-sm group-hover:animate-pulse">smart_toy</span>
       <span id="ai-role-btn-text">AI Analyze</span>
     </button>
@@ -844,7 +746,7 @@ if (typeof mapIconHtml !== 'function') {
         </p>
         <div class="flex items-center justify-center gap-2 text-xs text-on-surface-variant">
           <span class="material-symbols-outlined text-sm">info</span>
-          You can always manage accounts and friends in <span class="text-primary font-bold cursor-pointer" onclick="closeOnboarding();openSettingsModal()">Settings</span>.
+          You can always manage accounts and friends in <span class="text-primary font-bold cursor-pointer" data-action="closeOnboarding openSettingsModal">Settings</span>.
         </div>
       </div>
     </div>
@@ -858,10 +760,10 @@ if (typeof mapIconHtml !== 'function') {
         </label>
       </div>
       <div class="flex gap-3">
-        <button id="ob-prev-btn" onclick="obPrev()" class="hidden px-6 py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">
+        <button id="ob-prev-btn" data-action="obPrev" class="hidden px-6 py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all">
           Back
         </button>
-        <button id="ob-next-btn" onclick="obNext()" class="px-8 py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r from-primary to-primary-dim text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+        <button id="ob-next-btn" data-action="obNext" class="px-8 py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r from-primary to-primary-dim text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
           Next
         </button>
       </div>
@@ -873,13 +775,13 @@ if (typeof mapIconHtml !== 'function') {
   <div class="bg-surface-container rounded-2xl p-8 w-full max-w-2xl mx-4 border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] max-h-[90vh] overflow-y-auto">
     <div class="flex justify-between items-center mb-4">
       <h2 class="font-headline text-xl font-bold uppercase tracking-widest">Upload Demo</h2>
-      <button onclick="closeUploadModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+      <button data-action="closeUploadModal" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
     </div>
     <!-- One demo or many is the same task, so it is one modal with a mode
          switch rather than two separate entries in the sidebar. -->
     <div class="flex gap-2 mb-6">
-      <button id="upload-mode-single" onclick="switchUploadMode('single')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Single</button>
-      <button id="upload-mode-bulk" onclick="switchUploadMode('bulk')" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Bulk</button>
+      <button id="upload-mode-single" data-action="switchUploadMode" data-args='["single"]' class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Single</button>
+      <button id="upload-mode-bulk" data-action="switchUploadMode" data-args='["bulk"]' class="px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Bulk</button>
     </div>
     <div id="upload-pane-single">
     <form id="upload-form" class="space-y-4">
@@ -935,7 +837,7 @@ if (typeof mapIconHtml !== 'function') {
         <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Files Queued</p>
         <div id="bulk-file-list" class="space-y-1 max-h-40 overflow-y-auto"></div>
       </div>
-      <button type="button" id="bulk-upload-btn" onclick="startBulkUpload()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+      <button type="button" id="bulk-upload-btn" data-action="startBulkUpload" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
         Process All Demos
       </button>
       <div id="bulk-progress" class="hidden">
@@ -957,19 +859,20 @@ if (typeof mapIconHtml !== 'function') {
   <div class="bg-surface-container rounded-2xl w-full max-w-6xl h-full max-h-[92vh] border border-white/10 shadow-[0_0_40px_rgba(204,151,255,0.15)] flex flex-col overflow-hidden">
     <div class="flex justify-between items-center px-8 py-5 border-b border-white/5 shrink-0">
       <h2 class="font-headline text-xl font-bold uppercase tracking-widest">Settings</h2>
-      <button onclick="closeSettingsModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+      <button data-action="closeSettingsModal" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
     </div>
     <div class="flex-1 flex min-h-0 flex-col sm:flex-row">
     <!-- Tab rail. switchSettingsTab swaps the two colour class-strings by exact
          text, so those must survive verbatim; layout classes sit around them. -->
     <nav class="flex sm:flex-col gap-1 p-3 sm:p-4 sm:w-44 shrink-0 border-b sm:border-b-0 sm:border-r border-white/5 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto">
-      <button id="settings-tab-accounts" onclick="switchSettingsTab('accounts')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Accounts</button>
-      <button id="settings-tab-friends" onclick="switchSettingsTab('friends')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Friends</button>
-      <button id="settings-tab-ai" onclick="switchSettingsTab('ai')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
-      <button id="settings-tab-steam" onclick="switchSettingsTab('steam')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Steam</button>
-      <button id="settings-tab-storage" onclick="switchSettingsTab('storage')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Storage</button>
-      <button id="settings-tab-reanalyze" onclick="switchSettingsTab('reanalyze')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Re-analyze</button>
-      <button id="settings-tab-reset" onclick="switchSettingsTab('reset')" class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Reset</button>
+      <button id="settings-tab-accounts" data-action="switchSettingsTab" data-args='["accounts"]' class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-on-primary-fixed">Accounts</button>
+      <button id="settings-tab-friends" data-action="switchSettingsTab" data-args='["friends"]' class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Friends</button>
+      <button id="settings-tab-ai" data-action="switchSettingsTab" data-args='["ai"]' class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">AI Config</button>
+      <button id="settings-tab-steam" data-action="switchSettingsTab" data-args='["steam"]' class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Steam</button>
+      <button id="settings-tab-storage" data-action="switchSettingsTab" data-args='["storage"]' class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Storage</button>
+      <button id="settings-tab-reanalyze" data-action="switchSettingsTab" data-args='["reanalyze"]' class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Re-analyze</button>
+      <button id="settings-tab-updates" data-action="switchSettingsTab" data-args='["updates"]' class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Updates</button>
+      <button id="settings-tab-reset" data-action="switchSettingsTab" data-args='["reset"]' class="w-full text-left whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface-variant hover:bg-white/10">Reset</button>
     </nav>
     <div class="flex-1 min-w-0 overflow-y-auto p-6 sm:p-8">
     <!-- Accounts Tab -->
@@ -983,7 +886,7 @@ if (typeof mapIconHtml !== 'function') {
           <input id="new-acct-display" type="text" placeholder="Display Name (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
           <input id="new-acct-rank" type="text" placeholder="Rank (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
         </div>
-        <button onclick="addAccount()" class="mt-3 w-full bg-gradient-to-r from-secondary/80 to-secondary/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
+        <button data-action="addAccount" class="mt-3 w-full bg-gradient-to-r from-secondary/80 to-secondary/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
           Add Account
         </button>
         <div id="acct-status" class="text-xs mt-2"></div>
@@ -998,7 +901,7 @@ if (typeof mapIconHtml !== 'function') {
           <input id="new-friend-steamid" type="text" placeholder="Steam ID 64" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
           <input id="new-friend-name" type="text" placeholder="Name (optional)" class="bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
         </div>
-        <button onclick="addFriend()" class="mt-3 w-full bg-gradient-to-r from-accent/80 to-accent/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
+        <button data-action="addFriend" class="mt-3 w-full bg-gradient-to-r from-accent/80 to-accent/60 py-2 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform">
           Add Friend
         </button>
         <div id="friend-status" class="text-xs mt-2"></div>
@@ -1022,7 +925,7 @@ if (typeof mapIconHtml !== 'function') {
         <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Custom System Instructions (optional)</label>
         <textarea id="ai-system-instructions" rows="3" placeholder="e.g. Always focus on positioning mistakes..." class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0 resize-none"></textarea>
       </div>
-      <button onclick="saveAISettings()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+      <button data-action="saveAISettings" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
         Save AI Configuration
       </button>
       <div id="ai-settings-status" class="text-xs text-center mt-3 hidden"></div>
@@ -1047,7 +950,7 @@ if (typeof mapIconHtml !== 'function') {
           <p id="steam-qr-title" class="text-[10px] font-bold uppercase tracking-widest text-primary mb-3"></p>
           <div id="steam-qr-image" class="inline-block bg-white p-2 rounded-lg"></div>
           <p id="steam-qr-state" class="text-[9px] text-on-surface-variant mt-3 leading-relaxed"></p>
-          <button onclick="hideSteamQr()" class="mt-3 text-[9px] text-on-surface-variant hover:text-error underline">Cancel sign-in</button>
+          <button data-action="hideSteamQr" class="mt-3 text-[9px] text-on-surface-variant hover:text-error underline">Cancel sign-in</button>
         </div>
         <p class="text-[9px] text-on-surface-variant mb-4 leading-relaxed">
           Sign-in uses a QR code scanned with the Steam mobile app &mdash; no password is typed anywhere.
@@ -1063,7 +966,7 @@ if (typeof mapIconHtml !== 'function') {
         </div>
         <div class="flex gap-2 mb-2">
           <input id="steam-api-key" type="password" placeholder="32 hex characters &mdash; one key covers all accounts" class="flex-1 bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-primary/30 focus:ring-0"/>
-          <button onclick="saveSteamApiKey()" class="px-4 py-2 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors">Save</button>
+          <button data-action="saveSteamApiKey" class="px-4 py-2 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors">Save</button>
         </div>
         <!-- The key works for every account, but it is issued by one of them.
              Nothing in the key says which, and you need to know when it stops
@@ -1084,7 +987,7 @@ if (typeof mapIconHtml !== 'function') {
         <div class="flex gap-2 mb-2">
           <input id="steam-auth-code" type="text" placeholder="Auth code (XXXX-XXXXX-XXXX)" class="flex-1 bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-primary/30 focus:ring-0"/>
           <input id="steam-share-code" type="text" placeholder="CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx" class="flex-1 bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-primary/30 focus:ring-0"/>
-          <button onclick="saveSteamCodes()" class="px-4 py-2 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors">Save</button>
+          <button data-action="saveSteamCodes" class="px-4 py-2 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors">Save</button>
         </div>
         <p id="steam-codes-status" class="text-[9px] text-on-surface-variant"></p>
         <p class="text-[9px] text-on-surface-variant mt-2 leading-relaxed">
@@ -1109,21 +1012,21 @@ if (typeof mapIconHtml !== 'function') {
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3">
         <label class="flex items-center gap-2 text-[10px] text-on-surface-variant">
           Keep newest
-          <input id="storage-keep" type="number" min="0" oninput="previewStorage()" class="w-16 bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
+          <input id="storage-keep" type="number" min="0" data-action="previewStorage" data-event="input" class="w-16 bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
           demos
         </label>
         <label class="flex items-center gap-2 text-[10px] text-on-surface-variant cursor-pointer">
-          <input id="storage-per-account" type="checkbox" onchange="previewStorage()" class="accent-secondary"/> per account
+          <input id="storage-per-account" type="checkbox" data-action="previewStorage" data-event="change" class="accent-secondary"/> per account
         </label>
         <label class="flex items-center gap-2 text-[10px] text-on-surface-variant cursor-pointer">
-          <input id="storage-fetched-only" type="checkbox" onchange="previewStorage()" class="accent-secondary"/> only demos this app downloaded
+          <input id="storage-fetched-only" type="checkbox" data-action="previewStorage" data-event="change" class="accent-secondary"/> only demos this app downloaded
         </label>
         <label class="flex items-center gap-2 text-[10px] text-on-surface-variant cursor-pointer">
           <input id="storage-auto" type="checkbox" class="accent-secondary"/> clean up automatically after sync
         </label>
-        <button onclick="saveStorageConfig()" class="px-3 py-1.5 rounded-lg bg-secondary/20 text-secondary text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/30 transition-colors">Apply</button>
+        <button data-action="saveStorageConfig" class="px-3 py-1.5 rounded-lg bg-secondary/20 text-secondary text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/30 transition-colors">Apply</button>
       </div>
-      <button id="storage-delete-btn" onclick="runStorageCleanup()" class="w-full bg-error/20 text-error py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest hover:bg-error/30 transition-colors disabled:opacity-40 disabled:hover:bg-error/20">
+      <button id="storage-delete-btn" data-action="runStorageCleanup" class="w-full bg-error/20 text-error py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest hover:bg-error/30 transition-colors disabled:opacity-40 disabled:hover:bg-error/20">
         Nothing to delete
       </button>
       <p id="storage-result" class="text-[9px] text-on-surface-variant mt-2 leading-relaxed"></p>
@@ -1131,6 +1034,7 @@ if (typeof mapIconHtml !== 'function') {
     </div>
     <div id="settings-reanalyze-panel" class="hidden"></div>
 
+    <div id="settings-updates-panel" class="hidden"></div>
     <div id="settings-reset-panel" class="hidden">
       <div class="text-center mb-6">
         <span class="material-symbols-outlined text-4xl text-error mb-3 block">warning</span>
@@ -1150,10 +1054,10 @@ if (typeof mapIconHtml !== 'function') {
       </div>
       <div class="space-y-3">
         <label class="flex items-center gap-3 cursor-pointer select-none">
-          <input type="checkbox" id="reset-confirm-check" class="w-4 h-4 rounded bg-surface-container-highest border-white/20 text-error focus:ring-error/30 focus:ring-offset-0" onchange="document.getElementById('reset-btn').disabled = !this.checked">
+          <input type="checkbox" id="reset-confirm-check" class="w-4 h-4 rounded bg-surface-container-highest border-white/20 text-error focus:ring-error/30 focus:ring-offset-0" data-action="syncFactoryResetButton" data-event="change">
           <span class="text-xs text-on-surface-variant">I understand this cannot be undone</span>
         </label>
-        <button id="reset-btn" disabled onclick="doFactoryReset()" class="w-full bg-gradient-to-r from-error to-error-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-error shadow-[0_0_15px_rgba(255,100,100,0.3)] hover:scale-[1.02] transition-transform disabled:opacity-30 disabled:pointer-events-none">
+        <button id="reset-btn" disabled data-action="doFactoryReset" class="w-full bg-gradient-to-r from-error to-error-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-error shadow-[0_0_15px_rgba(255,100,100,0.3)] hover:scale-[1.02] transition-transform disabled:opacity-30 disabled:pointer-events-none">
           Reset Everything
         </button>
         <div id="reset-status" class="text-xs text-center hidden"></div>
@@ -1170,14 +1074,14 @@ if (typeof mapIconHtml !== 'function') {
       <h2 class="font-headline text-xl font-bold uppercase tracking-widest flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary">sync</span> Sync Folder
       </h2>
-      <button onclick="closeSyncModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+      <button data-action="closeSyncModal" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
     </div>
     <!-- Folder config -->
     <div class="mb-6">
       <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Demo Folder Path</label>
       <div class="flex gap-2">
         <input id="sync-folder-input" type="text" placeholder="/path/to/demos (inside container)" class="flex-1 bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"/>
-        <button onclick="saveSyncFolder()" class="px-4 py-2 rounded-lg bg-secondary/20 text-secondary text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/30 transition-colors">Save</button>
+        <button data-action="saveSyncFolder" class="px-4 py-2 rounded-lg bg-secondary/20 text-secondary text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/30 transition-colors">Save</button>
       </div>
       <p id="sync-folder-status" class="text-[9px] text-on-surface-variant mt-1"></p>
     </div>
@@ -1187,7 +1091,7 @@ if (typeof mapIconHtml !== 'function') {
       <select id="sync-steam-id" class="w-full bg-surface-container-highest text-on-surface text-xs p-3 rounded-lg border border-transparent focus:border-secondary/30 focus:ring-0"></select>
     </div>
     <!-- Scan button -->
-    <button id="sync-scan-btn" onclick="syncScan()" class="w-full bg-gradient-to-r from-secondary/80 to-secondary/60 py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform mb-4">
+    <button id="sync-scan-btn" data-action="syncScan" class="w-full bg-gradient-to-r from-secondary/80 to-secondary/60 py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform mb-4">
       Scan for New Demos
     </button>
     <!-- Scan results -->
@@ -1195,12 +1099,12 @@ if (typeof mapIconHtml !== 'function') {
       <div class="flex justify-between items-center mb-3">
         <p id="sync-found-text" class="text-xs text-on-surface-variant"></p>
         <div class="flex gap-2">
-          <button onclick="syncSelectAll(true)" class="text-[9px] text-secondary hover:underline">Select All</button>
-          <button onclick="syncSelectAll(false)" class="text-[9px] text-on-surface-variant hover:underline">Deselect All</button>
+          <button data-action="syncSelectAll" data-args='[true]' class="text-[9px] text-secondary hover:underline">Select All</button>
+          <button data-action="syncSelectAll" data-args='[false]' class="text-[9px] text-on-surface-variant hover:underline">Deselect All</button>
         </div>
       </div>
       <div id="sync-file-list" class="space-y-1.5 max-h-60 overflow-y-auto mb-4"></div>
-      <button id="sync-process-btn" onclick="syncProcess()" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
+      <button id="sync-process-btn" data-action="syncProcess" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform">
         Process Selected
       </button>
     </div>
@@ -1220,1569 +1124,14 @@ if (typeof mapIconHtml !== 'function') {
         Demos cost roughly 280&nbsp;MB each on disk but about 1.3&nbsp;MB once analysed.
         Retention and cleanup live in Settings.
       </p>
-      <button onclick="closeSyncModal(); openSettingsModal('storage');" class="shrink-0 px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:text-secondary transition-colors flex items-center gap-1">
+      <button data-action="closeSyncModal openSettingsModal" data-args='[[], ["storage"]]' class="shrink-0 px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:text-secondary transition-colors flex items-center gap-1">
         <span class="material-symbols-outlined text-[13px]">hard_drive</span> Storage
       </button>
     </div>
 
   </div>
 </div>
-<script>
-const API = window.location.origin + '/api';
-
-// --- Utility ---
-function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-
-// --- Account Management ---
-async function loadAccounts() {
-  try {
-    const res = await fetch(API + '/accounts');
-    const accounts = await res.json();
-    const sel = document.getElementById('upload-steam-id');
-    sel.innerHTML = '';
-    accounts.forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.steam_id;
-      opt.textContent = a.name;
-      sel.appendChild(opt);
-    });
-    renderAccountsList(accounts);
-  } catch (err) { console.error('Failed to load accounts:', err); }
-}
-
-// --- Settings Modal ---
-let _aiConfig = null;
-let _aiProviders = null;
-let _selectedProvider = null;
-
-function openSettingsModal(tab) {
-  document.getElementById('settings-modal').classList.remove('hidden');
-  document.getElementById('settings-modal').classList.add('flex');
-  switchSettingsTab(tab || 'accounts');
-  loadAccounts();
-  loadAIConfig();
-}
-function closeSettingsModal() {
-  document.getElementById('settings-modal').classList.add('hidden');
-  document.getElementById('settings-modal').classList.remove('flex');
-}
-document.getElementById('settings-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettingsModal(); });
-
-function switchSettingsTab(tab) {
-  const tabs = ['accounts', 'friends', 'ai', 'steam', 'storage', 'reanalyze', 'reset'];
-  tabs.forEach(t => {
-    const btn = document.getElementById('settings-tab-' + t);
-    const panel = document.getElementById('settings-' + t + '-panel');
-    if (!btn || !panel) return;
-    if (t === tab) {
-      btn.className = btn.className.replace('bg-surface-container-highest text-on-surface-variant hover:bg-white/10', '').replace('bg-primary text-on-primary-fixed', '') + ' bg-primary text-on-primary-fixed';
-      panel.classList.remove('hidden');
-    } else {
-      btn.className = btn.className.replace('bg-primary text-on-primary-fixed', '').replace('bg-surface-container-highest text-on-surface-variant hover:bg-white/10', '') + ' bg-surface-container-highest text-on-surface-variant hover:bg-white/10';
-      panel.classList.add('hidden');
-    }
-  });
-  if (tab === 'friends') loadFriends();
-  if (tab === 'steam') loadSteamStatus();
-  if (tab === 'reanalyze') loadReanalyzeList();
-}
-
-// Re-analyze panel lives in reanalyze.js, shared with the other pages that
-// host this modal.
-
-function renderAccountsList(accounts) {
-  const list = document.getElementById('accounts-list');
-  if (!list) return;
-  if (!accounts.length) { list.innerHTML = '<p class="text-on-surface-variant text-xs">No accounts configured.</p>'; return; }
-  list.innerHTML = accounts.map(a => `
-    <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest border border-transparent group">
-      <div class="flex-1 min-w-0">
-        <div class="font-bold text-sm text-on-surface">${esc(a.name)}</div>
-        <div class="text-[10px] text-on-surface-variant">${esc(a.display_name || '')} &middot; ${esc(a.rank || 'Unranked')}</div>
-        <div class="text-[9px] text-on-surface-variant/50 font-mono">${esc(a.steam_id)}</div>
-      </div>
-      <div class="flex gap-1">
-        <button onclick="removeAccount('${esc(a.steam_id)}')" class="text-[10px] px-2 py-1 rounded bg-error/20 text-error hover:bg-error/30 transition-colors" title="Remove">Remove</button>
-      </div>
-    </div>`).join('');
-}
-
-async function addAccount() {
-  const name = document.getElementById('new-acct-name').value.trim();
-  const steamId = document.getElementById('new-acct-steamid').value.trim();
-  const displayName = document.getElementById('new-acct-display').value.trim();
-  const rank = document.getElementById('new-acct-rank').value.trim();
-  if (!name || !steamId) return;
-  const statusEl = document.getElementById('acct-status');
-  try {
-    const res = await fetch(API + '/accounts', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ name, steam_id: steamId, display_name: displayName, rank })
-    });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
-    statusEl.textContent = 'Account added!'; statusEl.className = 'text-xs text-secondary mt-2';
-    document.getElementById('new-acct-name').value = '';
-    document.getElementById('new-acct-steamid').value = '';
-    document.getElementById('new-acct-display').value = '';
-    document.getElementById('new-acct-rank').value = '';
-    loadAccounts();
-  } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-error mt-2'; }
-}
-
-async function removeAccount(steamId) {
-  if (!confirm('Remove this account?')) return;
-  await fetch(API + '/accounts/' + steamId, { method: 'DELETE' });
-  loadAccounts();
-}
-
-// --- Friends Management ---
-async function loadFriends() {
-  try {
-    const res = await fetch(API + '/friends');
-    const friends = await res.json();
-    renderFriendsList(friends);
-  } catch (err) { console.error('Failed to load friends:', err); }
-}
-
-function renderFriendsList(friends) {
-  const list = document.getElementById('friends-list');
-  if (!list) return;
-  if (!friends.length) { list.innerHTML = '<p class="text-on-surface-variant text-xs">No friends added yet.</p>'; return; }
-  list.innerHTML = friends.map(f => `
-    <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest border border-transparent group">
-      <div class="flex-1 min-w-0">
-        <div class="font-bold text-sm text-accent">${esc(f.name || 'Unnamed')}</div>
-        <div class="text-[9px] text-on-surface-variant/50 font-mono">${esc(f.steam_id)}</div>
-      </div>
-      <div class="flex gap-1">
-        <button onclick="removeFriend('${esc(f.steam_id)}')" class="text-[10px] px-2 py-1 rounded bg-error/20 text-error hover:bg-error/30 transition-colors" title="Remove">Remove</button>
-      </div>
-    </div>`).join('');
-}
-
-async function addFriend() {
-  const steamId = document.getElementById('new-friend-steamid').value.trim();
-  const name = document.getElementById('new-friend-name').value.trim();
-  if (!steamId) return;
-  const statusEl = document.getElementById('friend-status');
-  try {
-    const res = await fetch(API + '/friends', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ steam_id: steamId, name })
-    });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
-    statusEl.textContent = 'Friend added!'; statusEl.className = 'text-xs text-accent mt-2';
-    document.getElementById('new-friend-steamid').value = '';
-    document.getElementById('new-friend-name').value = '';
-    loadFriends();
-  } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-error mt-2'; }
-}
-
-async function removeFriend(steamId) {
-  if (!confirm('Remove this friend?')) return;
-  await fetch(API + '/friends/' + steamId, { method: 'DELETE' });
-  loadFriends();
-}
-
-// --- AI Config ---
-async function loadAIConfig() {
-  try {
-    const [configRes, providersRes] = await Promise.all([
-      fetch(API + '/ai/config'),
-      fetch(API + '/ai/providers')
-    ]);
-    _aiConfig = await configRes.json();
-    _aiProviders = await providersRes.json();
-    _selectedProvider = _aiConfig.active_provider || Object.keys(_aiProviders)[0];
-    renderAISettings();
-    renderAISelector();
-  } catch (err) { console.error('Failed to load AI config:', err); }
-}
-
-// /api/ai/providers returns {key: {label, models, default_model}} and
-// /api/ai/config masks keys as api_key_set / api_key_masked. This read the
-// provider entry as a bare array of model names and the config as if it still
-// carried the raw key: the model dropdown threw on .map of an object, which
-// aborted the rest of the function, so the model list and the system
-// instructions never rendered and a configured key always read "No key set".
-function renderAISettings() {
-  if (!_aiProviders || !_aiConfig) return;
-  const tabsEl = document.getElementById('ai-provider-tabs');
-  tabsEl.innerHTML = Object.entries(_aiProviders).map(([key, p]) => {
-    const isActive = key === _selectedProvider;
-    const hasKey = _aiConfig.providers?.[key]?.api_key_set;
-    return `<button onclick="selectAIProvider('${key}')" class="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${isActive ? 'bg-primary text-on-primary-fixed' : 'bg-surface-container-highest text-on-surface-variant hover:bg-white/10'}">${esc(p.label || key)}${hasKey ? ' ✓' : ''}</button>`;
-  }).join('');
-
-  const prov = _aiConfig.providers?.[_selectedProvider] || {};
-  const status = document.getElementById('ai-key-status');
-  // The key never comes back from the server, so the input starts empty and a
-  // blank save leaves the stored key alone.
-  document.getElementById('ai-key-input').value = '';
-  if (prov.api_key_set) {
-    status.textContent = 'Key set: ' + (prov.api_key_masked || '••••');
-    status.className = 'text-[9px] text-secondary mt-1';
-  } else {
-    status.textContent = 'No key configured';
-    status.className = 'text-[9px] text-on-surface-variant mt-1';
-  }
-
-  const modelSel = document.getElementById('ai-settings-model');
-  const models = _aiProviders[_selectedProvider]?.models || [];
-  const active = _aiConfig.active_model || prov.default_model
-    || _aiProviders[_selectedProvider]?.default_model || models[0];
-  modelSel.innerHTML = models.map(m =>
-    `<option value="${esc(m)}" ${m === active ? 'selected' : ''}>${esc(m)}</option>`
-  ).join('');
-  document.getElementById('ai-system-instructions').value = _aiConfig.system_instructions || '';
-}
-
-// The provider/model pickers beside each AI Analyze button, listing only
-// providers that actually have a key — picking one without a key would just
-// buy a 400 from the endpoint. The map card and the career card each carry
-// their own pair; only one of the two is on screen at a time.
-const AI_SELECTORS = [
-  { prov: 'ai-provider-select', model: 'ai-model-select' },
-  { prov: 'ai-overall-provider-select', model: 'ai-overall-model-select' },
-];
-
-function renderAISelector() {
-  for (const sel of AI_SELECTORS) renderAISelectorPair(sel.prov, sel.model);
-}
-
-function renderAISelectorPair(provId, modelId) {
-  const provSel = document.getElementById(provId);
-  const modelSel = document.getElementById(modelId);
-  if (!provSel || !modelSel || !_aiProviders || !_aiConfig) return;
-
-  const usable = Object.entries(_aiProviders)
-    .filter(([key]) => _aiConfig.providers?.[key]?.api_key_set);
-  if (!usable.length) {
-    provSel.innerHTML = '<option value="">No API keys</option>';
-    modelSel.innerHTML = '<option value="">—</option>';
-    return;
-  }
-  provSel.innerHTML = usable.map(([key, p]) =>
-    `<option value="${esc(key)}" ${key === _aiConfig.active_provider ? 'selected' : ''}>${esc(p.label || key)}</option>`
-  ).join('');
-  renderAIModelOptions(provId, modelId);
-}
-
-function renderAIModelOptions(provId, modelId) {
-  const provSel = document.getElementById(provId || 'ai-provider-select');
-  const modelSel = document.getElementById(modelId || 'ai-model-select');
-  if (!provSel || !modelSel || !_aiProviders) return;
-  const prov = provSel.value;
-  const models = _aiProviders[prov]?.models || [];
-  const active = (prov === _aiConfig?.active_provider && _aiConfig?.active_model)
-    || _aiConfig?.providers?.[prov]?.default_model
-    || _aiProviders[prov]?.default_model
-    || models[0];
-  modelSel.innerHTML = models.map(m =>
-    `<option value="${esc(m)}" ${m === active ? 'selected' : ''}>${esc(m)}</option>`
-  ).join('');
-}
-
-function openAISettings() { openSettingsModal('ai'); }
-
-function selectAIProvider(provider) {
-  _selectedProvider = provider;
-  renderAISettings();
-}
-
-async function saveAISettings() {
-  const statusEl = document.getElementById('ai-settings-status');
-  try {
-    const model = document.getElementById('ai-settings-model').value;
-    const key = document.getElementById('ai-key-input').value.trim();
-    // Send only what this panel edits. Echoing the whole config back would
-    // return the masked provider entries the GET handed out, and the PUT
-    // replies {status: ok} rather than the config — reading that back into
-    // _aiConfig left the panel unable to render until a page reload.
-    const body = {
-      active_provider: _selectedProvider,
-      active_model: model,
-      system_instructions: document.getElementById('ai-system-instructions').value,
-      providers: { [_selectedProvider]: { default_model: model } },
-    };
-    if (key) body.providers[_selectedProvider].api_key = key;
-
-    const res = await fetch(API + '/ai/config', {
-      method: 'PUT', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error('Failed to save');
-    await loadAIConfig();
-    statusEl.textContent = 'Saved!'; statusEl.className = 'text-xs text-center mt-3 text-secondary';
-    statusEl.classList.remove('hidden');
-    setTimeout(() => statusEl.classList.add('hidden'), 2000);
-  } catch (err) { statusEl.textContent = err.message; statusEl.className = 'text-xs text-center mt-3 text-error'; statusEl.classList.remove('hidden'); }
-}
-
-// --- Upload Modal (single + bulk in one) ---
-function openUploadModal(mode) {
-  document.getElementById('upload-modal').classList.remove('hidden');
-  document.getElementById('upload-modal').classList.add('flex');
-  switchUploadMode(mode || 'single');
-}
-function closeUploadModal() { document.getElementById('upload-modal').classList.add('hidden'); document.getElementById('upload-modal').classList.remove('flex'); }
-document.getElementById('upload-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeUploadModal(); });
-
-const UPLOAD_MODE_ON = 'bg-primary text-on-primary-fixed';
-const UPLOAD_MODE_OFF = 'bg-surface-container-highest text-on-surface-variant hover:bg-white/10';
-
-function switchUploadMode(mode) {
-  const bulk = mode === 'bulk';
-  document.getElementById('upload-pane-single').classList.toggle('hidden', bulk);
-  document.getElementById('upload-pane-bulk').classList.toggle('hidden', !bulk);
-  ['single', 'bulk'].forEach(m => {
-    const btn = document.getElementById('upload-mode-' + m);
-    const base = 'px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ';
-    btn.className = base + (m === mode ? UPLOAD_MODE_ON : UPLOAD_MODE_OFF);
-  });
-  // The bulk pane keeps state between openings (queued files, progress), so
-  // reset it as it comes into view rather than on modal open.
-  if (bulk) resetBulkUpload();
-}
-
-// Kept as its own function: the bulk pane is reset both when switching into it
-// and by the "Bulk Upload" entry points elsewhere in the app.
-function resetBulkUpload() {
-  populateBulkAccountSelector();
-  document.getElementById('bulk-dem-files').value = '';
-  document.getElementById('bulk-info-files').value = '';
-  document.getElementById('bulk-file-preview').classList.add('hidden');
-  document.getElementById('bulk-progress').classList.add('hidden');
-  document.getElementById('bulk-upload-btn').disabled = false;
-  document.getElementById('bulk-upload-btn').textContent = 'Process All Demos';
-}
-
-// --- Auto-detect player from .info file ---
-document.getElementById('upload-info-file').addEventListener('change', async function() {
-  const detectStatus = document.getElementById('player-detect-status');
-  const sel = document.getElementById('upload-steam-id');
-  const dateInput = document.getElementById('upload-date');
-  detectStatus.classList.add('hidden');
-  if (!this.files.length) return;
-  const fd = new FormData();
-  fd.append('info_file', this.files[0]);
-  try {
-    const res = await fetch(API + '/matches/detect-player', { method: 'POST', body: fd });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Detection failed'); }
-    const data = await res.json();
-    if (data.match_date && !dateInput.value) dateInput.value = data.match_date;
-    if (data.matched && data.matched.length > 0) {
-      const matchedId = data.matched[0].steam_id;
-      if (sel.querySelector('option[value="' + matchedId + '"]')) {
-        sel.value = matchedId;
-      }
-      const names = data.matched.map(a => a.name).join(', ');
-      detectStatus.textContent = 'Detected player: ' + names;
-      detectStatus.className = 'text-xs mt-1 text-secondary';
-      detectStatus.classList.remove('hidden');
-    } else {
-      detectStatus.innerHTML = 'No configured account found in this match. <button type="button" onclick="openSettingsModal(\'accounts\')" class="underline text-primary hover:text-primary-dim">Add account</button>';
-      detectStatus.className = 'text-xs mt-1 text-error';
-      detectStatus.classList.remove('hidden');
-    }
-  } catch (err) {
-    detectStatus.textContent = err.message;
-    detectStatus.className = 'text-xs mt-1 text-error';
-    detectStatus.classList.remove('hidden');
-  }
-});
-
-document.getElementById('upload-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const btn = document.getElementById('upload-btn');
-  const status = document.getElementById('upload-status');
-  const fileInput = document.getElementById('upload-file');
-  if (!fileInput.files.length) return;
-  btn.disabled = true; btn.textContent = 'PROCESSING...';
-  status.classList.remove('hidden','text-error','text-secondary'); status.classList.add('text-on-surface-variant'); status.textContent = 'Uploading and parsing demo...';
-  const fd = new FormData();
-  fd.append('file', fileInput.files[0]);
-  const infoInput = document.getElementById('upload-info-file');
-  if (infoInput.files.length) fd.append('info_file', infoInput.files[0]);
-  fd.append('steam_id', document.getElementById('upload-steam-id').value);
-  fd.append('context_notes', document.getElementById('upload-notes').value);
-  fd.append('tags', document.getElementById('upload-tags').value);
-  const dateVal = document.getElementById('upload-date').value;
-  if (dateVal) fd.append('match_date', dateVal);
-  try {
-    const res = await fetch(API + '/matches/upload', { method: 'POST', body: fd });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Upload failed'); }
-    status.classList.remove('text-on-surface-variant'); status.classList.add('text-secondary'); status.textContent = 'Demo processed! Refreshing...';
-    setTimeout(() => { closeUploadModal(); _overallTrends = null; _overallPerf = null; loadPerformance(); }, 800);
-  } catch (err) {
-    status.classList.remove('text-on-surface-variant'); status.classList.add('text-error'); status.textContent = err.message;
-  } finally { btn.disabled = false; btn.textContent = 'Process Demo'; }
-});
-
-// --- Bulk upload — now the "bulk" mode of the upload modal above.
-// These two survive as aliases so existing call sites keep working.
-function openBulkUploadModal() { openUploadModal('bulk'); }
-function closeBulkUploadModal() { closeUploadModal(); }
-
-async function populateBulkAccountSelector() {
-  const sel = document.getElementById('bulk-steam-id');
-  try {
-    const res = await fetch(API + '/accounts');
-    const data = await res.json();
-    sel.innerHTML = '';
-    const accounts = Array.isArray(data) ? data : (data.accounts || []);
-    accounts.forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.steam_id; opt.textContent = a.name + ' (' + a.steam_id + ')';
-      if (a.active) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  } catch(e) { sel.innerHTML = '<option value="">No accounts</option>'; }
-}
-
-document.getElementById('bulk-dem-files').addEventListener('change', function() {
-  const preview = document.getElementById('bulk-file-preview');
-  const list = document.getElementById('bulk-file-list');
-  if (!this.files.length) { preview.classList.add('hidden'); return; }
-  preview.classList.remove('hidden');
-  list.innerHTML = '';
-  for (const f of this.files) {
-    const row = document.createElement('div');
-    row.className = 'text-xs text-on-surface-variant flex items-center gap-2';
-    row.innerHTML = '<span class="material-symbols-outlined text-[14px]">description</span>' + f.name + ' <span class="text-on-surface-variant/50">(' + (f.size / 1024 / 1024).toFixed(1) + ' MB)</span>';
-    list.appendChild(row);
-  }
-});
-
-async function startBulkUpload() {
-  const demInput = document.getElementById('bulk-dem-files');
-  const infoInput = document.getElementById('bulk-info-files');
-  if (!demInput.files.length) return;
-
-  const btn = document.getElementById('bulk-upload-btn');
-  const progressSection = document.getElementById('bulk-progress');
-  const progressText = document.getElementById('bulk-progress-text');
-  const progressCount = document.getElementById('bulk-progress-count');
-  const progressBar = document.getElementById('bulk-progress-bar');
-  const resultsDiv = document.getElementById('bulk-results');
-
-  btn.disabled = true; btn.textContent = 'PROCESSING...';
-  progressSection.classList.remove('hidden');
-  resultsDiv.innerHTML = '';
-  progressBar.style.width = '0%';
-  const total = demInput.files.length;
-  progressCount.textContent = '0 / ' + total;
-  progressText.textContent = 'Uploading ' + total + ' demo' + (total > 1 ? 's' : '') + '...';
-
-  const fd = new FormData();
-  for (const f of demInput.files) fd.append('files', f);
-  for (const f of infoInput.files) fd.append('info_files', f);
-  fd.append('steam_id', document.getElementById('bulk-steam-id').value);
-
-  try {
-    const res = await fetch(API + '/matches/upload-bulk', { method: 'POST', body: fd });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Bulk upload failed'); }
-    const data = await res.json();
-    progressBar.style.width = '100%';
-    progressCount.textContent = data.processed + ' / ' + data.total;
-    progressText.textContent = data.processed === data.total ? 'All demos processed!' : data.processed + ' of ' + data.total + ' succeeded';
-    progressText.className = 'text-[10px] font-bold uppercase tracking-widest ' + (data.processed === data.total ? 'text-secondary' : 'text-warning');
-
-    data.results.forEach(r => {
-      const row = document.createElement('div');
-      const ok = r.status === 'ok';
-      row.className = 'flex items-center gap-2 text-xs p-2 rounded-lg ' + (ok ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error');
-      const icon = ok ? 'check_circle' : 'error';
-      const detail = ok ? (r.map_name || '') + (r.player_name ? ' — ' + r.player_name : '') : (r.error || 'Failed');
-      row.innerHTML = '<span class="material-symbols-outlined text-[16px]">' + icon + '</span><span class="font-medium truncate flex-1">' + r.filename + '</span><span class="text-on-surface-variant/70 text-[10px]">' + detail + '</span>';
-      resultsDiv.appendChild(row);
-    });
-
-    if (data.processed > 0) setTimeout(() => { _overallTrends = null; _overallPerf = null; loadPerformance(); }, 500);
-  } catch(err) {
-    progressText.textContent = err.message;
-    progressText.className = 'text-[10px] font-bold uppercase tracking-widest text-error';
-  } finally {
-    btn.disabled = false; btn.textContent = 'Process All Demos';
-  }
-}
-
-// --- Sync Folder ---
-let _syncDemos = [];
-
-function openSyncModal() {
-  const m = document.getElementById('sync-modal');
-  m.classList.remove('hidden'); m.classList.add('flex');
-  document.getElementById('sync-results').classList.add('hidden');
-  document.getElementById('sync-progress').classList.add('hidden');
-  document.getElementById('sync-scan-btn').disabled = false;
-  document.getElementById('sync-scan-btn').textContent = 'Scan for New Demos';
-  _syncDemos = [];
-  loadSyncConfig();
-  populateSyncAccountSelector();
-}
-function closeSyncModal() { const m = document.getElementById('sync-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
-document.getElementById('sync-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSyncModal(); });
-
-async function loadSyncConfig() {
-  try {
-    const res = await fetch(API + '/sync/config');
-    const cfg = await res.json();
-    document.getElementById('sync-folder-input').value = cfg.folder || '';
-    document.getElementById('sync-folder-status').textContent = cfg.folder ? 'Folder configured' : '';
-  } catch(e) {}
-}
-
-async function saveSyncFolder() {
-  const folder = document.getElementById('sync-folder-input').value.trim();
-  const st = document.getElementById('sync-folder-status');
-  if (!folder) { st.textContent = 'Enter a folder path'; st.className = 'text-[9px] text-error mt-1'; return; }
-  try {
-    const res = await fetch(API + '/sync/config', {
-      method: 'PUT', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ folder })
-    });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
-    st.textContent = 'Folder saved!'; st.className = 'text-[9px] text-secondary mt-1';
-  } catch(err) { st.textContent = err.message; st.className = 'text-[9px] text-error mt-1'; }
-}
-
-async function populateSyncAccountSelector() {
-  const sel = document.getElementById('sync-steam-id');
-  try {
-    const res = await fetch(API + '/accounts');
-    const data = await res.json();
-    sel.innerHTML = '';
-    const accounts = Array.isArray(data) ? data : (data.accounts || []);
-    accounts.forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.steam_id; opt.textContent = a.name + ' (' + a.steam_id + ')';
-      if (a.active) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  } catch(e) { sel.innerHTML = '<option value="">No accounts</option>'; }
-}
-
-async function syncScan() {
-  const btn = document.getElementById('sync-scan-btn');
-  btn.disabled = true; btn.textContent = 'SCANNING...';
-  document.getElementById('sync-results').classList.add('hidden');
-  document.getElementById('sync-progress').classList.add('hidden');
-  try {
-    const sid = document.getElementById('sync-steam-id').value;
-    const res = await fetch(API + '/sync/scan' + (sid ? '?steam_id=' + encodeURIComponent(sid) : ''));
-    if (!res.ok) { const err = await res.json(); throw new Error(err.detail); }
-    const data = await res.json();
-    _syncDemos = data.new;
-    const resultsDiv = document.getElementById('sync-results');
-    const foundText = document.getElementById('sync-found-text');
-    const fileList = document.getElementById('sync-file-list');
-
-    if (!_syncDemos.length) {
-      foundText.textContent = 'No new demos found (' + data.total_found + ' total in folder, all already imported).';
-      fileList.innerHTML = '';
-      resultsDiv.classList.remove('hidden');
-      document.getElementById('sync-process-btn').classList.add('hidden');
-      return;
-    }
-
-    foundText.textContent = _syncDemos.length + ' new demo' + (_syncDemos.length > 1 ? 's' : '') + ' found (' + data.total_found + ' total in folder)';
-    document.getElementById('sync-process-btn').classList.remove('hidden');
-    fileList.innerHTML = _syncDemos.map((d, i) => `
-      <label class="flex items-start gap-3 p-2.5 rounded-lg bg-surface-container-highest hover:bg-white/5 cursor-pointer transition-colors">
-        <input type="checkbox" class="sync-file-cb accent-secondary mt-1" data-idx="${i}" checked />
-        <span class="material-symbols-outlined text-[14px] text-secondary mt-0.5">${d.has_info ? 'verified' : 'description'}</span>
-        <div class="flex-1 min-w-0">
-          <span class="text-xs text-on-surface font-medium block truncate">${esc(d.filename)}</span>
-          <div class="flex gap-3 mt-0.5">
-            ${d.match_date ? `<span class="text-[10px] text-on-surface-variant">${esc(d.match_date)}</span>` : ''}
-            ${d.map_name ? `<span class="text-[10px] text-primary font-semibold">${esc(d.map_name)}</span>` : ''}
-          </div>
-        </div>
-        <span class="text-[10px] text-on-surface-variant/50 mt-0.5 shrink-0">${d.size_mb} MB</span>
-      </label>`).join('');
-    resultsDiv.classList.remove('hidden');
-  } catch(err) {
-    document.getElementById('sync-found-text').textContent = err.message;
-    document.getElementById('sync-found-text').className = 'text-xs text-error';
-    document.getElementById('sync-results').classList.remove('hidden');
-    document.getElementById('sync-file-list').innerHTML = '';
-    document.getElementById('sync-process-btn').classList.add('hidden');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Scan for New Demos';
-  }
-}
-
-function syncSelectAll(checked) {
-  document.querySelectorAll('.sync-file-cb').forEach(cb => cb.checked = checked);
-}
-
-async function syncProcess() {
-  const selected = [];
-  document.querySelectorAll('.sync-file-cb:checked').forEach(cb => {
-    const idx = parseInt(cb.dataset.idx);
-    if (_syncDemos[idx]) selected.push(_syncDemos[idx].filename);
-  });
-  if (!selected.length) return;
-
-  const btn = document.getElementById('sync-process-btn');
-  const progressSection = document.getElementById('sync-progress');
-  const progressText = document.getElementById('sync-progress-text');
-  const progressCount = document.getElementById('sync-progress-count');
-  const progressBar = document.getElementById('sync-progress-bar');
-  const resultsDiv = document.getElementById('sync-process-results');
-
-  btn.disabled = true; btn.textContent = 'PROCESSING...';
-  progressSection.classList.remove('hidden');
-  resultsDiv.innerHTML = '';
-  progressBar.style.width = '0%';
-  progressCount.textContent = '0 / ' + selected.length;
-  progressText.textContent = 'Processing ' + selected.length + ' demo' + (selected.length > 1 ? 's' : '') + '...';
-
-  try {
-    const res = await fetch(API + '/sync/process', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ filenames: selected, steam_id: document.getElementById('sync-steam-id').value })
-    });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Sync failed'); }
-    const data = await res.json();
-    progressBar.style.width = '100%';
-    progressCount.textContent = data.processed + ' / ' + data.total;
-    progressText.textContent = data.processed === data.total ? 'All demos processed!' : data.processed + ' of ' + data.total + ' succeeded';
-    progressText.className = 'text-[10px] font-bold uppercase tracking-widest ' + (data.processed === data.total ? 'text-secondary' : 'text-warning');
-
-    data.results.forEach(r => {
-      const row = document.createElement('div');
-      const ok = r.status === 'ok';
-      row.className = 'flex items-center gap-2 text-xs p-2 rounded-lg ' + (ok ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error');
-      const icon = ok ? 'check_circle' : 'error';
-      const detail = ok ? (r.map_name || '') + (r.player_name ? ' — ' + r.player_name : '') : (r.detail || 'Failed');
-      row.innerHTML = '<span class="material-symbols-outlined text-[16px]">' + icon + '</span><span class="font-medium truncate flex-1">' + esc(r.filename) + '</span><span class="text-on-surface-variant/70 text-[10px]">' + detail + '</span>';
-      resultsDiv.appendChild(row);
-    });
-
-    if (data.processed > 0) setTimeout(() => { _overallTrends = null; _overallPerf = null; loadPerformance(); }, 500);
-  } catch(err) {
-    progressText.textContent = err.message;
-    progressText.className = 'text-[10px] font-bold uppercase tracking-widest text-error';
-  } finally {
-    btn.disabled = false; btn.textContent = 'Process Selected';
-  }
-}
-
-// --- Map filter state ---
-let activeMap = null;
-let _overallTrends = null;
-let _overallPerf = null;
-
-// --- Player filter state ---
-let _selectedPlayerIds = new Set(); // empty = show all
-
-// --- Trend chart state ---
-// The metric list and view state moved to charts.js with the chart that
-// reads them. This one is the page's own loaded data.
-let _trendDataPoints = [];
-
-// --- Build API query string helper ---
-function _buildParams(mapFilter) {
-  const p = new URLSearchParams();
-  if (mapFilter) p.set('maps', mapFilter);
-  if (_selectedPlayerIds.size > 0) p.set('steam_ids', [..._selectedPlayerIds].join(','));
-  const s = p.toString();
-  return s ? '?' + s : '';
-}
-
-// --- Player filter ---
-function togglePlayerFilter(steamId) {
-  if (steamId === null) {
-    _selectedPlayerIds.clear();
-  } else {
-    if (_selectedPlayerIds.has(steamId)) _selectedPlayerIds.delete(steamId);
-    else _selectedPlayerIds.add(steamId);
-  }
-  _renderPlayerFilterBar();
-  _overallTrends = null; _overallPerf = null;
-  loadPerformance(activeMap);
-}
-
-function _renderPlayerFilterBar() {
-  const allBtn = document.getElementById('pf-all');
-  const allActive = _selectedPlayerIds.size === 0;
-  allBtn.className = allActive
-    ? 'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all'
-    : 'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all';
-  document.querySelectorAll('.pf-chip').forEach(chip => {
-    const isActive = _selectedPlayerIds.has(chip.dataset.sid);
-    chip.className = (isActive
-      ? 'pf-chip px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-secondary/20 text-secondary border border-secondary/30 cursor-pointer transition-all'
-      : 'pf-chip px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-secondary/30 hover:text-secondary cursor-pointer transition-all');
-  });
-}
-
-async function loadPlayerFilter() {
-  try {
-    const res = await fetch(API + '/accounts');
-    const data = await res.json();
-    const accounts = Array.isArray(data) ? data : (data.accounts || []);
-    if (accounts.length < 2) return;
-    const bar = document.getElementById('player-filter-bar');
-    const chips = document.getElementById('pf-chips');
-    chips.innerHTML = accounts.map(a =>
-      `<button class="pf-chip px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-secondary/30 hover:text-secondary cursor-pointer transition-all" data-sid="${esc(a.steam_id)}" onclick="togglePlayerFilter('${esc(a.steam_id)}')">${esc(a.name)}</button>`
-    ).join('');
-    bar.classList.remove('hidden');
-  } catch(e) {}
-}
-
-// --- Trend chart ---
-function toggleTrendMetric(key) {
-  if (_trendMetrics.has(key) && _trendMetrics.size > 1) _trendMetrics.delete(key);
-  else _trendMetrics.add(key);
-  _renderTrendMetricToggles();
-  drawTrendChart(_trendDataPoints);
-}
-
-function setTrendTimescale(scale) {
-  _trendTimescale = scale;
-  _renderTrendTimescaleButtons();
-  drawTrendChart(_trendDataPoints);
-}
-
-function _renderTrendMetricToggles() {
-  TREND_METRICS.forEach(m => {
-    const btn = document.getElementById('tm-' + m.key);
-    if (!btn) return;
-    if (_trendMetrics.has(m.key)) {
-      const c = m.color();
-      btn.style.borderColor = c;
-      btn.style.color = c;
-      btn.style.background = c + '22';
-      btn.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all';
-    } else {
-      btn.style.borderColor = ''; btn.style.color = ''; btn.style.background = '';
-      btn.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-on-surface-variant hover:border-white/30 transition-all';
-    }
-  });
-}
-
-function _renderTrendTimescaleButtons() {
-  const scales = ['all', 5, 10, 20];
-  scales.forEach(s => {
-    const btn = document.getElementById('ts-' + s);
-    if (!btn) return;
-    btn.className = _trendTimescale === s
-      ? 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 transition-all'
-      : 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border border-white/10 hover:border-primary/30 hover:text-primary transition-all';
-  });
-}
-
-
-
-const ACTIVE_DUTY_MAPS = [
-  { id: 'de_dust2',   name: 'Dust II',   icon: 'wb_sunny' },
-  { id: 'de_inferno', name: 'Inferno',   icon: 'local_fire_department' },
-  { id: 'de_mirage',  name: 'Mirage',    icon: 'landscape' },
-  { id: 'de_ancient', name: 'Ancient',   icon: 'temple_hindu' },
-  { id: 'de_anubis',  name: 'Anubis',    icon: 'pyramid' },
-  { id: 'de_overpass',name: 'Overpass',  icon: 'bridge' },
-  { id: 'de_nuke',    name: 'Nuke',      icon: 'nuclear' },
-  { id: 'de_cache',   name: 'Cache',     icon: 'database' },
-];
-
-function renderMapGrid(availableMaps) {
-  const grid = document.getElementById('map-grid');
-  grid.innerHTML = '';
-  const clearBtn = document.getElementById('map-clear-btn');
-  clearBtn.classList.toggle('hidden', !activeMap);
-
-  for (const m of ACTIVE_DUTY_MAPS) {
-    const hasData = availableMaps.includes(m.id);
-    const isActive = activeMap === m.id;
-    const card = document.createElement('button');
-    card.className = isActive
-      ? 'relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(204,151,255,0.2)] transition-all duration-300 group'
-      : hasData
-        ? 'relative flex flex-col items-center justify-center p-4 rounded-xl border border-white/10 bg-surface-container-highest hover:border-secondary/40 hover:bg-surface-container-high transition-all duration-300 cursor-pointer group'
-        : 'relative flex flex-col items-center justify-center p-4 rounded-xl border border-white/5 bg-surface-container-highest/50 opacity-40 cursor-not-allowed group';
-    // Maps with no data are dimmed by the card class already; desaturating the
-    // icon as well stops a bright badge from pulling the eye to a dead card.
-    card.innerHTML = `
-      <img src="${mapIconUrl(m.id)}" alt="" loading="lazy"
-           class="w-14 h-14 object-contain mb-2 ${hasData ? '' : 'grayscale'}"
-           onerror="this.remove()"/>
-      <span class="font-headline text-xs font-bold uppercase tracking-widest ${isActive ? 'text-primary' : 'text-on-surface'}">${esc(m.name)}</span>
-      <span class="text-[9px] text-on-surface-variant/60 uppercase mt-0.5">${esc(m.id)}</span>
-      ${hasData && !isActive ? '<span class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-secondary"></span>' : ''}
-      ${isActive ? '<span class="absolute top-2 right-2 material-symbols-outlined text-primary text-sm">check_circle</span>' : ''}
-    `;
-    if (hasData) {
-      card.addEventListener('click', () => {
-        if (isActive) { clearMapSelection(); }
-        else { activeMap = m.id; loadPerformance(m.id); }
-      });
-    }
-    grid.appendChild(card);
-  }
-}
-
-function clearMapSelection() {
-  activeMap = null;
-  loadPerformance();
-}
-
-// --- Distribution strip chart ---
-
-
-// --- Render performance panel (shared logic for overall & map-specific) ---
-function _renderPerfPanel(prefix, trends, perf) {
-  const el = id => document.getElementById(id);
-  const pts = trends.data_points || [];
-  const n = pts.length;
-  if (!n) return;
-
-  // Rating
-  const ratings = pts.map(d => d.hltv_rating || 0);
-  const avgRating = trends.averages?.avg_rating || 0;
-  el(prefix + '-rating').textContent = avgRating.toFixed(2);
-  el(prefix + '-rating-range').textContent = Math.min(...ratings).toFixed(2) + ' — ' + Math.max(...ratings).toFixed(2);
-  drawDistStrip(prefix + '-rating-strip', ratings, avgRating, TC.purple || '#cc97ff');
-
-  // ADR
-  const adrs = pts.map(d => d.adr || 0);
-  const avgAdr = trends.averages?.avg_adr || 0;
-  el(prefix + '-adr').textContent = avgAdr.toFixed(0);
-  el(prefix + '-adr-range').textContent = Math.min(...adrs).toFixed(0) + ' — ' + Math.max(...adrs).toFixed(0);
-  drawDistStrip(prefix + '-adr-strip', adrs, avgAdr, TC.cyan || '#53ddfc');
-
-  // K/D
-  const kds = pts.map(d => (d.deaths || 1) > 0 ? (d.kills || 0) / (d.deaths || 1) : (d.kills || 0));
-  const totalK = pts.reduce((s, d) => s + (d.kills || 0), 0);
-  const totalD = pts.reduce((s, d) => s + (d.deaths || 0), 0);
-  const avgKD = totalD ? totalK / totalD : 0;
-  el(prefix + '-kd').textContent = avgKD.toFixed(2);
-  el(prefix + '-kd-range').textContent = Math.min(...kds).toFixed(2) + ' — ' + Math.max(...kds).toFixed(2);
-  drawDistStrip(prefix + '-kd-strip', kds, avgKD, TC.onText || '#dee5ff');
-
-  // KAST
-  const kasts = pts.map(d => d.kast || 0);
-  const avgKast = trends.averages?.avg_kast || 0;
-  el(prefix + '-kast').textContent = avgKast.toFixed(1) + '%';
-  el(prefix + '-kast-range').textContent = Math.min(...kasts).toFixed(0) + '% — ' + Math.max(...kasts).toFixed(0) + '%';
-  drawDistStrip(prefix + '-kast-strip', kasts, avgKast, TC.cyan || '#53ddfc');
-
-  // HS% (aggregate only, no per-match strip)
-  const hs = perf.hs_pct || 0;
-  el(prefix + '-hs').textContent = hs.toFixed(1) + '%';
-  el(prefix + '-hs-range').textContent = (perf.total_rounds || 0).toLocaleString() + ' rounds';
-  // No strip for HS — draw empty
-  const hsCanvas = document.getElementById(prefix + '-hs-strip');
-  if (hsCanvas) {
-    const ctx = hsCanvas.getContext('2d');
-    const w = hsCanvas.clientWidth; const h = hsCanvas.clientHeight;
-    hsCanvas.width = w * 2; hsCanvas.height = h * 2;
-    ctx.scale(2, 2); ctx.clearRect(0, 0, w, h);
-    // Draw single bar for HS%
-    ctx.fillStyle = TC.track || 'rgba(255,255,255,0.04)';
-    ctx.beginPath(); ctx.roundRect(0, h / 2 - 2, w, 4, 2); ctx.fill();
-    ctx.fillStyle = TC.pink || '#ff86c3';
-    ctx.beginPath(); ctx.roundRect(0, h / 2 - 2, w * hs / 100, 4, 2); ctx.fill();
-  }
-
-  // Win Rate
-  const wins = pts.filter(d => (d.match_result || '').toLowerCase() === 'win').length;
-  const wr = n ? (wins / n * 100) : 0;
-  el(prefix + '-winrate').textContent = wr.toFixed(0) + '%';
-  el(prefix + '-winrate-detail').textContent = wins + 'W / ' + (n - wins) + 'L';
-  const wrBar = el(prefix + '-winrate-bar');
-  if (wrBar) wrBar.style.width = wr.toFixed(1) + '%';
-
-  // AIM Rating (per-match from aim_stats.aim_rating)
-  const aimVals = pts.map(d => d.aim_rating).filter(v => v != null);
-  if (aimVals.length) {
-    const avgAim = trends.averages?.avg_aim_rating || (aimVals.reduce((s,v) => s+v, 0) / aimVals.length);
-    el(prefix + '-aim').textContent = avgAim.toFixed(1);
-    el(prefix + '-aim-range').textContent = Math.min(...aimVals).toFixed(1) + ' — ' + Math.max(...aimVals).toFixed(1);
-    drawDistStrip(prefix + '-aim-strip', aimVals, avgAim, TC.amber || '#fbbf24');
-  } else {
-    el(prefix + '-aim').textContent = '—';
-    el(prefix + '-aim-range').textContent = 'No data';
-  }
-
-  // Utility Rating (per-match from utility_data.utility_rating)
-  const utilVals = pts.map(d => d.utility_rating).filter(v => v != null);
-  if (utilVals.length) {
-    const avgUtil = trends.averages?.avg_utility_rating || (utilVals.reduce((s,v) => s+v, 0) / utilVals.length);
-    el(prefix + '-util').textContent = avgUtil.toFixed(1);
-    el(prefix + '-util-range').textContent = Math.min(...utilVals).toFixed(1) + ' — ' + Math.max(...utilVals).toFixed(1);
-    drawDistStrip(prefix + '-util-strip', utilVals, avgUtil, TC.success || '#34d399');
-  } else {
-    el(prefix + '-util').textContent = '—';
-    el(prefix + '-util-range').textContent = 'No data';
-  }
-}
-
-function renderOverallPerformance(trends, perf) {
-  const section = document.getElementById('overall-perf-section');
-  const pts = trends.data_points || [];
-  if (!pts.length) { section.classList.add('hidden'); return; }
-  section.classList.remove('hidden');
-  document.getElementById('overall-match-count').textContent = pts.length;
-  _renderPerfPanel('overall', trends, perf);
-}
-
-function renderMapPerformance(trends, perf, mapFilter) {
-  const section = document.getElementById('map-perf-section');
-  if (!mapFilter) { section.classList.add('hidden'); return; }
-  const pts = trends.data_points || [];
-  if (!pts.length) { section.classList.add('hidden'); return; }
-  section.classList.remove('hidden');
-  const mapName = mapFilter.replace('de_', '').charAt(0).toUpperCase() + mapFilter.replace('de_', '').slice(1);
-  document.getElementById('map-perf-title').textContent = mapName + ' — Performance';
-  document.getElementById('map-perf-match-count').textContent = pts.length;
-  _renderPerfPanel('map-perf', trends, perf);
-}
-
-async function loadPerformance(mapFilter) {
-  try {
-    // Overall data — player-filtered but not map-filtered
-    if (!_overallTrends || !_overallPerf) {
-      const overallParam = _buildParams(null);
-      const [oTrendsRes, oPerfRes] = await Promise.all([
-        fetch(API + '/trends' + overallParam),
-        fetch(API + '/performance' + overallParam),
-      ]);
-      _overallTrends = await oTrendsRes.json();
-      _overallPerf = await oPerfRes.json();
-    }
-    renderOverallPerformance(_overallTrends, _overallPerf);
-
-    // Fetch map-filtered data or reuse overall
-    let trends, perf;
-    if (mapFilter) {
-      const mapParam = _buildParams(mapFilter);
-      const [trendsRes, perfRes] = await Promise.all([
-        fetch(API + '/trends' + mapParam),
-        fetch(API + '/performance' + mapParam),
-      ]);
-      trends = await trendsRes.json();
-      perf = await perfRes.json();
-    } else {
-      trends = _overallTrends;
-      perf = _overallPerf;
-    }
-
-    // Main trend chart — always overall (player-filtered, never map-filtered)
-    _trendDataPoints = _overallTrends.data_points || [];
-    const trendSection = document.getElementById('trend-graph-section');
-    if (_trendDataPoints.length >= 2) {
-      trendSection.classList.remove('hidden');
-      _renderTrendMetricToggles();
-      drawTrendChart(_trendDataPoints);
-    } else {
-      trendSection.classList.add('hidden');
-    }
-
-    // Map-specific trend chart — only shown when a map is selected
-    const mapTrendSection = document.getElementById('map-trend-section');
-    const mapTrendPts = mapFilter ? (trends.data_points || []) : [];
-    if (mapFilter && mapTrendPts.length >= 2) {
-      mapTrendSection.classList.remove('hidden');
-      const mapLabel = document.getElementById('map-trend-label');
-      if (mapLabel) mapLabel.textContent = mapFilter.replace('de_', '').replace('cs_', '').replace(/^./, c => c.toUpperCase()) + ' — Trend';
-      drawTrendChart(mapTrendPts, 'map-trend-chart');
-    } else {
-      mapTrendSection.classList.add('hidden');
-    }
-
-    renderMapGrid(trends.available_maps || _overallTrends.available_maps || []);
-    renderMechanics(perf, trends);
-    renderMapPerformance(trends, perf, mapFilter);
-    renderSideStats(perf, mapFilter);
-    renderSideRoles(perf, mapFilter);
-    renderOverallAssessment(mapFilter);
-  } catch (err) { console.error('Failed to load performance:', err); }
-}
-
-function renderMechanics(perf, trends) {
-  const el = id => document.getElementById(id);
-  const hs = perf.hs_pct || 0;
-  el('stat-hs-pct').textContent = hs.toFixed(1);
-  el('hs-ring').setAttribute('stroke-dashoffset', (440 * (1 - hs / 100)).toFixed(0));
-  el('stat-open-duel').textContent = perf.opening_kill_pct ? perf.opening_kill_pct.toFixed(0) + '%' : '—';
-  el('stat-top-weapon').textContent = perf.top_weapon || '—';
-  el('stat-total-rounds').textContent = (perf.total_rounds || 0).toLocaleString();
-  el('stat-hltv-rating').textContent = (trends.averages?.avg_rating || 0).toFixed(2);
-  el('stat-total-matches').textContent = (perf.total_matches || 0).toLocaleString();
-}
-
-function renderSideStats(perf, mapFilter) {
-  const section = document.getElementById('side-stats-section');
-  if (!mapFilter) { section.classList.add('hidden'); return; }
-  section.classList.remove('hidden');
-
-  const el = id => document.getElementById(id);
-  const mapName = mapFilter.replace('de_', '').charAt(0).toUpperCase() + mapFilter.replace('de_', '').slice(1);
-  el('side-stats-title').textContent = mapName + ' — Side Effectiveness';
-
-  // CT stats
-  el('side-ct-winrate').textContent = perf.ct_win_pct + '%';
-  el('side-ct-bar').style.width = perf.ct_win_pct + '%';
-  const ct = perf.ct_role || {};
-  el('side-ct-adr').textContent = ct.adr || '—';
-  el('side-ct-survival').textContent = ct.survival_pct ? ct.survival_pct.toFixed(0) + '%' : '—';
-  el('side-ct-rounds').textContent = (ct.rounds || 0) + ' rounds';
-  el('side-ct-kd').textContent = (ct.kills || 0) + 'K / ' + (ct.deaths || 0) + 'D';
-
-  // T stats
-  el('side-t-winrate').textContent = perf.t_win_pct + '%';
-  el('side-t-bar').style.width = perf.t_win_pct + '%';
-  const t = perf.t_role || {};
-  el('side-t-adr').textContent = t.adr || '—';
-  el('side-t-survival').textContent = t.survival_pct ? t.survival_pct.toFixed(0) + '%' : '—';
-  el('side-t-rounds').textContent = (t.rounds || 0) + ' rounds';
-  el('side-t-kd').textContent = (t.kills || 0) + 'K / ' + (t.deaths || 0) + 'D';
-}
-
-function renderSideRoles(perf, mapFilter) {
-  const section = document.getElementById('side-roles-section');
-  if (!mapFilter) { section.classList.add('hidden'); return; }
-  section.classList.remove('hidden');
-
-  const el = id => document.getElementById(id);
-  const mapName = mapFilter.replace('de_', '').charAt(0).toUpperCase() + mapFilter.replace('de_', '').slice(1);
-  el('side-roles-title').textContent = mapName + ' — Roles & Patterns';
-
-  // Heuristic roles first; the AI assessment refines them if one exists.
-  _heuristicRoles = { ct: perf.ct_role || {}, t: perf.t_role || {} };
-  applyRoleData(_heuristicRoles.ct, _heuristicRoles.t, false);
-  applyPatternData(null);
-
-  fetch(API + '/performance/ai-assessment?maps=' + encodeURIComponent(mapFilter))
-    .then(r => r.ok ? r.json() : null)
-    .then(data => { if (data) applyAssessment(data); })
-    .catch(() => {});
-}
-
-let _heuristicRoles = { ct: {}, t: {} };
-
-// One assessment covers both halves, so one function applies it.
-function applyAssessment(data) {
-  if (data.ct_role && data.ct_role.name) {
-    // The model supplies name, icon and description. Opening-duel counts and
-    // the radar axes stay from the heuristic pass, which measured them — the
-    // model was never given them to return, so overwriting wiped both.
-    applyRoleData(
-      { ..._heuristicRoles.ct, ...data.ct_role },
-      { ..._heuristicRoles.t, ...(data.t_role || {}) },
-      true,
-    );
-  }
-  if (data.headline || (data.aim && data.aim.name)) {
-    applyPatternData(data);
-  }
-}
-
-function applyRoleData(ctRole, tRole, isAI) {
-  const el = id => document.getElementById(id);
-  const ct = ctRole || {};
-  el('ct-role-icon').textContent = ct.icon || 'help';
-  el('ct-role-name').textContent = ct.name || 'Unknown';
-  el('ct-role-desc').textContent = ct.description || 'No data available.';
-  el('ct-role-fk').textContent = ct.opening_kills ?? '—';
-  el('ct-role-fd').textContent = ct.opening_deaths ?? '—';
-
-  const t = tRole || {};
-  el('t-role-icon').textContent = t.icon || 'help';
-  el('t-role-name').textContent = t.name || 'Unknown';
-  el('t-role-desc').textContent = t.description || 'No data available.';
-  el('t-role-fk').textContent = t.opening_kills ?? '—';
-  el('t-role-fd').textContent = t.opening_deaths ?? '—';
-
-  // Draw radar charts
-  if (ct.axes) drawRoleRadar('ct-role-radar', ct.axes, TC.cyan || '#53ddfc');
-  if (t.axes) drawRoleRadar('t-role-radar', t.axes, TC.pink || '#ff86c3');
-
-  // Show/hide AI badge
-  const badge = document.getElementById('ai-role-badge');
-  if (badge) badge.classList.toggle('hidden', !isAI);
-}
-
-// --- Radar chart for 5-axis role assessment ---
-
-
-// --- AI Patterns ---
-// Roles answer "where does this player play"; patterns answer "how". Same map
-// filter, same persisted-then-refresh flow as the role card above.
-//
-// The career card renders the same way over the same shape, with a fourth
-// section: across maps there are no roles to name — callouts belong to the map
-// they came from — so the comparison of the maps themselves takes their place.
-const PATTERN_SECTIONS = [
-  { key: 'aim',       label: 'Aim',       accent: 'secondary' },
-  { key: 'utility',   label: 'Utility',   accent: 'tertiary' },
-  { key: 'behaviour', label: 'Behaviour', accent: 'primary' },
-];
-const OVERALL_SECTIONS = PATTERN_SECTIONS.concat(
-  [{ key: 'maps', label: 'Map Pool', accent: 'secondary' }]
-);
-
-const MAP_PATTERN_IDS = {
-  empty: 'ai-patterns-empty', cards: 'ai-patterns-cards',
-  meta: 'ai-patterns-meta', headline: 'ai-assessment-headline', badge: null,
-};
-const OVERALL_PATTERN_IDS = {
-  empty: 'ai-overall-empty', cards: 'ai-overall-cards',
-  meta: 'ai-overall-meta', headline: 'ai-overall-headline', badge: 'ai-overall-badge',
-};
-
-function applyPatternData(data, ids, sections) {
-  ids = ids || MAP_PATTERN_IDS;
-  sections = sections || PATTERN_SECTIONS;
-  const empty = document.getElementById(ids.empty);
-  const cardsEl = document.getElementById(ids.cards);
-  const headline = document.getElementById(ids.headline);
-  const badge = ids.badge ? document.getElementById(ids.badge) : null;
-  if (badge) badge.classList.toggle('hidden', !data);
-  if (!empty || !cardsEl) return;
-
-  if (!data) {
-    empty.classList.remove('hidden');
-    cardsEl.classList.add('hidden');
-    headline.classList.add('hidden');
-    document.getElementById(ids.meta).textContent = '';
-    return;
-  }
-
-  empty.classList.add('hidden');
-  cardsEl.classList.remove('hidden');
-  headline.textContent = data.headline || '';
-  headline.classList.toggle('hidden', !data.headline);
-
-  const cards = sections.map(sec => {
-    const p = data[sec.key] || {};
-    if (!p.name && !p.description) return '';
-    const bullets = (p.tendencies || []).length
-      ? '<ul class="mt-3 space-y-1">' + p.tendencies.map(t =>
-          `<li class="text-[11px] text-on-surface-variant flex gap-2"><span class="text-${sec.accent}">›</span><span>${esc(t)}</span></li>`
-        ).join('') + '</ul>'
-      : '';
-    return `
-      <div class="p-4 bg-surface-container-highest rounded-xl border border-${sec.accent}/20">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="h-9 w-9 rounded-lg bg-surface-container flex items-center justify-center border border-${sec.accent}/30">
-            <span class="material-symbols-outlined text-${sec.accent} text-lg">${esc(p.icon || 'insights')}</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <span class="text-[9px] font-bold text-${sec.accent} uppercase tracking-widest">${sec.label}</span>
-            <p class="text-sm font-bold truncate">${esc(p.name || '—')}</p>
-          </div>
-        </div>
-        <p class="text-xs text-on-surface-variant leading-relaxed">${esc(p.description || '')}</p>
-        ${bullets}
-      </div>`;
-  }).join('');
-  cardsEl.innerHTML = cards;
-
-  const meta = [];
-  if (data.matches) meta.push(data.matches + ' matches, ' + (data.rounds || 0) + ' rounds');
-  if (data.model) meta.push(data.model);
-  document.getElementById(ids.meta).textContent = meta.join(' · ');
-}
-
-// One button, one call. Roles and patterns were two endpoints and two
-// requests, which split what is really one question — where the player plays
-// and how — across two prompts that could not see each other's data.
-//
-// The same runner drives the career card: same endpoint, no map filter, and
-// the response rendered into the other set of elements.
-async function runAssessment({ btnId, btnTextId, provId, modelId, maps, onResult }) {
-  const btn = document.getElementById(btnId);
-  const btnText = document.getElementById(btnTextId);
-  btn.disabled = true;
-  btn.classList.add('opacity-60');
-  btnText.textContent = 'Analyzing...';
-  try {
-    const params = new URLSearchParams();
-    if (maps) params.set('maps', maps);
-    // Honour the selector next to the button; blank falls back to the
-    // configured default server-side.
-    const prov = document.getElementById(provId)?.value;
-    const model = document.getElementById(modelId)?.value;
-    if (prov) params.set('provider', prov);
-    if (model) params.set('model', model);
-
-    const res = await fetch(API + '/performance/ai-assessment?' + params, { method: 'POST' });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'AI analysis failed');
-    }
-    onResult(await res.json());
-    btnText.textContent = 'AI ✓';
-    btn.classList.remove('opacity-60');
-    btn.classList.add('border-secondary/50', 'text-secondary');
-    setTimeout(() => {
-      btnText.textContent = 'AI Analyze';
-      btn.classList.remove('border-secondary/50', 'text-secondary');
-      btn.disabled = false;
-    }, 3000);
-  } catch (err) {
-    btnText.textContent = err.message.length > 30 ? 'Failed' : err.message;
-    btn.title = err.message;
-    btn.classList.remove('opacity-60');
-    btn.classList.add('border-error/50', 'text-error');
-    setTimeout(() => {
-      btnText.textContent = 'AI Analyze';
-      btn.classList.remove('border-error/50', 'text-error');
-      btn.disabled = false;
-    }, 4000);
-  }
-}
-
-function analyzeWithAI() {
-  if (!activeMap) return;
-  return runAssessment({
-    btnId: 'ai-role-btn', btnTextId: 'ai-role-btn-text',
-    provId: 'ai-provider-select', modelId: 'ai-model-select',
-    maps: activeMap, onResult: applyAssessment,
-  });
-}
-
-function analyzeOverallWithAI() {
-  return runAssessment({
-    btnId: 'ai-overall-btn', btnTextId: 'ai-overall-btn-text',
-    provId: 'ai-overall-provider-select', modelId: 'ai-overall-model-select',
-    maps: null,
-    onResult: data => applyPatternData(data, OVERALL_PATTERN_IDS, OVERALL_SECTIONS),
-  });
-}
-
-// The career card shows whenever no map is selected — the same condition that
-// hides the per-map one.
-function renderOverallAssessment(mapFilter) {
-  const section = document.getElementById('ai-overall-section');
-  if (!section) return;
-  if (mapFilter) { section.classList.add('hidden'); return; }
-  section.classList.remove('hidden');
-
-  applyPatternData(null, OVERALL_PATTERN_IDS, OVERALL_SECTIONS);
-  fetch(API + '/performance/ai-assessment')
-    .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      if (data && (data.headline || (data.aim && data.aim.name))) {
-        applyPatternData(data, OVERALL_PATTERN_IDS, OVERALL_SECTIONS);
-      }
-    })
-    .catch(() => {});
-}
-
-// --- Sidebar collapse ---
-function toggleSidebar() {
-  const sb = document.getElementById('sidebar');
-  const main = document.getElementById('main-area');
-  sb.classList.toggle('collapsed');
-  const collapsed = sb.classList.contains('collapsed');
-  main.style.paddingLeft = collapsed ? '6rem' : '';
-  try { localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0'); } catch(e) {}
-}
-(function applySidebarState() {
-  try {
-    if (localStorage.getItem('sidebar-collapsed') === '1') {
-      const sb = document.getElementById('sidebar');
-      const main = document.getElementById('main-area');
-      if (sb) { sb.classList.add('collapsed'); }
-      if (main) { main.style.paddingLeft = '6rem'; }
-    }
-  } catch(e) {}
-})();
-
-// ─── Factory Reset ───
-async function doFactoryReset() {
-  const status = document.getElementById('reset-status');
-  const btn = document.getElementById('reset-btn');
-  btn.disabled = true; btn.textContent = 'RESETTING...';
-  status.classList.add('hidden');
-  try {
-    const res = await fetch(API + '/factory-reset', { method: 'POST' });
-    const data = await res.json();
-    if (data.status === 'ok') {
-      status.textContent = 'Reset complete. Reloading...';
-      status.className = 'text-xs text-center text-secondary';
-      status.classList.remove('hidden');
-      setTimeout(() => window.location.reload(), 1000);
-    } else {
-      status.textContent = 'Partial reset: ' + (data.errors || []).join(', ');
-      status.className = 'text-xs text-center text-error';
-      status.classList.remove('hidden');
-      btn.disabled = false; btn.textContent = 'Reset Everything';
-    }
-  } catch (err) {
-    status.textContent = err.message;
-    status.className = 'text-xs text-center text-error';
-    status.classList.remove('hidden');
-    btn.disabled = false; btn.textContent = 'Reset Everything';
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadAccounts();
-  loadPlayerFilter();
-  _renderTrendMetricToggles();
-  _renderTrendTimescaleButtons();
-  loadPerformance();
-  checkOnboarding();
-});
-
-// ─── Onboarding ───
-let _obStep = 0;
-const OB_TOTAL = 5;
-let _obSelectedAccount = null;
-let _obFriends = [];
-let _obAllPlayers = [];
-
-async function checkOnboarding() {
-  try {
-    const res = await fetch(API + '/onboarding');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.completed) return;
-    }
-  } catch (_) {}
-  openOnboarding();
-}
-
-function openOnboarding() {
-  _obStep = 0; _obSelectedAccount = null; _obFriends = []; _obAllPlayers = [];
-  updateObStep();
-  const m = document.getElementById('onboarding-modal');
-  m.classList.remove('hidden'); m.classList.add('flex');
-}
-
-function closeOnboarding() {
-  const m = document.getElementById('onboarding-modal');
-  m.classList.add('hidden'); m.classList.remove('flex');
-  if (document.getElementById('ob-dismiss-check').checked) {
-    fetch(API + '/onboarding', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({completed: true}) }).catch(() => {});
-  }
-}
-
-function updateObStep() {
-  for (let i = 0; i < OB_TOTAL; i++) {
-    const step = document.getElementById('ob-step-' + i);
-    const dot = document.getElementById('ob-dot-' + i);
-    if (step) step.classList.toggle('hidden', i !== _obStep);
-    if (dot) {
-      dot.classList.toggle('bg-primary', i === _obStep);
-      dot.classList.toggle('bg-white/20', i !== _obStep);
-    }
-  }
-  const prev = document.getElementById('ob-prev-btn');
-  const next = document.getElementById('ob-next-btn');
-  prev.classList.toggle('hidden', _obStep === 0);
-  if (_obStep === OB_TOTAL - 1) {
-    next.textContent = 'Get Started';
-  } else {
-    next.textContent = (_obStep === 2 || _obStep === 3) ? 'Skip / Next' : 'Next';
-  }
-  // Init AI provider tabs when entering step 3
-  if (_obStep === 3) obInitAIStep();
-}
-
-function obNext() {
-  if (_obStep >= OB_TOTAL - 1) { closeOnboarding(); return; }
-  // Save AI config when leaving step 3
-  if (_obStep === 3) obSaveAIConfig();
-  _obStep++;
-  updateObStep();
-}
-
-function obPrev() {
-  if (_obStep <= 0) return;
-  _obStep--;
-  updateObStep();
-}
-
-// ─── Onboarding: AI config step ───
-let _obAIProviders = null;
-let _obSelectedProvider = '';
-
-async function obInitAIStep() {
-  if (_obAIProviders) { obRenderAIProviders(); return; }
-  try {
-    const res = await fetch(API + '/ai/providers');
-    _obAIProviders = await res.json();
-    _obSelectedProvider = _obSelectedProvider || Object.keys(_obAIProviders)[0];
-    obRenderAIProviders();
-  } catch (_) {}
-}
-
-function obRenderAIProviders() {
-  if (!_obAIProviders) return;
-  const tabsEl = document.getElementById('ob-ai-provider-tabs');
-  tabsEl.innerHTML = Object.keys(_obAIProviders).map(p => {
-    const isActive = p === _obSelectedProvider;
-    return `<button type="button" onclick="obSelectAIProvider('${p}')" class="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${isActive ? 'bg-primary text-on-primary-fixed' : 'bg-surface-container-highest text-on-surface-variant hover:bg-white/10'}">${p}</button>`;
-  }).join('');
-  const modelSel = document.getElementById('ob-ai-model');
-  const models = _obAIProviders[_obSelectedProvider] || [];
-  const defaultModel = models.length > 0 ? models[0] : '';
-  modelSel.innerHTML = models.map(m => `<option value="${m}" ${m === defaultModel ? 'selected' : ''}>${m}</option>`).join('');
-}
-
-function obSelectAIProvider(provider) {
-  _obSelectedProvider = provider;
-  document.getElementById('ob-ai-key').value = '';
-  obRenderAIProviders();
-}
-
-async function obSaveAIConfig() {
-  const key = document.getElementById('ob-ai-key').value.trim();
-  if (!key) return; // Skip if no key entered
-  const model = document.getElementById('ob-ai-model').value;
-  try {
-    const body = {
-      active_provider: _obSelectedProvider,
-      active_model: model,
-      providers: {}
-    };
-    body.providers[_obSelectedProvider] = { api_key: key };
-    await fetch(API + '/ai/config', {
-      method: 'PUT', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body)
-    });
-  } catch (_) {}
-}
-
-// ─── Onboarding: .dem.info player detection ───
-document.getElementById('ob-info-file').addEventListener('change', async function() {
-  const status = document.getElementById('ob-detect-status');
-  const section = document.getElementById('ob-players-section');
-  status.classList.add('hidden');
-  section.classList.add('hidden');
-  if (!this.files.length) return;
-  status.textContent = 'Detecting players...';
-  status.className = 'text-xs mt-2 text-on-surface-variant';
-  status.classList.remove('hidden');
-  const fd = new FormData();
-  fd.append('info_file', this.files[0]);
-  const demInput = document.getElementById('ob-dem-file');
-  if (demInput && demInput.files.length) fd.append('demo_file', demInput.files[0]);
-  try {
-    const res = await fetch(API + '/matches/detect-player', { method: 'POST', body: fd });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Detection failed'); }
-    const data = await res.json();
-    _obAllPlayers = [];
-    // Build combined player list from matched + unmatched
-    if (data.matched) data.matched.forEach(a => _obAllPlayers.push({ steam_id: a.steam_id, name: a.name, known: true }));
-    if (data.unmatched) data.unmatched.forEach(u => _obAllPlayers.push({ steam_id: u.steam_id, name: u.name || '', known: false }));
-    if (_obAllPlayers.length === 0) {
-      status.textContent = 'No players found in this file.';
-      status.className = 'text-xs mt-2 text-error';
-      return;
-    }
-    status.textContent = _obAllPlayers.length + ' player(s) detected.';
-    status.className = 'text-xs mt-2 text-secondary';
-    renderObPlayers();
-    section.classList.remove('hidden');
-  } catch (err) {
-    status.textContent = err.message;
-    status.className = 'text-xs mt-2 text-error';
-  }
-});
-
-function renderObPlayers() {
-  const list = document.getElementById('ob-players-list');
-  list.innerHTML = _obAllPlayers.map((p, i) => {
-    const isMe = _obSelectedAccount && _obSelectedAccount.steam_id === p.steam_id;
-    const isFriend = _obFriends.some(f => f.steam_id === p.steam_id);
-    const label = p.name ? esc(p.name) + ' <span class="text-on-surface-variant/50 font-mono text-[9px]">' + esc(p.steam_id) + '</span>' : '<span class="font-mono text-[10px]">' + esc(p.steam_id) + '</span>';
-    const meBtnClass = isMe
-      ? 'bg-primary text-on-primary-container'
-      : 'bg-surface-container-highest text-primary border border-primary/30 hover:bg-primary/10';
-    const friendBtnClass = isFriend
-      ? 'bg-accent/20 text-accent'
-      : 'bg-surface-container-highest text-accent border border-accent/30 hover:bg-accent/10';
-    return `<div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest/50 border border-white/5">
-      <div class="flex-1 min-w-0 text-xs">${label}</div>
-      <button type="button" onclick="obSetMe(${i})" class="text-[9px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider transition-all ${meBtnClass}">
-        ${isMe ? '✓ Me' : 'Set as Me'}
-      </button>
-      <button type="button" onclick="obToggleFriend(${i})" class="text-[9px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider transition-all ${friendBtnClass}" ${isMe ? 'disabled style="opacity:0.3;pointer-events:none"' : ''}>
-        ${isFriend ? '✓ Friend' : 'Add Friend'}
-      </button>
-    </div>`;
-  }).join('');
-  updateObSummary();
-}
-
-async function obSetMe(idx) {
-  const p = _obAllPlayers[idx];
-  // Remove from friends if tagged
-  _obFriends = _obFriends.filter(f => f.steam_id !== p.steam_id);
-  // Prompt for a name if unknown
-  let name = p.name;
-  if (!name) {
-    name = prompt('Enter a name for this account:', '') || 'Main Account';
-  }
-  _obSelectedAccount = { steam_id: p.steam_id, name: name };
-  // Save to backend
-  try {
-    const res = await fetch(API + '/accounts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, steam_id: p.steam_id, display_name: name, rank: '' })
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      // Ignore "already exists" errors
-      if (!err.detail?.includes?.('exists')) throw new Error(err.detail);
-    }
-    // Activate this account
-    await fetch(API + '/accounts/' + p.steam_id + '/activate', { method: 'PUT' });
-  } catch (err) { console.error('Failed to save account:', err); }
-  renderObPlayers();
-}
-
-async function obToggleFriend(idx) {
-  const p = _obAllPlayers[idx];
-  if (_obSelectedAccount && _obSelectedAccount.steam_id === p.steam_id) return;
-  const existing = _obFriends.findIndex(f => f.steam_id === p.steam_id);
-  if (existing >= 0) {
-    // Remove friend
-    _obFriends.splice(existing, 1);
-    try { await fetch(API + '/friends/' + p.steam_id, { method: 'DELETE' }); } catch(e) {}
-  } else {
-    // Add friend
-    let name = p.name;
-    if (!name) {
-      name = prompt('Enter a name for this friend:', '') || 'Friend';
-    }
-    _obFriends.push({ steam_id: p.steam_id, name: name });
-    try {
-      await fetch(API + '/friends', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ steam_id: p.steam_id, name: name })
-      });
-    } catch(e) {}
-  }
-  renderObPlayers();
-}
-
-function updateObSummary() {
-  const summary = document.getElementById('ob-selections-summary');
-  const acctEl = document.getElementById('ob-my-account');
-  const friendsEl = document.getElementById('ob-my-friends');
-  if (!_obSelectedAccount && _obFriends.length === 0) {
-    summary.classList.add('hidden');
-    return;
-  }
-  summary.classList.remove('hidden');
-  acctEl.innerHTML = _obSelectedAccount
-    ? '<span class="text-primary font-bold">You:</span> ' + esc(_obSelectedAccount.name) + ' <span class="text-on-surface-variant/50 font-mono">(' + esc(_obSelectedAccount.steam_id) + ')</span>'
-    : '<span class="text-on-surface-variant">No account selected yet</span>';
-  friendsEl.innerHTML = _obFriends.length
-    ? '<span class="font-bold">Friends:</span> ' + _obFriends.map(f => esc(f.name || f.steam_id)).join(', ')
-    : '';
-}
-</script>
+<script type="module" src="js/breakdown.js?v=2"></script>
 
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 <!-- AUTO-SYNC MODAL                                                      -->
@@ -2795,7 +1144,7 @@ function updateObSummary() {
       <h2 class="font-headline text-xl font-bold uppercase tracking-widest flex items-center gap-2">
         <span class="material-symbols-outlined text-tertiary">autorenew</span> Auto-Sync
       </h2>
-      <button onclick="closeAutoSyncModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+      <button data-action="closeAutoSyncModal" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
     </div>
     <p class="text-[10px] text-on-surface-variant mb-4 leading-relaxed">
       Fetches <span class="text-primary font-bold">and</span> analyses on its own &mdash; the work
@@ -2805,7 +1154,7 @@ function updateObSummary() {
 
     <div id="auto-sync-needs-setup" class="hidden mb-4 p-4 rounded-xl bg-primary/10 border border-primary/30">
       <p id="auto-sync-needs-setup-text" class="text-[10px] text-on-surface-variant leading-relaxed mb-3"></p>
-      <button onclick="closeAutoSyncModal(); openSettingsModal(); switchSettingsTab('steam');" class="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors flex items-center gap-1">
+      <button data-action="closeAutoSyncModal openSettingsModal switchSettingsTab" data-args='[[], [], ["steam"]]' class="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors flex items-center gap-1">
         <span class="material-symbols-outlined text-[13px]">tune</span> Open Steam Setup
       </button>
     </div>
@@ -2818,7 +1167,7 @@ function updateObSummary() {
           <p class="text-[11px] font-bold uppercase tracking-widest text-tertiary">Run continuously</p>
           <p id="auto-sync-toggle-hint" class="text-[9px] text-on-surface-variant">Off</p>
         </div>
-        <button id="auto-sync-toggle" onclick="toggleAutoSync()" role="switch" aria-checked="false"
+        <button id="auto-sync-toggle" data-action="toggleAutoSync" role="switch" aria-checked="false"
                 class="relative w-11 h-6 rounded-full bg-surface-container-highest border border-white/10 transition-colors shrink-0 disabled:opacity-40">
           <span id="auto-sync-knob" class="absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-on-surface-variant transition-all"></span>
         </button>
@@ -2849,7 +1198,7 @@ function updateObSummary() {
       <div class="flex items-center gap-2 mb-2">
         <label class="text-[9px] text-on-surface-variant whitespace-nowrap">Wait</label>
         <input id="auto-sync-interval" type="number" min="0" max="1440" value="5"
-               onchange="saveAutoSyncSettings()"
+               data-action="saveAutoSyncSettings" data-event="change"
                class="w-16 bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-primary/30 focus:ring-0"/>
         <span class="text-[9px] text-on-surface-variant leading-tight">
           minutes between demos. <span class="text-on-surface-variant/70">0 runs them back to back &mdash;
@@ -2859,7 +1208,7 @@ function updateObSummary() {
 
       <!-- CS2 detection -->
       <label class="flex items-start gap-2 cursor-pointer mb-1">
-        <input id="auto-sync-pause-playing" type="checkbox" checked onchange="saveAutoSyncSettings()"
+        <input id="auto-sync-pause-playing" type="checkbox" checked data-action="saveAutoSyncSettings" data-event="change"
                class="accent-secondary mt-[1px]"/>
         <span class="text-[9px] text-on-surface-variant leading-relaxed">
           Pause while CS2 is running &mdash; a 280&nbsp;MB download mid-match costs you ping, and
@@ -2897,7 +1246,7 @@ function updateObSummary() {
       <h2 class="font-headline text-xl font-bold uppercase tracking-widest flex items-center gap-2">
         <span class="material-symbols-outlined text-primary">cloud_download</span> Manual Fetch from Steam
       </h2>
-      <button onclick="closeSteamModal()" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
+      <button data-action="closeSteamModal" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">close</button>
     </div>
     <p class="text-[10px] text-on-surface-variant mb-4 leading-relaxed">
       Downloads your match demos from Valve into the demo folder, on demand and all at once. This is
@@ -2910,7 +1259,7 @@ function updateObSummary() {
          hit two dead buttons with no explanation. -->
     <div id="steam-needs-setup" class="hidden mb-4 p-4 rounded-xl bg-primary/10 border border-primary/30">
       <p id="steam-needs-setup-text" class="text-[10px] text-on-surface-variant leading-relaxed mb-3"></p>
-      <button onclick="closeSteamModal(); openSettingsModal(); switchSettingsTab('steam');" class="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors flex items-center gap-1">
+      <button data-action="closeSteamModal openSettingsModal switchSettingsTab" data-args='[[], [], ["steam"]]' class="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors flex items-center gap-1">
         <span class="material-symbols-outlined text-[13px]">tune</span> Open Steam Setup
       </button>
     </div>
@@ -2924,7 +1273,7 @@ function updateObSummary() {
         Asks Steam what you have played since the last check. Needs no Steam session, so it is safe
         to run with Steam open or while you are in a match.
       </p>
-      <button id="steam-check-btn" onclick="runSteamJob('check')" class="w-full bg-gradient-to-r from-secondary/80 to-secondary/60 py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:hover:scale-100">
+      <button id="steam-check-btn" data-action="runSteamJob" data-args='["check"]' class="w-full bg-gradient-to-r from-secondary/80 to-secondary/60 py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:hover:scale-100">
         Check for New Matches
       </button>
     </div>
@@ -2947,10 +1296,10 @@ function updateObSummary() {
 
       <div class="flex items-center gap-2 mb-2">
         <label class="text-[9px] text-on-surface-variant whitespace-nowrap">Download at most</label>
-        <input id="steam-download-limit" type="number" min="1" placeholder="all" oninput="updateDownloadButton()" class="w-20 bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-primary/30 focus:ring-0"/>
+        <input id="steam-download-limit" type="number" min="1" placeholder="all" data-action="updateDownloadButton" data-event="input" class="w-20 bg-surface-container-highest text-on-surface text-xs p-2 rounded-lg border border-transparent focus:border-primary/30 focus:ring-0"/>
         <span class="text-[9px] text-on-surface-variant leading-tight">newest matches. Leave blank for everything &mdash; useful on a first run over a big backlog.</span>
       </div>
-      <button id="steam-download-btn" onclick="runSteamJob('download')" class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:hover:scale-100">
+      <button id="steam-download-btn" data-action="runSteamJob" data-args='["download"]' class="w-full bg-gradient-to-r from-primary to-primary-dim py-3 rounded-full font-headline text-xs font-bold uppercase tracking-widest text-on-primary-container shadow-[0_0_15px_rgba(204,151,255,0.3)] hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:hover:scale-100">
         Download Demos
       </button>
       <p class="text-[9px] text-on-surface-variant mt-2 leading-relaxed">
@@ -2966,7 +1315,7 @@ function updateObSummary() {
         <div class="flex items-center gap-3">
           <span id="steam-job-elapsed" class="text-[10px] font-mono text-on-surface-variant"></span>
           <span id="steam-job-state" class="text-[10px] font-mono font-bold text-primary"></span>
-          <button id="steam-job-cancel" onclick="cancelSteamJob()" class="hidden px-2 py-1 rounded-md bg-error/20 text-error text-[9px] font-bold uppercase tracking-widest hover:bg-error/30 transition-colors disabled:opacity-40">Cancel</button>
+          <button id="steam-job-cancel" data-action="cancelSteamJob" class="hidden px-2 py-1 rounded-md bg-error/20 text-error text-[9px] font-bold uppercase tracking-widest hover:bg-error/30 transition-colors disabled:opacity-40">Cancel</button>
         </div>
       </div>
       <pre id="steam-log" class="bg-black/40 rounded-lg p-3 text-[10px] font-mono text-on-surface-variant max-h-60 overflow-y-auto whitespace-pre-wrap leading-relaxed"></pre>
@@ -2974,7 +1323,7 @@ function updateObSummary() {
         <p class="text-[10px] text-secondary leading-relaxed">
           Downloaded to the demo folder. They are not analysed until you import them.
         </p>
-        <button onclick="closeSteamModal(); openSyncModal();" class="shrink-0 px-3 py-1.5 rounded-lg bg-secondary/20 text-secondary text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/30 transition-colors flex items-center gap-1">
+        <button data-action="closeSteamModal openSyncModal" class="shrink-0 px-3 py-1.5 rounded-lg bg-secondary/20 text-secondary text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/30 transition-colors flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px]">sync</span> Sync Folder
         </button>
       </div>
@@ -2982,906 +1331,4 @@ function updateObSummary() {
   </div>
 </div>
 
-<script>
-// ═══════════════════════════════════════════════════════════════════
-// Fetch from Steam — drives /api/steam/*
-// Kept separate from the Sync Folder logic on purpose: this downloads
-// demos from Valve, Sync Folder imports what is already on disk.
-// ═══════════════════════════════════════════════════════════════════
-const STEAM_API = (typeof API !== 'undefined') ? API : '/api';
-let _steamPoll = null;
-
-function steamEsc(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
-}
-
-function openSteamModal() {
-  const m = document.getElementById('steam-modal');
-  m.classList.remove('hidden'); m.classList.add('flex');
-  loadSteamStatus();
-  startAutoSyncPolling();
-}
-
-function closeSteamModal() {
-  const m = document.getElementById('steam-modal');
-  m.classList.add('hidden'); m.classList.remove('flex');
-  if (_steamPoll) { clearInterval(_steamPoll); _steamPoll = null; }
-  if (!isAutoSyncModalOpen()) stopAutoSyncPolling();
-}
-
-document.getElementById('steam-modal').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeSteamModal();
-});
-
-async function loadSteamStatus() {
-  try {
-    const res = await fetch(STEAM_API + '/steam/status');
-    if (!res.ok) throw new Error('Could not read fetcher status');
-    renderSteamStatus(await res.json());
-  } catch (err) {
-    document.getElementById('steam-unavailable').classList.remove('hidden');
-    document.getElementById('steam-unavailable-text').textContent = err.message;
-  }
-}
-
-function renderSteamStatus(s) {
-  // Availability banner — Node and its packages live outside the Python app.
-  const banner = document.getElementById('steam-unavailable');
-  const bannerText = document.getElementById('steam-unavailable-text');
-  if (!s.fetcher_present) {
-    banner.classList.remove('hidden');
-    bannerText.textContent = 'The fetcher/ folder is missing. This feature is not part of the public release.';
-  } else if (!s.node_installed) {
-    banner.classList.remove('hidden');
-    bannerText.textContent = 'Node.js was not found. The Steam fetcher needs Node 18 or newer.';
-  } else if (!s.deps_installed) {
-    banner.classList.remove('hidden');
-    bannerText.textContent = 'Fetcher dependencies are not installed. Run: cd fetcher && npm install';
-  } else {
-    banner.classList.add('hidden');
-  }
-
-  // Per-account setup state.
-  const list = document.getElementById('steam-accounts');
-  list.innerHTML = s.accounts.map(a => {
-    const badge = (ok, yes, no) => ok
-      ? '<span class="text-secondary">' + yes + '</span>'
-      : '<span class="text-on-surface-variant/60">' + no + '</span>';
-    const counts = a.total
-      ? '<span class="text-[9px] font-mono text-on-surface-variant">' +
-        a.downloaded + ' got / ' + (a.pending + a.failed) + ' due / ' + a.expired + ' gone</span>'
-      : '<span class="text-[9px] text-on-surface-variant/60">no matches known</span>';
-    // Tracking is setup: it decides whether an account's history is recorded at
-    // all. Whether its demos get downloaded is a property of a fetch run, so
-    // that toggle lives in the Download step rather than here.
-    const toggle = (stage, on, label) =>
-      '<label class="flex items-center gap-1 cursor-pointer normal-case tracking-normal">' +
-      '<input type="checkbox" class="accent-secondary"' + (on ? ' checked' : '') +
-      ' onchange="setSteamToggle(\'' + steamEsc(a.name) + '\', \'' + stage + '\', this.checked)"/>' +
-      label + '</label>';
-
-    return '<div class="px-3 py-2 rounded-lg bg-surface-container-highest/60">' +
-      '<div class="flex items-center justify-between gap-2 mb-1">' +
-      '<span class="text-xs font-bold">' + steamEsc(a.name) + '</span>' +
-      '<div class="flex items-center gap-3 text-[9px] font-bold uppercase tracking-widest">' +
-      (a.authenticated
-        ? '<span class="text-secondary">signed in</span>'
-        : '<button onclick="startSteamAuth(\'' + steamEsc(a.name) + '\')" class="px-2 py-1 rounded-md bg-primary/20 text-primary hover:bg-primary/30 transition-colors uppercase tracking-widest">sign in</button>') +
-      badge(a.configured, 'codes set', 'no codes') + '</div></div>' +
-      '<div class="flex items-center justify-between gap-3 text-[9px] text-on-surface-variant">' +
-      '<div class="flex items-center gap-3">' +
-      toggle('walk', a.walk_enabled !== false, 'track') +
-      '</div>' + counts + '</div></div>';
-  }).join('');
-
-  renderSteamApiKeyStatus(s);
-
-  const sel = document.getElementById('steam-code-account');
-  const previous = sel.value;
-  sel.innerHTML = s.accounts.map(a =>
-    '<option value="' + steamEsc(a.name) + '">' + steamEsc(a.name) +
-    (a.configured ? ' — configured' : '') + '</option>'
-  ).join('');
-  if (previous) sel.value = previous;
-
-  // Download step.
-  const pendingText = document.getElementById('steam-pending-text');
-  const downloadBtn = document.getElementById('steam-download-btn');
-  const running = s.job && s.job.running;
-
-  if (s.pending_total > 0) {
-    pendingText.innerHTML = '<span class="text-primary font-bold">' + s.pending_total +
-      '</span> match(es) waiting to be downloaded.';
-  } else {
-    pendingText.textContent = 'Nothing outstanding. Run step 1 to look for new matches.';
-  }
-
-  renderSteamDownloadAccounts(s);
-  downloadBtn.disabled = running || !s.available || s.pending_total === 0;
-  downloadBtn.dataset.pending = s.pending_total;
-  updateDownloadButton();
-  document.getElementById('steam-check-btn').disabled = running || !s.available;
-
-  if (s.job && (s.job.running || (s.job.lines && s.job.lines.length))) renderSteamJob(s.job);
-  if (running && !_steamPoll) startSteamPolling();
-  renderAutoSync(s.auto_sync);
-  renderSteamSetupGate(s);
-}
-
-// "API key stored." on its own is not much use with several accounts: the key
-// works for all of them, but it is issued by one, and when it stops working you
-// need to know whose profile to regenerate it from.
-function renderSteamApiKeyStatus(s) {
-  const status = document.getElementById('steam-api-key-status');
-  const sel = document.getElementById('steam-api-key-account');
-
-  if (sel) {
-    const previous = sel.value;
-    sel.innerHTML = '<option value="">(not recorded)</option>' + (s.accounts || []).map(a =>
-      '<option value="' + steamEsc(a.name) + '">' + steamEsc(a.name) + '</option>'
-    ).join('');
-    sel.value = previous || s.api_key_account || '';
-    // The environment overrides the stored key, so the field would be lying.
-    sel.disabled = s.api_key_source === 'environment';
-  }
-
-  if (!s.api_key_set) {
-    status.textContent = 'No API key yet.';
-    status.className = 'text-[9px] text-on-surface-variant mb-4';
-    return;
-  }
-
-  const tail = s.api_key_tail ? ' ····' + s.api_key_tail : '';
-  if (s.api_key_source === 'environment') {
-    status.innerHTML = '<span class="text-secondary">API key from STEAM_API_KEY' + steamEsc(tail)
-      + '.</span> The environment overrides anything stored here.';
-  } else if (s.api_key_account) {
-    status.innerHTML = '<span class="text-secondary">API key stored' + steamEsc(tail)
-      + '</span>, issued by <span class="text-primary font-bold">' + steamEsc(s.api_key_account) + '</span>.';
-  } else {
-    status.innerHTML = '<span class="text-secondary">API key stored' + steamEsc(tail)
-      + '.</span> Pick the account that issued it so you know where to renew it.';
-  }
-  status.className = 'text-[9px] text-on-surface-variant mb-4';
-}
-
-// Which accounts the next download covers. This is deliberately here and not in
-// Settings: it changes what the button below is about to do, and the pending
-// total reacts to it immediately.
-function renderSteamDownloadAccounts(s) {
-  const wrap = document.getElementById('steam-download-accounts-wrap');
-  const list = document.getElementById('steam-download-accounts');
-  const note = document.getElementById('steam-download-excluded');
-  if (!wrap || !list) return;
-
-  // Only accounts the ledger actually knows about can be downloaded.
-  const known = (s.accounts || []).filter(a => a.configured || a.total);
-  wrap.classList.toggle('hidden', known.length === 0);
-  if (!known.length) return;
-
-  const busy = !!(s.job && s.job.running);
-  list.innerHTML = known.map(a => {
-    const on = a.download_enabled !== false;
-    const due = a.outstanding;
-    const detail = due
-      ? '<span class="text-primary font-bold">' + due + ' due</span>'
-      : '<span class="text-on-surface-variant/50">nothing due</span>';
-    return '<label class="flex items-center justify-between gap-3 px-3 py-1.5 rounded-lg bg-surface-container-highest/60 cursor-pointer' +
-      (on ? '' : ' opacity-50') + '">' +
-      '<span class="flex items-center gap-2">' +
-      '<input type="checkbox" class="accent-primary"' + (on ? ' checked' : '') + (busy ? ' disabled' : '') +
-      ' onchange="setSteamToggle(\'' + steamEsc(a.name) + '\', \'download\', this.checked)"/>' +
-      '<span class="text-[10px] font-bold">' + steamEsc(a.name) + '</span></span>' +
-      '<span class="text-[9px] font-mono">' + detail + '</span></label>';
-  }).join('');
-
-  // Say what is being left out, so a zero total is never a mystery.
-  const off = known.filter(a => a.download_enabled === false);
-  const skipped = off.reduce((n, a) => n + a.outstanding, 0);
-  note.textContent = off.length
-    ? off.length + ' account(s) excluded' + (skipped ? ', holding ' + skipped + ' match(es) back' : '') + '.'
-    : '';
-}
-
-async function setSteamToggle(name, stage, enabled) {
-  const body = stage === 'walk' ? { walk_enabled: enabled } : { download_enabled: enabled };
-  try {
-    const res = await fetch(STEAM_API + '/steam/accounts/' + encodeURIComponent(name) + '/toggles', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error((await res.json()).detail);
-  } catch (err) {
-    document.getElementById('steam-codes-status').textContent = err.message;
-    document.getElementById('steam-codes-status').className = 'text-[9px] text-error';
-  }
-  loadSteamStatus();
-}
-
-async function saveSteamApiKey() {
-  const input = document.getElementById('steam-api-key');
-  const status = document.getElementById('steam-api-key-status');
-  try {
-    const res = await fetch(STEAM_API + '/steam/api-key', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        api_key: input.value.trim(),
-        account: (document.getElementById('steam-api-key-account') || {}).value || null
-      })
-    });
-    if (!res.ok) throw new Error((await res.json()).detail);
-    input.value = '';
-    // loadSteamStatus repaints the status line with the issuing account, so
-    // there is nothing useful to say here that it would not immediately replace.
-    loadSteamStatus();
-  } catch (err) {
-    status.textContent = err.message;
-    status.className = 'text-[9px] text-error mb-4';
-  }
-}
-
-async function saveSteamCodes() {
-  const name = document.getElementById('steam-code-account').value;
-  const status = document.getElementById('steam-codes-status');
-  try {
-    const res = await fetch(STEAM_API + '/steam/accounts/' + encodeURIComponent(name), {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        auth_code: document.getElementById('steam-auth-code').value.trim(),
-        share_code: document.getElementById('steam-share-code').value.trim()
-      })
-    });
-    if (!res.ok) throw new Error((await res.json()).detail);
-    document.getElementById('steam-auth-code').value = '';
-    document.getElementById('steam-share-code').value = '';
-    status.textContent = 'Saved for ' + name + '. Now run a fetch.';
-    status.className = 'text-[9px] text-secondary';
-    loadSteamStatus();
-  } catch (err) {
-    status.textContent = err.message;
-    status.className = 'text-[9px] text-error';
-  }
-}
-
-// Keeps the button honest about what it will actually do.
-function updateDownloadButton() {
-  const btn = document.getElementById('steam-download-btn');
-  const input = document.getElementById('steam-download-limit');
-  if (!btn || !input) return;
-
-  const pending = parseInt(btn.dataset.pending || '0', 10);
-  if (!pending) { btn.textContent = 'Download Demos'; return; }
-
-  const limit = parseInt(input.value, 10);
-  const count = Number.isFinite(limit) && limit > 0 ? Math.min(limit, pending) : pending;
-  btn.textContent = count < pending
-    ? 'Download newest ' + count + ' of ' + pending
-    : 'Download ' + pending + ' Demo' + (pending > 1 ? 's' : '');
-}
-
-async function runSteamJob(kind) {
-  const endpoint = kind === 'check' ? '/steam/check' : '/steam/download';
-  document.getElementById('steam-check-btn').disabled = true;
-  document.getElementById('steam-download-btn').disabled = true;
-  document.getElementById('steam-done-hint').classList.add('hidden');
-
-  try {
-    const init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
-    if (kind === 'download') {
-      const limit = parseInt(document.getElementById('steam-download-limit').value, 10);
-      if (Number.isFinite(limit) && limit > 0) init.body = JSON.stringify({ limit });
-    }
-
-    const res = await fetch(STEAM_API + endpoint, init);
-    if (!res.ok) throw new Error((await res.json()).detail);
-    renderSteamJob(await res.json());
-    startSteamPolling();
-  } catch (err) {
-    document.getElementById('steam-output-wrap').classList.remove('hidden');
-    document.getElementById('steam-log').textContent = err.message;
-    document.getElementById('steam-job-state').textContent = 'failed';
-    loadSteamStatus();
-  }
-}
-
-function startSteamPolling() {
-  if (_steamPoll) clearInterval(_steamPoll);
-  _steamPoll = setInterval(async () => {
-    try {
-      const job = await (await fetch(STEAM_API + '/steam/job')).json();
-      renderSteamJob(job);
-      if (!job.running) {
-        clearInterval(_steamPoll); _steamPoll = null;
-        // Downloads land in the demo folder — remind the user to import them.
-        if (job.type === 'download' && job.exit_code === 0 && !job.auto) {
-          document.getElementById('steam-done-hint').classList.remove('hidden');
-        }
-        loadSteamStatus();
-      }
-    } catch (e) { clearInterval(_steamPoll); _steamPoll = null; }
-  }, 1200);
-}
-
-let _steamQrDismissed = false;
-
-async function startSteamAuth(name) {
-  const panel = document.getElementById('steam-qr-panel');
-  _steamQrDismissed = false;
-  panel.classList.remove('hidden');
-  document.getElementById('steam-qr-title').textContent = 'Signing in — ' + name;
-  document.getElementById('steam-qr-image').innerHTML = '';
-  document.getElementById('steam-qr-state').textContent = 'Asking Steam for a QR code...';
-  try {
-    const res = await fetch(STEAM_API + '/steam/auth/' + encodeURIComponent(name), { method: 'POST' });
-    if (!res.ok) throw new Error((await res.json()).detail);
-    renderSteamJob(await res.json());
-    startSteamPolling();
-  } catch (err) {
-    document.getElementById('steam-qr-state').textContent = err.message;
-  }
-}
-
-// Dismissing the code cancels the attempt. The challenge event stays in the
-// job's history, so hiding alone would let the next poll re-open the panel —
-// and the sign-in would sit pending until Steam's own timeout.
-async function hideSteamQr() {
-  _steamQrDismissed = true;
-  document.getElementById('steam-qr-panel').classList.add('hidden');
-  try {
-    await fetch(STEAM_API + '/steam/job/cancel', { method: 'POST' });
-  } catch (e) { /* nothing running */ }
-  loadSteamStatus();
-}
-
-// Drives the QR panel from the structured events auth-qr.js emits.
-function applySteamAuthEvents(job) {
-  if (_steamQrDismissed) return;
-  const panel = document.getElementById('steam-qr-panel');
-  const image = document.getElementById('steam-qr-image');
-  const state = document.getElementById('steam-qr-state');
-
-  for (const ev of (job.events || [])) {
-    if (ev.event === 'challenge') {
-      panel.classList.remove('hidden');
-      if (!image.innerHTML) image.innerHTML = ev.svg;
-      state.textContent = 'Scan this with the Steam mobile app, then approve it.';
-    } else if (ev.event === 'scanned') {
-      state.textContent = 'Scanned. Now approve it in the app...';
-    } else if (ev.event === 'authenticated') {
-      image.innerHTML = '';
-      state.innerHTML = '<span class="text-secondary font-bold">Signed in'
-        + (ev.steamId ? ' as ' + steamEsc(ev.steamId) : '') + '.</span>'
-        + (ev.warning ? '<br>' + steamEsc(ev.warning) : '');
-    } else if (ev.event === 'error') {
-      image.innerHTML = '';
-      state.innerHTML = '<span class="text-error">' + steamEsc(ev.message) + '</span>';
-    }
-  }
-}
-
-async function cancelSteamJob() {
-  const btn = document.getElementById('steam-job-cancel');
-  btn.disabled = true;
-  try {
-    await fetch(STEAM_API + '/steam/job/cancel', { method: 'POST' });
-  } catch (e) { /* already finished */ }
-}
-
-function formatElapsed(seconds) {
-  return seconds < 60 ? seconds + 's' : Math.floor(seconds / 60) + 'm ' + (seconds % 60) + 's';
-}
-
-function renderSteamJob(job) {
-  document.getElementById('steam-output-wrap').classList.remove('hidden');
-
-  // Cancel is offered for any running job, not just QR sign-in — a stuck
-  // download should not need the container restarting to stop.
-  const cancelBtn = document.getElementById('steam-job-cancel');
-  cancelBtn.classList.toggle('hidden', !job.running);
-  if (job.running) cancelBtn.disabled = false;
-
-  // Ticks with the poll, then freezes on the final value when the job ends.
-  const elapsed = document.getElementById('steam-job-elapsed');
-  if (job.started_at) {
-    const end = job.finished_at ? new Date(job.finished_at) : new Date();
-    const secs = Math.max(0, Math.round((end - new Date(job.started_at)) / 1000));
-    elapsed.textContent = formatElapsed(secs);
-  } else {
-    elapsed.textContent = '';
-  }
-  document.getElementById('steam-job-label').textContent =
-    job.type === 'check' ? 'Checking for new matches'
-      : job.type === 'auth' ? 'Signing in to Steam'
-      : 'Downloading demos';
-  if (job.type === 'auth') applySteamAuthEvents(job);
-
-  const state = document.getElementById('steam-job-state');
-  if (job.running) {
-    state.textContent = 'running...';
-    state.className = 'text-[10px] font-mono font-bold text-primary';
-  } else if (job.exit_code === 0) {
-    state.textContent = 'done';
-    state.className = 'text-[10px] font-mono font-bold text-secondary';
-  } else if (job.cancelled) {
-    state.textContent = 'cancelled';
-    state.className = 'text-[10px] font-mono font-bold text-on-surface-variant';
-  } else if (job.exit_code != null) {
-    state.textContent = 'exit ' + job.exit_code;
-    state.className = 'text-[10px] font-mono font-bold text-error';
-  }
-
-  const log = document.getElementById('steam-log');
-  const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
-  log.textContent = (job.lines || []).join('\n');
-  if (atBottom) log.scrollTop = log.scrollHeight;
-}
-
-
-// ─── Auto-Sync modal ────────────────────────────────────────────────────
-// Auto-Sync has its own entry point because it is a state, not an action:
-// you switch it on once and it keeps working. The sidebar dot reports that
-// state without the modal being open at all.
-function isAutoSyncModalOpen() {
-  const m = document.getElementById('auto-sync-modal');
-  return m && !m.classList.contains('hidden');
-}
-
-function openAutoSyncModal() {
-  const m = document.getElementById('auto-sync-modal');
-  m.classList.remove('hidden'); m.classList.add('flex');
-  loadSteamStatus();
-  startAutoSyncPolling();
-  refreshPresence();
-}
-
-function closeAutoSyncModal() {
-  const m = document.getElementById('auto-sync-modal');
-  m.classList.add('hidden'); m.classList.remove('flex');
-  const steam = document.getElementById('steam-modal');
-  if (!steam || steam.classList.contains('hidden')) stopAutoSyncPolling();
-}
-
-document.getElementById('auto-sync-modal').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeAutoSyncModal();
-});
-
-// Setup moved to Settings, so both action modals have to say when it is
-// missing — otherwise their buttons just sit there doing nothing.
-function renderSteamSetupGate(s) {
-  const ready = s.available && s.api_key_set && (s.accounts || []).some(a => a.configured && a.authenticated);
-  let why = '';
-  if (!s.fetcher_present) why = 'The fetcher is not installed, so demos cannot be downloaded from Valve.';
-  else if (!s.available) why = 'The Steam fetcher is not ready yet.';
-  else if (!s.api_key_set) why = 'No Steam Web API key yet. Add one in Settings to look up your matches.';
-  else if (!(s.accounts || []).some(a => a.authenticated)) why = 'No account is signed in to Steam yet.';
-  else why = 'No account has its match-sharing codes set yet.';
-
-  [['steam-needs-setup', 'steam-needs-setup-text'],
-   ['auto-sync-needs-setup', 'auto-sync-needs-setup-text']].forEach(([wrapId, textId]) => {
-    const wrap = document.getElementById(wrapId);
-    if (!wrap) return;
-    wrap.classList.toggle('hidden', ready);
-    if (!ready) document.getElementById(textId).textContent = why + ' Setup lives in Settings → Steam.';
-  });
-  return ready;
-}
-
-// The dot is the whole point of giving Auto-Sync a sidebar entry: whether it
-// is running should be readable without opening anything.
-function renderAutoSyncDot(state) {
-  const dot = document.getElementById('auto-sync-dot');
-  if (!dot) return;
-  const on = state && state.enabled;
-  dot.classList.toggle('hidden', !on);
-  if (!on) return;
-  // Amber while it is held back, so "paused" does not read as "working".
-  const held = state.phase === 'paused' || state.phase === 'error' || state.phase === 'blocked';
-  dot.classList.toggle('bg-tertiary', !held);
-  dot.classList.toggle('bg-error', held);
-  dot.title = 'Auto-Sync: ' + (state.detail || state.phase);
-}
-
-// Runs regardless of any modal being open, so the dot is live from page load.
-let _autoSyncDotPoll = null;
-function startAutoSyncDotPoll() {
-  if (_autoSyncDotPoll) return;
-  const tick = async () => {
-    try {
-      const s = await (await fetch(STEAM_API + '/steam/auto-sync')).json();
-      renderAutoSyncDot(s);
-    } catch (e) { /* backend down — leave the dot as it was */ }
-  };
-  tick();
-  _autoSyncDotPoll = setInterval(tick, 20000);
-}
-
-// ─── Auto-Sync ──────────────────────────────────────────────────────────
-// The manual buttons above run one burst and stop. Auto-Sync is a switch: the
-// backend loops on its own, so this side only reflects state and edits
-// settings. It keeps its own slow poll because the panel has to stay live
-// between jobs, when the 1.2s job poll is not running.
-let _autoSyncPoll = null;
-let _autoSyncState = null;
-let _autoSyncSaving = false;
-
-const AUTO_PHASES = {
-  off:         { label: 'off',          cls: 'text-on-surface-variant' },
-  waiting:     { label: 'waiting',      cls: 'text-secondary' },
-  checking:    { label: 'checking',     cls: 'text-secondary' },
-  downloading: { label: 'downloading',  cls: 'text-primary' },
-  importing:   { label: 'analysing',    cls: 'text-primary' },
-  paused:      { label: 'paused',       cls: 'text-tertiary' },
-  blocked:     { label: 'waiting',      cls: 'text-on-surface-variant' },
-  error:       { label: 'problem',      cls: 'text-error' }
-};
-
-function renderAutoSync(state) {
-  if (!state) return;
-  _autoSyncState = state;
-  const cfg = state.config || {};
-  const on = !!state.enabled;
-
-  // Toggle.
-  const toggle = document.getElementById('auto-sync-toggle');
-  const knob = document.getElementById('auto-sync-knob');
-  toggle.setAttribute('aria-checked', on ? 'true' : 'false');
-  toggle.classList.toggle('bg-primary', on);
-  toggle.classList.toggle('bg-surface-container-highest', !on);
-  knob.classList.toggle('translate-x-5', on);
-  knob.classList.toggle('bg-on-primary-container', on);
-  knob.classList.toggle('bg-on-surface-variant', !on);
-  const hint = document.getElementById('auto-sync-toggle-hint');
-  if (hint) {
-    hint.textContent = on
-      ? 'On — ' + ((AUTO_PHASES[state.phase] || AUTO_PHASES.off).label) + (state.detail ? ' · ' + state.detail : '')
-      : 'Off';
-    hint.className = 'text-[9px] ' + (on ? 'text-tertiary' : 'text-on-surface-variant');
-  }
-
-  // Don't fight the user mid-edit.
-  if (!_autoSyncSaving && document.activeElement !== document.getElementById('auto-sync-interval')) {
-    document.getElementById('auto-sync-interval').value = cfg.interval_minutes;
-  }
-  document.getElementById('auto-sync-pause-playing').checked = cfg.pause_when_playing !== false;
-
-  // Live state — only meaningful while it is on, or just after it stopped.
-  const wrap = document.getElementById('auto-sync-state');
-  wrap.classList.toggle('hidden', !on && state.phase === 'off');
-  const phase = AUTO_PHASES[state.phase] || AUTO_PHASES.off;
-  const phaseEl = document.getElementById('auto-sync-phase');
-  phaseEl.textContent = phase.label;
-  phaseEl.className = 'text-[10px] font-bold uppercase tracking-widest ' + phase.cls;
-  document.getElementById('auto-sync-detail').textContent = state.detail || '';
-  document.getElementById('auto-sync-countdown').textContent = autoCountdown(state.next_action_at);
-
-  const t = state.totals || {};
-  const totals = document.getElementById('auto-sync-totals');
-  totals.textContent = (t.downloaded || t.imported || t.failed)
-    ? t.downloaded + ' downloaded  ·  ' + t.imported + ' analysed' + (t.failed ? '  ·  ' + t.failed + ' failed' : '')
-    : '';
-
-  // Demos that would not parse. They are set aside rather than retried, so say
-  // so — otherwise they just quietly never appear.
-  const skipped = Object.keys(state.skipped || {}).filter(k => state.skipped[k] >= 3);
-  const skipWrap = document.getElementById('auto-sync-skipped');
-  skipWrap.classList.toggle('hidden', skipped.length === 0);
-  if (skipped.length) {
-    skipWrap.querySelector('p').textContent =
-      skipped.length + ' demo(s) could not be analysed and were set aside so the rest could carry on: '
-      + skipped.join(', ');
-  }
-
-  // CS2 detection.
-  const presence = state.presence;
-  const pEl = document.getElementById('auto-sync-presence');
-  if (cfg.pause_when_playing === false) {
-    pEl.textContent = '';
-  } else if (!presence) {
-    pEl.textContent = 'Not checked yet.';
-  } else if (presence.playing === true) {
-    pEl.innerHTML = '<span class="text-tertiary">In CS2 now: ' + steamEsc(presence.in_game.join(', ')) + '</span>';
-  } else if (presence.playing === false) {
-    pEl.innerHTML = '<span class="text-secondary">Detected — nobody is in CS2.</span>';
-  } else {
-    pEl.innerHTML = '<span class="text-error/80">Cannot detect: ' + steamEsc(presence.detail) + '</span>';
-  }
-
-  renderAutoSyncDot(state);
-
-  const actWrap = document.getElementById('auto-sync-activity-wrap');
-  const act = state.activity || [];
-  actWrap.classList.toggle('hidden', act.length === 0);
-  document.getElementById('auto-sync-activity').innerHTML = act.slice(-8).reverse().map(a =>
-    '<p class="text-[9px] font-mono text-on-surface-variant/70">'
-    + '<span class="text-on-surface-variant/40">' + steamEsc(autoClock(a.at)) + '</span> '
-    + steamEsc(a.text) + '</p>'
-  ).join('');
-}
-
-// The job slot is shared with Manual Fetch, so its output is mirrored here
-// rather than making the user open the other modal to see what is happening.
-function renderAutoSyncJob(job) {
-  const wrap = document.getElementById('auto-sync-output-wrap');
-  if (!wrap) return;
-  const useful = job && job.auto && (job.running || (job.lines || []).length);
-  wrap.classList.toggle('hidden', !useful);
-  if (!useful) return;
-
-  const state = document.getElementById('auto-sync-job-state');
-  state.textContent = job.running ? (job.type || '') + '...' : (job.exit_code === 0 ? 'done' : 'stopped');
-  state.className = 'text-[10px] font-mono font-bold ' + (job.running ? 'text-primary' : 'text-on-surface-variant');
-
-  const log = document.getElementById('auto-sync-log');
-  const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
-  log.textContent = (job.lines || []).join('\n');
-  if (atBottom) log.scrollTop = log.scrollHeight;
-}
-
-function autoClock(iso) {
-  const d = new Date(iso);
-  return isNaN(d) ? '' : d.toTimeString().slice(0, 5);
-}
-
-function autoCountdown(iso) {
-  if (!iso) return '';
-  const secs = Math.round((new Date(iso) - new Date()) / 1000);
-  if (!isFinite(secs) || secs <= 0) return '';
-  return 'next in ' + (secs < 60 ? secs + 's' : Math.round(secs / 60) + 'm');
-}
-
-async function putAutoSync(body) {
-  const res = await fetch(STEAM_API + '/steam/auto-sync', {
-    method: 'PUT', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) throw new Error((await res.json()).detail);
-  return res.json();
-}
-
-async function toggleAutoSync() {
-  const btn = document.getElementById('auto-sync-toggle');
-  const wantOn = btn.getAttribute('aria-checked') !== 'true';
-  btn.disabled = true;
-  try {
-    renderAutoSync(await putAutoSync({ enabled: wantOn }));
-    if (wantOn) startAutoSyncPolling();
-  } catch (err) {
-    const detail = document.getElementById('auto-sync-detail');
-    document.getElementById('auto-sync-state').classList.remove('hidden');
-    detail.textContent = err.message;
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-async function saveAutoSyncSettings() {
-  const interval = parseInt(document.getElementById('auto-sync-interval').value, 10);
-  _autoSyncSaving = true;
-  try {
-    renderAutoSync(await putAutoSync({
-      interval_minutes: Number.isFinite(interval) && interval >= 0 ? interval : 5,
-      pause_when_playing: document.getElementById('auto-sync-pause-playing').checked
-    }));
-  } catch (err) {
-    document.getElementById('auto-sync-detail').textContent = err.message;
-  } finally {
-    _autoSyncSaving = false;
-  }
-}
-
-// Slow poll so the panel stays live between jobs. Every few seconds is plenty
-// for something whose default cadence is one match every five minutes; the
-// countdown is recomputed locally in between.
-function startAutoSyncPolling() {
-  if (_autoSyncPoll) return;
-  _autoSyncPoll = setInterval(async () => {
-    try {
-      const s = await (await fetch(STEAM_API + '/steam/status')).json();
-      renderAutoSync(s.auto_sync);
-      renderAutoSyncJob(s.job);
-      // Auto-sync drives the same job slot, so keep the Manual Fetch log in step.
-      if (s.job && (s.job.running || (s.job.lines || []).length)) renderSteamJob(s.job);
-      document.getElementById('steam-check-btn').disabled = (s.job && s.job.running) || !s.available;
-    } catch (e) { /* backend restarting — the next tick retries */ }
-  }, 3000);
-}
-
-function stopAutoSyncPolling() {
-  if (_autoSyncPoll) { clearInterval(_autoSyncPoll); _autoSyncPoll = null; }
-}
-
-// Presence is a Steam Web API call, so it is refreshed on open rather than on
-// every poll. The backend caches it and the loop refreshes it as it runs.
-async function refreshPresence() {
-  try {
-    const p = await (await fetch(STEAM_API + '/steam/presence')).json();
-    if (_autoSyncState) renderAutoSync({ ..._autoSyncState, presence: p });
-  } catch (e) { /* leave the last known answer */ }
-}
-
-// ─── Storage ────────────────────────────────────────────────────────
-// Demos are disposable once analysed; the retention window exists only so
-// recent matches can be re-parsed after a metrics change.
-
-function storageBytes(b) {
-  return b >= 1073741824 ? (b / 1073741824).toFixed(2) + ' GB' : (b / 1048576).toFixed(0) + ' MB';
-}
-
-async function loadStorageStatus(preview) {
-  const summary = document.getElementById('storage-summary');
-  if (!summary) return;
-
-  // With `preview`, the on-screen settings are sent as query parameters and the
-  // server evaluates them without saving, so a retention number can be tuned
-  // against real figures before committing to it.
-  let query = '';
-  if (preview) {
-    const params = new URLSearchParams();
-    const keep = parseInt(document.getElementById('storage-keep').value, 10);
-    if (!isNaN(keep) && keep >= 0) params.set('keep_recent', keep);
-    params.set('per_account', document.getElementById('storage-per-account').checked);
-    params.set('fetched_only', document.getElementById('storage-fetched-only').checked);
-    query = '?' + params.toString();
-  }
-
-  try {
-    const res = await fetch(STEAM_API + '/storage/status' + query);
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.detail || 'Could not read storage status');
-    renderStorage(body);
-  } catch (err) {
-    summary.innerHTML = '<span class="text-[10px] text-error col-span-2">' + steamEsc(err.message) + '</span>';
-  }
-}
-
-let _storagePreviewTimer = null;
-
-// Retune as the user types rather than making them press Apply to find out.
-function previewStorage() {
-  clearTimeout(_storagePreviewTimer);
-  _storagePreviewTimer = setTimeout(() => loadStorageStatus(true), 250);
-}
-
-function renderStorage(s) {
-  const cell = (label, value, cls) =>
-    '<div class="px-3 py-2 rounded-lg bg-surface-container-highest/60">' +
-    '<div class="text-[9px] uppercase tracking-widest text-on-surface-variant">' + label + '</div>' +
-    '<div class="text-[11px] font-mono font-bold ' + (cls || '') + '">' + value + '</div></div>';
-
-  document.getElementById('storage-summary').innerHTML =
-    cell('On disk', s.total_files + ' demos, ' + storageBytes(s.total_bytes)) +
-    cell('Imported', s.imported_files + ' of ' + s.total_files) +
-    cell('Kept', s.protected_files + ' demos, ' + storageBytes(s.protected_bytes)) +
-    cell('Safe to delete', s.deletable_files + ', ' + storageBytes(s.deletable_bytes),
-         s.deletable_files ? 'text-error' : '');
-
-  // Never fight the user's typing: only reset the controls from saved settings.
-  if (!s.preview) {
-    document.getElementById('storage-keep').value = s.config.keep_recent;
-    document.getElementById('storage-per-account').checked = s.config.per_account !== false;
-    document.getElementById('storage-fetched-only').checked = !!s.config.fetched_only;
-    document.getElementById('storage-auto').checked = !!s.config.auto_cleanup;
-  } else {
-    const note = document.getElementById('storage-result');
-    note.textContent = 'Preview of unsaved settings — press Apply to keep them.';
-    note.className = 'text-[9px] text-on-surface-variant mt-2 leading-relaxed';
-  }
-
-  // Deleting always uses the saved settings, so keep it disabled while the
-  // figures on screen come from unsaved ones.
-  const btn = document.getElementById('storage-delete-btn');
-  btn.disabled = s.deletable_files === 0 || s.preview;
-  btn.textContent = s.deletable_files === 0
-    ? 'Nothing to delete'
-    : (s.preview
-        ? 'Apply these settings to delete ' + s.deletable_files + ' demos'
-        : 'Delete ' + s.deletable_files + ' demos, free ' + storageBytes(s.deletable_bytes));
-}
-
-async function saveStorageConfig() {
-  const result = document.getElementById('storage-result');
-  try {
-    const res = await fetch(STEAM_API + '/storage/config', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        keep_recent: parseInt(document.getElementById('storage-keep').value, 10),
-        per_account: document.getElementById('storage-per-account').checked,
-        fetched_only: document.getElementById('storage-fetched-only').checked,
-        auto_cleanup: document.getElementById('storage-auto').checked
-      })
-    });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.detail);
-    result.textContent = 'Settings saved.';
-    result.className = 'text-[9px] text-secondary mt-2 leading-relaxed';
-    loadStorageStatus();
-  } catch (err) {
-    result.textContent = err.message;
-    result.className = 'text-[9px] text-error mt-2 leading-relaxed';
-  }
-}
-
-async function runStorageCleanup() {
-  const result = document.getElementById('storage-result');
-  const btn = document.getElementById('storage-delete-btn');
-
-  // Deleting is irreversible past Valve's ~30 day retention, so confirm against
-  // the exact figures rather than showing a generic prompt.
-  let preview;
-  try {
-    const res = await fetch(STEAM_API + '/storage/cleanup', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dry_run: true })
-    });
-    preview = await res.json();
-    if (!res.ok) throw new Error(preview.detail);
-  } catch (err) {
-    result.textContent = err.message;
-    result.className = 'text-[9px] text-error mt-2 leading-relaxed';
-    return;
-  }
-
-  if (!preview.deleted_count) { loadStorageStatus(); return; }
-  const ok = confirm(
-    'Delete ' + preview.deleted_count + ' demo file(s), freeing ' +
-    storageBytes(preview.freed_bytes) + '?\n\n' +
-    'Their analysis stays in the database. The demo files themselves cannot be ' +
-    're-downloaded once Valve drops them (about 30 days).'
-  );
-  if (!ok) return;
-
-  btn.disabled = true;
-  try {
-    const res = await fetch(STEAM_API + '/storage/cleanup', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dry_run: false })
-    });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.detail);
-    result.innerHTML = 'Deleted ' + body.deleted_count + ' demo(s), freed ' +
-      storageBytes(body.freed_bytes) + '.' +
-      (body.errors.length ? '<br><span class="text-error">' + steamEsc(body.errors.join('; ')) + '</span>' : '');
-    result.className = 'text-[9px] text-secondary mt-2 leading-relaxed';
-  } catch (err) {
-    result.textContent = err.message;
-    result.className = 'text-[9px] text-error mt-2 leading-relaxed';
-  }
-  loadStorageStatus();
-}
-
-// Storage is a Settings tab, so refresh its figures when that tab is shown.
-if (typeof switchSettingsTab === 'function') {
-  const _switchSettingsTabBase = switchSettingsTab;
-  switchSettingsTab = function (tab) {
-    _switchSettingsTabBase.apply(this, arguments);
-    if (tab === 'storage') loadStorageStatus();
-  };
-}
-
-// The fetcher ships separately from the app (build-release.ps1 excludes it),
-// so hide the entry point entirely when it is not installed rather than
-// offering a button that only leads to an error.
-document.addEventListener('DOMContentLoaded', () => {
-  // The selectors beside the AI Analyze buttons need the provider list, which
-  // used to load only when the settings modal was opened.
-  loadAIConfig();
-  for (const sel of AI_SELECTORS) {
-    document.getElementById(sel.prov)
-      ?.addEventListener('change', () => renderAIModelOptions(sel.prov, sel.model));
-  }
-});
-
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const s = await (await fetch(STEAM_API + '/steam/status')).json();
-    if (!s.fetcher_present) {
-      document.querySelectorAll('[onclick="openSteamModal()"], [onclick="openAutoSyncModal()"], #settings-tab-steam')
-        .forEach(b => b.classList.add('hidden'));
-    } else {
-      startAutoSyncDotPoll();
-    }
-  } catch (e) { /* backend unreachable — leave the buttons visible */ }
-});</script>
 </body></html>

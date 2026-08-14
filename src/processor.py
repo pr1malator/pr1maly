@@ -7,13 +7,79 @@ Rating.
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 import pandas as pd
 
 from src.callouts import get_callout, is_map_supported
-from src.parser import _build_freeze_end_map
+
+# Aliased: `hltv_rating` is also the name of the computed value in
+# calculate_match_stats, and the local would shadow the function.
+from src.domain.calibration import (
+    hltv_rating as compute_hltv_rating,
+)
+from src.domain.metrics._shared import (
+    _aim_bounds,
+    _build_round_team_map,
+    _find_id_col,
+)
+from src.domain.metrics.aim import _calculate_aim_stats
+from src.domain.metrics.benchmarks import compute_benchmarks
+from src.domain.metrics.impact import _calculate_impact_stats
+from src.domain.metrics.replay import _build_replay_data
+from src.domain.metrics.roles import _calculate_roles
+from src.domain.metrics.utility import _calculate_utility_stats
+
+
+def metric_versions() -> dict[str, int]:
+    """The registry's per-metric stamp.
+
+    Imported inside the function on purpose: the metric modules currently adapt
+    functions defined in this one, so importing the registry at module scope
+    would be a cycle.
+    """
+    from src.domain.metrics import REGISTRY
+
+    return REGISTRY.versions()
+
+
+def stamp_metric_versions(stats: dict[str, Any]) -> dict[str, Any]:
+    """Record which version of each metric produced the value under its key.
+
+    Written *inside* the metric's own blob, which is already opaque TEXT, so
+    there is no schema change and no new column. A reader that does not know
+    about it sees one extra key.
+
+    This is what makes staleness per-metric. A match stamped with
+    ``{"aim.stats": 3}`` and read by code at version 4 is stale on aim and
+    nothing else, instead of being marked stale wholesale by ANALYZER_VERSION
+    and dragging the user's entire library into a re-parse.
+    """
+    from src.domain.metrics import REGISTRY
+
+    for spec in REGISTRY:
+        if not spec.version_in_blob:
+            continue
+        value = stats.get(spec.output_key)
+        if isinstance(value, dict):
+            value["_metric_version"] = spec.version
+    return stats
+
+
+def stored_metric_versions(stats: dict[str, Any]) -> dict[str, int]:
+    """Read the stamps back off a stored match.
+
+    Missing entirely for anything imported before this existed, which
+    ``MetricRegistry.stale_ids`` reads as "stale on everything".
+    """
+    from src.domain.metrics import REGISTRY
+
+    found: dict[str, int] = {}
+    for spec in REGISTRY:
+        value = stats.get(spec.output_key)
+        if isinstance(value, dict) and "_metric_version" in value:
+            found[spec.id] = int(value["_metric_version"])
+    return found
 
 
 # ---------------------------------------------------------------------------
@@ -96,22 +162,24 @@ from src.parser import _build_freeze_end_map
 #      benchmark tiers and the scatter plot, which had drifted onto three
 #      different sets. Scatter data now excludes the same outliers the
 #      aggregates do, and carries stop_ticks so counter-strafe is plottable.
+#   20 Fixed five map zones that could never match, found by cross-checking the
+#      zone data once it moved to JSON. de_dust2 "Upper Tunnels" had inverted y
+#      bounds so nothing ever fell inside it; "Xbox" sat inside "Mid",
+#      de_inferno "Boiler" inside "Arch" and de_anubis "B Pillar" inside
+#      "B Site", each listed after the zone enclosing it and therefore dead
+#      — first match wins. Positions that should have read as those callouts
+#      were recorded as the enclosing area instead, in stored enriched rounds
+#      and in role classification. Also de_overpass CT gained "A Site": no CT
+#      role claimed the A bombsite, so an A anchor scored nothing from the
+#      position they actually held.
+#
+#      Still outstanding: on de_nuke the A and B bombsites share a 2D footprint
+#      because the map is stacked, so B Site reads as A Site. Separating them
+#      needs a Z coordinate the zone model does not carry.
 # ---------------------------------------------------------------------------
-ANALYZER_VERSION = 19
+ANALYZER_VERSION = 20
 
 
-# ---------------------------------------------------------------------------
-# HLTV 2.0 Rating formula coefficients (publicly documented approximation).
-# Source: https://www.hltv.org/news/20695/introducing-rating-20
-# ---------------------------------------------------------------------------
-_HLTV_COEFFICIENTS = {
-    "kast_weight": 0.0073,
-    "kpr_weight": 0.3591,
-    "dpr_weight": -0.5329,
-    "impact_weight": 0.2372,
-    "adr_weight": 0.0032,
-    "intercept": 0.1587,
-}
 
 
 def calculate_match_stats(
@@ -187,7 +255,7 @@ def calculate_match_stats(
     impact: float = round(
         2.13 * kpr + 0.42 * (assists / total_rounds) - 0.41, 4
     )
-    hltv_rating: float = _compute_hltv_rating(kast, kpr, dpr, impact, adr)
+    hltv_rating: float = compute_hltv_rating(kast, kpr, dpr, impact, adr)
 
     # ------------------------------------------------------------------ #
     # K/D ratio                                                            #
@@ -245,7 +313,7 @@ def calculate_match_stats(
         parsed_data, replay_positions_df, total_rounds,
     )
 
-    return {
+    return stamp_metric_versions({
         "analyzer_version": ANALYZER_VERSION,
         "impact_stats": impact_stats,
         "player_name": player_name,
@@ -278,7 +346,7 @@ def calculate_match_stats(
         "all_players": calculate_all_players_stats(
             parsed_data, steam_id, total_rounds
         ),
-    }
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -286,267 +354,6 @@ def calculate_match_stats(
 # ---------------------------------------------------------------------------
 
 
-def _build_replay_data(
-    parsed_data: dict[str, Any],
-    replay_positions_df: Any,
-    total_rounds: int,
-) -> dict[int, dict]:
-    """Convert replay position DataFrame into per-round frame structures.
-
-    Returns ``{round_num: {"players": {...}, "frames": [...], "events": [...]}}``.
-    """
-    if (
-        replay_positions_df is None
-        or not isinstance(replay_positions_df, pd.DataFrame)
-        or replay_positions_df.empty
-    ):
-        return {}
-
-    # Build name mapping from death events
-    death_df = parsed_data.get("player_death", pd.DataFrame())
-    name_map: dict[str, str] = {}
-    if not death_df.empty:
-        for col_sid, col_name in [
-            ("attacker_steamid", "attacker_name"),
-            ("user_steamid", "user_name"),
-        ]:
-            if col_sid in death_df.columns and col_name in death_df.columns:
-                for _, row in (
-                    death_df[[col_sid, col_name]].drop_duplicates().iterrows()
-                ):
-                    sid = str(row.get(col_sid, ""))
-                    nm = row.get(col_name, "")
-                    if sid and nm:
-                        name_map[sid] = nm
-
-    # Build per-round kill event timeline (with tick offsets matching replay frames)
-    round_end_df = parsed_data.get("round_end", pd.DataFrame())
-    round_freeze_end_df = parsed_data.get("round_freeze_end", pd.DataFrame())
-    round_start_ticks: dict[int, int] = {}
-    if not round_end_df.empty and "tick" in round_end_df.columns:
-        re_sorted = round_end_df.sort_values("round")
-        end_ticks = re_sorted["tick"].values.tolist()
-        round_nums = re_sorted["round"].values.tolist()
-        # Use freeze-end ticks when available (same reference as replay frames)
-        freeze_map = _build_freeze_end_map(round_freeze_end_df, end_ticks)
-        for i, rnd in enumerate(round_nums):
-            round_start_ticks[int(rnd)] = freeze_map.get(
-                i, int(end_ticks[i - 1]) if i > 0 else 0
-            )
-
-    kill_events_by_round: dict[int, list] = {}
-    # Build authoritative per-round team map from death AND hurt events.
-    # Event-level team_num is always correct (recorded at event time),
-    # unlike tick-sampled team_num which can be stale around halftime.
-    event_team_map: dict[int, dict[str, int]] = {}  # {round: {steamid: team}}
-
-    def _record_event_teams(df: pd.DataFrame, sid_team_pairs: list[tuple[str, str]]) -> None:
-        """Extract team assignments from event DataFrame rows."""
-        if df.empty or "round" not in df.columns:
-            return
-        for _, row in df.iterrows():
-            rnd = int(row.get("round", 0))
-            if rnd < 1:
-                continue
-            for sid_col, team_col in sid_team_pairs:
-                if sid_col not in row.index or team_col not in row.index:
-                    continue
-                sid = str(row.get(sid_col, ""))
-                if not sid:
-                    continue
-                try:
-                    t = int(row[team_col])
-                    if t in (2, 3):
-                        event_team_map.setdefault(rnd, {})[sid] = t
-                except (ValueError, TypeError):
-                    pass
-
-    # Gather teams from hurt events first (most numerous — covers almost everyone)
-    hurt_df = parsed_data.get("player_hurt", pd.DataFrame())
-    _record_event_teams(hurt_df, [
-        ("attacker_steamid", "attacker_team_num"),
-        ("user_steamid", "user_team_num"),
-    ])
-
-    # Then from death events (also builds kill timeline)
-    if not death_df.empty and "tick" in death_df.columns and "round" in death_df.columns:
-        for _, row in death_df.iterrows():
-            rnd = int(row.get("round", 0))
-            tick = int(row.get("tick", 0))
-            start = round_start_ticks.get(rnd, 0)
-            kill_events_by_round.setdefault(rnd, []).append({
-                "t": tick - start,
-                "type": "kill",
-                "attacker": str(row.get("attacker_steamid", "")),
-                "victim": str(row.get("user_steamid", "")),
-                "weapon": row.get("weapon", ""),
-                "headshot": bool(row.get("headshot", False)),
-            })
-            for sid_col, team_col in [
-                ("attacker_steamid", "attacker_team_num"),
-                ("user_steamid", "user_team_num"),
-            ]:
-                sid = str(row.get(sid_col, ""))
-                if sid and team_col in row.index:
-                    try:
-                        t = int(row[team_col])
-                        if t in (2, 3):
-                            event_team_map.setdefault(rnd, {})[sid] = t
-                    except (ValueError, TypeError):
-                        pass
-
-    # Build per-round grenade event timeline (flash/he/smoke/molotov with positions)
-    grenade_events_by_round: dict[int, list] = {}
-    _grenade_sources = [
-        ("flash_detonate", "flash"),
-        ("he_detonate", "he"),
-        ("smoke_detonate", "smoke"),
-        ("molotov_detonate", "molotov"),
-    ]
-    for data_key, nade_type in _grenade_sources:
-        nade_df = parsed_data.get(data_key, pd.DataFrame())
-        if nade_df.empty or "tick" not in nade_df.columns or "round" not in nade_df.columns:
-            continue
-        for _, row in nade_df.iterrows():
-            rnd = int(row.get("round", 0))
-            tick = int(row.get("tick", 0))
-            start = round_start_ticks.get(rnd, 0)
-            if rnd < 1:
-                continue
-            ev: dict[str, Any] = {
-                "t": tick - start,
-                "type": "grenade",
-                "grenade": nade_type,
-            }
-            # Position (game coordinates — converted to pixel in API)
-            for coord in ("x", "y"):
-                if coord in row.index:
-                    try:
-                        ev[coord] = float(row[coord])
-                    except (ValueError, TypeError):
-                        pass
-            # Thrower info (not available for inferno_startburn)
-            sid_col = "user_steamid" if "user_steamid" in row.index else None
-            if sid_col:
-                ev["thrower"] = str(row.get(sid_col, ""))
-            grenade_events_by_round.setdefault(rnd, []).append(ev)
-
-    # Detect halftime round (standard MR12 = round 12, but could differ).
-    # Find the round where a player's event-team flips compared to the previous
-    # round — that boundary marks the side swap.
-    halftime_round = 12  # default
-    for check_rnd in sorted(event_team_map.keys()):
-        prev_rnd = check_rnd - 1
-        if prev_rnd not in event_team_map:
-            continue
-        overlap = set(event_team_map[check_rnd]) & set(event_team_map[prev_rnd])
-        flipped = sum(
-            1 for s in overlap
-            if event_team_map[check_rnd][s] != event_team_map[prev_rnd][s]
-        )
-        if flipped >= 3:  # majority of overlapping players swapped
-            halftime_round = prev_rnd
-            break
-
-    result: dict[int, dict] = {}
-    for rnd in range(1, total_rounds + 1):
-        round_df = replay_positions_df[replay_positions_df["round"] == rnd]
-        if round_df.empty:
-            continue
-
-        # Build player roster with team assignment.
-        # Priority: (1) event team_num for this round (authoritative),
-        #           (2) event team from nearest round in SAME HALF,
-        #           (3) tick-sampled mode (fallback).
-        round_event_teams = event_team_map.get(rnd, {})
-        # Determine valid range for nearby-round search (stay in same half)
-        if rnd <= halftime_round:
-            search_lo, search_hi = 1, halftime_round
-        else:
-            search_lo, search_hi = halftime_round + 1, total_rounds
-
-        players: dict[str, dict] = {}
-        for sid in round_df["steamid"].unique():
-            team = round_event_teams.get(sid, 0)
-            if team == 0:
-                # Search ALL rounds within the same half (closest first)
-                for delta in range(1, search_hi - search_lo + 1):
-                    for nearby in (rnd - delta, rnd + delta):
-                        if search_lo <= nearby <= search_hi:
-                            if nearby in event_team_map and sid in event_team_map[nearby]:
-                                team = event_team_map[nearby][sid]
-                                break
-                    if team:
-                        break
-            if team == 0:
-                # Try the OTHER half and flip the team (2↔3) since sides swapped
-                if rnd <= halftime_round:
-                    alt_lo, alt_hi = halftime_round + 1, total_rounds
-                else:
-                    alt_lo, alt_hi = 1, halftime_round
-                for alt_rnd in range(alt_lo, alt_hi + 1):
-                    if alt_rnd in event_team_map and sid in event_team_map[alt_rnd]:
-                        other = event_team_map[alt_rnd][sid]
-                        team = 3 if other == 2 else 2
-                        break
-            if team == 0:
-                # Final fallback: tick-sampled mode
-                sid_rows = round_df[round_df["steamid"] == sid]
-                if "team_num" in sid_rows.columns:
-                    try:
-                        teams = sid_rows["team_num"].dropna()
-                        if not teams.empty:
-                            team = int(teams.mode().iloc[0])
-                    except (ValueError, TypeError):
-                        team = 0
-            players[sid] = {
-                "name": name_map.get(sid, sid[:8]),
-                "team": team,
-            }
-
-        # Team composition inference: if one side has 4 and the other has
-        # 5+, any team=0 players belong to the short side.
-        team_counts = {2: 0, 3: 0}
-        unknowns = []
-        for sid, info in players.items():
-            if info["team"] in (2, 3):
-                team_counts[info["team"]] += 1
-            else:
-                unknowns.append(sid)
-        if unknowns:
-            short_team = 2 if team_counts[2] < team_counts[3] else 3
-            for sid in unknowns:
-                players[sid]["team"] = short_team
-
-        # Build frames (sorted by tick offset)
-        frames: list[list] = []
-        for tick_offset in sorted(round_df["tick_offset"].unique()):
-            tick_df = round_df[round_df["tick_offset"] == tick_offset]
-            positions: dict[str, list] = {}
-            for _, row in tick_df.iterrows():
-                sid = row["steamid"]
-                try:
-                    hp = int(row["health"]) if "health" in row.index else 100
-                except (ValueError, TypeError):
-                    hp = 0
-                try:
-                    x = float(row["X"])
-                    y = float(row["Y"])
-                except (ValueError, TypeError):
-                    continue
-                if x != x or y != y:  # NaN check
-                    continue
-                positions[sid] = [round(x, 1), round(y, 1), hp]
-            frames.append([int(tick_offset), positions])
-
-        result[rnd] = {
-            "players": players,
-            "frames": frames,
-            "events": kill_events_by_round.get(rnd, [])
-                + grenade_events_by_round.get(rnd, []),
-        }
-
-    return result
 
 
 # ---------------------------------------------------------------------------
@@ -554,822 +361,35 @@ def _build_replay_data(
 # ---------------------------------------------------------------------------
 
 
-# Weapons with low movement-inaccuracy penalty — running kills with these are
-# expected and should not count against the player's movement discipline score.
-_LOW_PENALTY_WEAPONS: set[str] = {
-    # SMGs
-    "MAC-10", "MP9", "MP7", "MP5-SD", "UMP-45", "P90", "PP-Bizon",
-    # Shotguns
-    "MAG-7", "Sawed-Off", "Nova", "XM1014",
-    # Pistols
-    "Glock-18", "USP-S", "P2000", "P250", "Five-SeveN", "Tec-9",
-    "CZ75-Auto", "Dual Berettas", "Desert Eagle", "R8 Revolver",
-    # Machine guns
-    "M249", "Negev",
-    # Melee / utility (not penalised)
-    "Knife",
-}
 
 
-# Peek-speed bands: was the counter-strafe held together at speed, or only on
-# the slow peeks where there was time for it?  They label the regions of the
-# peek-speed axis on the charts as well as splitting the counter-strafe rate.
-#
-# The floor is _ACCURATE_SPEED — below it the player never had to stop at all,
-# and no engagement enters the counter-strafe denominator.  (Written as a
-# literal because _ACCURATE_SPEED is defined further down and so cannot be
-# referenced at import time; a test pins the two together.)
-#
-# The upper split is at 180 u/s.  A rifle caps a player at 215-225 rather than
-# the 250 a knife allows, so 180 is roughly 80% of the fastest a peek with an
-# AK or M4 in hand can be — the range where the stop has to be timed to the
-# tick.  The lower split at 130 sits just above shift-walk speed (~112), which
-# separates a peek taken at a walk from one taken with real commitment.
-_PEEK_BUCKETS: list[tuple[str, str, float, float]] = [
-    ("walk", "Walk", 85.0, 130.0),
-    ("half", "Half speed", 130.0, 180.0),
-    ("full", "Full speed", 180.0, float("inf")),
-]
 
-def _peek_bucket(speed: float) -> str | None:
-    """Which ``_PEEK_BUCKETS`` band *speed* falls in, or None if below them all."""
-    for key, _label, lo, hi in _PEEK_BUCKETS:
-        if lo <= speed < hi:
-            return key
-    return None
 
 
-# ---------------------------------------------------------------------------
-# Aim metric bands — the single source of truth
-#
-# These bounds were previously written down three times: once as the per-kill
-# quality buckets, once as the benchmark tiers, and once again in the scatter
-# plot's JavaScript.  They had drifted apart — crosshair placement was bucketed
-# at 5/10/20 but graded at 3/10/25, and the scatter drew bands at yet another
-# set — so the same number could be called "good" on one card and "fair" three
-# inches to the right.  Everything now reads from here, and the table is
-# shipped to the frontend in ``aim_stats["thresholds"]`` so nothing has to
-# duplicate it.
-#
-# ``range`` fixes the axis a chart draws on. Scaling to each match's own
-# spread meant an identical distribution looked different from game to
-# game, and a good match and a bad one drew the same picture — the only
-# cue left was colour. A fixed span makes the shape itself comparable.
-#
-# The values remain hand-set heuristics; see the note on compute_benchmarks.
-# ---------------------------------------------------------------------------
-_AIM_THRESHOLDS: dict[str, dict[str, Any]] = {
-    "movement": {
-        "label": "Shot Speed", "unit": "u/s",
-        "bounds": [15, 40, 100], "lower_better": True,
-        "range": [0, 250],
-    },
-    # Peek speed ships with no bounds because it carries no verdict on its own:
-    # approaching slowly is right when holding an angle and wrong when entering
-    # a site, and nothing in the demo says which one the player meant to do.
-    # Charts therefore draw it as a plain axis, and whatever grading appears on
-    # a chart it is plotted against comes from the *other* metric — which is the
-    # comparison that actually means something.
-    #
-    # ``zones`` name the regions of that axis instead.  They are categories,
-    # not grades — which kind of peek this was, at the same speeds the
-    # counter-strafe cross-tab splits on, so a point's position on the chart
-    # and its row in the breakdown mean the same thing.  Charts must colour
-    # them as a speed ramp, never in the tier palette.
-    "peek": {
-        "label": "Peek Speed", "unit": "u/s",
-        "bounds": [], "lower_better": True,
-        "range": [0, 250],
-        "zones": [{"at": 0.0, "label": "Held"}] + [
-            {"at": lo, "label": label} for _key, label, lo, _hi in _PEEK_BUCKETS
-        ],
-    },
-    # The middle bound must stay equal to _COUNTERSTRAFE_MAX_TICKS, which is
-    # defined further down and so cannot be referenced at import time.  A test
-    # pins the two together.
-    "stop_ticks": {
-        "label": "Counter-strafe", "unit": "ticks",
-        "bounds": [3, 7, 15], "lower_better": True,
-        "range": [0, 32],
-    },
-    # Not a per-encounter measurement like the rest — an encounter is either a
-    # clean stop or it is not — so this never appears on the scatter.  It lives
-    # here so the benchmark badge and the per-peek-speed breakdown grade the
-    # rate against one set of numbers instead of two.
-    "counterstrafe": {
-        "label": "Counter-strafe Rate", "unit": "%",
-        "bounds": [80, 60, 35], "lower_better": False,
-        "range": [0, 100],
-    },
-    "preaim": {
-        "label": "Crosshair Placement", "unit": "°",
-        "bounds": [5, 10, 20], "lower_better": True,
-        "range": [0, 45],
-    },
-    "ttk": {
-        "label": "Engagement Time", "unit": "s",
-        "bounds": [0.4, 0.65, 1.1], "lower_better": True,
-        "range": [0, 1.0],
-    },
-    "reaction": {
-        "label": "Reaction Time", "unit": "ms",
-        "bounds": [150, 200, 300], "lower_better": True,
-        "range": [0, 800],
-    },
-    "accuracy": {
-        "label": "Accuracy", "unit": "%",
-        "bounds": [75, 50, 30], "lower_better": False,
-        "range": [0, 100],
-    },
-}
 
 
-def _aim_bounds(metric: str) -> list[float]:
-    return _AIM_THRESHOLDS[metric]["bounds"]
 
 
-# The regions of the peek-speed axis, in ascending order.  The chart shades and
-# labels these, and the per-match distribution below is reported against the
-# same list, so the legend beside a chart names exactly the bands drawn on it.
-_PEEK_ZONES: list[dict[str, Any]] = _AIM_THRESHOLDS["peek"]["zones"]
 
 
-def _peek_zone_index(speed: float) -> int:
-    """Which ``_PEEK_ZONES`` region *speed* falls in — what kind of peek it was.
 
-    Unlike ``_peek_bucket`` this never returns None: the bottom region covers
-    the speeds that never needed a stop, which are held angles rather than
-    peeks but still belong somewhere in the distribution.
-    """
-    index = 0
-    for i, zone in enumerate(_PEEK_ZONES):
-        if speed >= zone["at"]:
-            index = i
-    return index
 
 
-# Engagement times at or beyond this are not telling us about aim any more —
-# they are a fight that broke off and resumed, a reload, or a repositioning.
-# Leetify draws the same line on their Time to Damage stat.
-_TTK_OUTLIER_SECONDS = 1.0
 
-# Shrinkage constant for confidence weighting: a metric measured n times
-# carries n / (n + k) of its nominal weight, so a two-sample estimate barely
-# moves the rating while a twenty-sample one counts almost fully.  Standard
-# empirical-Bayes shrinkage; k ≈ 12 puts the half-way point at a dozen
-# engagements, which is roughly what a normal match produces per metric.
-_CONFIDENCE_K = 12
 
-# Relative weights of the components that feed the aim rating.
-#
-# Two measured metrics are deliberately absent.
-#
-# Reaction time: at 2-20 samples per match, and with no way to tell a flick
-# from an enemy walking into a held crosshair, it is a diagnostic rather than a
-# rating input.  Leetify reached the same conclusion and publishes Time to
-# Damage instead, explicitly captioned as *not* reaction time.
-#
-# Counter-strafe rate: it is the best-measured technique stat here, but it
-# answers a different question than the rating asks.  The movement component
-# already scores the *outcome* — was the shot taken from an accurate state —
-# and coasting to a halt produces just as accurate a shot as counter-strafing,
-# only slower and more telegraphed.  Feeding both in would score movement
-# twice and break the independence the per-dimension weighting depends on, so
-# counter-strafe rate is reported and graded on its own instead.
-_AIM_RATING_WEIGHTS = {
-    "preaim": 0.40,
-    "movement": 0.30,
-    "ttk": 0.30,
-}
 
 
-# Weapons where counter-strafing is the technique that decides the shot.
-# Rifles have a hard accuracy penalty above ~34% of max speed and no way to
-# shoot through it, so stopping properly is the whole skill.  SMGs, shotguns
-# and pistols carry a far smaller penalty and are routinely fired on the move
-# by design, and snipers are a different mechanic again — grading any of them
-# on counter-strafe quality measures the weapon, not the player.  Leetify
-# restricts the same stat to rifles.
-_COUNTERSTRAFE_WEAPONS: set[str] = {
-    "AK-47", "M4A4", "M4A1-S", "Galil AR", "FAMAS", "SG 553", "AUG",
-}
 
 
-def _median(values: list[float]) -> float | None:
-    """Median of *values*, or None when empty.
 
-    Used instead of the mean throughout the aim aggregates: these samples are
-    few and have a long right tail, so one bad engagement drags a mean well
-    away from typical behaviour.
-    """
-    if not values:
-        return None
-    ordered = sorted(values)
-    mid = len(ordered) // 2
-    if len(ordered) % 2:
-        return float(ordered[mid])
-    return (ordered[mid - 1] + ordered[mid]) / 2.0
 
 
-def _confidence(n: int) -> str:
-    """Coarse label for how much a sample of *n* engagements can carry."""
-    if n >= 20:
-        return "high"
-    if n >= 8:
-        return "medium"
-    return "low"
 
 
-def _summarise(values: list[float], digits: int) -> dict[str, Any]:
-    """Central-tendency block shared by every aim metric.
 
-    ``median`` is the headline figure and what the rating and benchmarks read;
-    ``avg`` is kept alongside it because it is what earlier versions reported
-    and it is still useful for spotting a skewed distribution at a glance.
-    """
-    n = len(values)
-    return {
-        "n": n,
-        "confidence": _confidence(n),
-        "median": round(_median(values), digits),
-        "avg": round(sum(values) / n, digits),
-        "min": round(min(values), digits),
-        "max": round(max(values), digits),
-    }
 
 
-def _calculate_aim_stats(enriched_rounds: list[dict[str, Any]]) -> dict[str, Any]:
-    """Aggregate per-kill movement, pre-aim, and TTK data into match-level stats.
 
-    Every metric block carries ``median`` (the headline figure), ``avg``,
-    ``min``, ``max``, ``n`` and a coarse ``confidence`` label.  The median
-    leads because these samples are small and right-skewed.
-
-    Returns a dict with:
-      - movement: {speeds: [...], weapons: [...], median, avg, min, max, n,
-                   confidence, standing_pct, counterstrafed_pct, stopped_pct,
-                   running_pct, low_penalty_weapons: [...],
-                   counterstrafe_by_peek: [...]}
-      - peek: speed carried into the duel; diagnostic only, never graded
-      - preaim: {errors: [...], median, avg, ..., excellent_pct, good_pct,
-                 moderate_pct, poor_pct}
-      - ttk: {values: [...], median, avg, ..., excluded_outliers}  (seconds)
-      - reaction: diagnostic only, never an input to aim_rating
-      - aim_rating: 0-100, or None when nothing measurable was found
-      - aim_rating_inputs: per-component score, n and the weight it earned
-    """
-    shot_speeds: list[float] = []
-    # Peak speed in the half second before the shot — how fast the player
-    # entered the duel.  Kept parallel to the lists around it so the
-    # counter-strafe cross-tab can zip the two together.
-    peek_speeds: list[float] = []
-    kill_weapons: list[str] = []
-    movement_qualities: list[str] = []
-    movement_crouched: list[bool] = []
-    preaim_errors: list[float] = []
-    preaim_qualities: list[str] = []
-    ttk_values: list[float] = []
-    ttk_shots: list[int] = []
-    ttk_hits: list[int] = []
-    reaction_values: list[float] = []
-    reaction_categories: list[str] = []
-
-    # Accuracy per-encounter
-    accuracy_values: list[float] = []    # hit_pct per engagement
-    accuracy_hits: list[int] = []
-    accuracy_shots: list[int] = []
-    first_bullet_hits: list[bool] = []
-    hitgroup_head: int = 0
-    hitgroup_upper: int = 0
-    hitgroup_lower: int = 0
-    hitgroup_total: int = 0
-
-    # Per-data-point encounter outcomes: "kill" | "death" | "damage"
-    outcomes_mov: list[str] = []
-    outcomes_preaim: list[str] = []
-    outcomes_ttk: list[str] = []
-    outcomes_rxn: list[str] = []
-    outcomes_acc: list[str] = []
-
-    # Per-encounter objects for the 2D scatter plot (each has whichever KPIs are available)
-    encounters: list[dict[str, Any]] = []
-
-    for r in enriched_rounds:
-        for k in r.get("kills_detail", []):
-            # Every kills_detail entry is a kill the player secured, so the
-            # aim-scatter outcome is always "kill". (Dying later in the same
-            # round does not turn a won duel into a lost one.)
-            outcome = "kill"
-            weapon = k.get("weapon", "")
-            enc: dict[str, Any] = {"outcome": outcome}
-
-            mv = k.get("movement")
-            if mv:
-                shot_speeds.append(mv["shot_speed"])
-                peek_speeds.append(mv["pre_speed"])
-                movement_qualities.append(mv["movement_quality"])
-                movement_crouched.append(bool(mv.get("crouched")))
-                kill_weapons.append(weapon)
-                outcomes_mov.append(outcome)
-                enc["movement"] = mv["shot_speed"]
-                enc["peek"] = mv["pre_speed"]
-                if mv.get("stop_ticks") is not None:
-                    enc["stop_ticks"] = mv["stop_ticks"]
-
-            pa = k.get("preaim")
-            if pa:
-                preaim_errors.append(pa["crosshair_error"])
-                preaim_qualities.append(pa["preaim_quality"])
-                outcomes_preaim.append(outcome)
-                enc["preaim"] = pa["crosshair_error"]
-
-            ttd = k.get("ttd")
-            # A one-tap registers first_shot_tick == kill_tick, so its
-            # engagement time is legitimately 0.  Requiring > 0 dropped exactly
-            # the fastest kills a player has, pulling the median upward.
-            if ttd and ttd.get("ttk_seconds") is not None:
-                ttk_values.append(ttd["ttk_seconds"])
-                ttk_shots.append(ttd.get("shots_fired", ttd.get("hits", 1)))
-                ttk_hits.append(ttd.get("hits", 1))
-                outcomes_ttk.append(outcome)
-                # Same exclusion the aggregate applies, or the scatter would
-                # plot engagements the median beside it has thrown away.
-                if ttd["ttk_seconds"] < _TTK_OUTLIER_SECONDS:
-                    enc["ttk"] = ttd["ttk_seconds"]
-
-            rxn = k.get("reaction")
-            if rxn and rxn.get("reaction_ms") is not None:
-                reaction_values.append(rxn["reaction_ms"])
-                reaction_categories.append(rxn["category"])
-                outcomes_rxn.append(outcome)
-                enc["reaction"] = rxn["reaction_ms"]
-
-            # Accuracy (from ttd sub-dict)
-            acc = ttd.get("accuracy") if ttd else None
-            if acc and acc.get("hit_pct") is not None:
-                accuracy_values.append(acc["hit_pct"])
-                first_bullet_hits.append(acc["first_bullet_hit"])
-                hitgroup_head += acc.get("head", 0)
-                hitgroup_upper += acc.get("upper", 0)
-                hitgroup_lower += acc.get("lower", 0)
-                hitgroup_total += acc.get("head", 0) + acc.get("upper", 0) + acc.get("lower", 0)
-                accuracy_hits.append(int(ttd.get("hits", 0)))
-                accuracy_shots.append(int(ttd.get("shots_fired", 0)))
-                outcomes_acc.append(outcome)
-                enc["accuracy"] = acc["hit_pct"]
-
-            encounters.append(enc)
-
-        # Damage encounters (hurt an enemy but did not kill them). A duel is
-        # counted as lost ("death") when the player dies to that same enemy
-        # shortly after last hitting them; otherwise it stays "damage"
-        # (inconclusive — enemy disengaged, was traded, or round ended).
-        death = r.get("death_detail")
-        death_tick = death.get("tick") if death else None
-        killer_sid = death.get("killer_steamid") if death else None
-
-        for d in r.get("damage_encounters", []):
-            outcome = "damage"
-            if (
-                killer_sid
-                and d.get("victim_sid") == killer_sid
-                and death_tick is not None
-                and d.get("last_tick") is not None
-                and 0 <= death_tick - d["last_tick"] <= _LOST_DUEL_WINDOW
-            ):
-                outcome = "death"
-
-            enc = {"outcome": outcome}
-
-            mv = d.get("movement")
-            if mv:
-                shot_speeds.append(mv["shot_speed"])
-                peek_speeds.append(mv["pre_speed"])
-                movement_qualities.append(mv["movement_quality"])
-                movement_crouched.append(bool(mv.get("crouched")))
-                kill_weapons.append(d.get("weapon", ""))
-                outcomes_mov.append(outcome)
-                enc["movement"] = mv["shot_speed"]
-                enc["peek"] = mv["pre_speed"]
-                if mv.get("stop_ticks") is not None:
-                    enc["stop_ticks"] = mv["stop_ticks"]
-
-            pa = d.get("preaim")
-            if pa:
-                preaim_errors.append(pa["crosshair_error"])
-                preaim_qualities.append(pa["preaim_quality"])
-                outcomes_preaim.append(outcome)
-                enc["preaim"] = pa["crosshair_error"]
-
-            # Reaction and accuracy do not depend on the duel being won, and
-            # these engagements are roughly 40% of a player's shooting.
-            # Excluding them measured only the fights that went well.
-            rxn = d.get("reaction")
-            if rxn and rxn.get("reaction_ms") is not None:
-                reaction_values.append(rxn["reaction_ms"])
-                reaction_categories.append(rxn["category"])
-                outcomes_rxn.append(outcome)
-                enc["reaction"] = rxn["reaction_ms"]
-
-            acc = d.get("accuracy")
-            if acc and acc.get("hit_pct") is not None:
-                accuracy_values.append(acc["hit_pct"])
-                first_bullet_hits.append(acc["first_bullet_hit"])
-                hitgroup_head += acc.get("head", 0)
-                hitgroup_upper += acc.get("upper", 0)
-                hitgroup_lower += acc.get("lower", 0)
-                hitgroup_total += acc.get("head", 0) + acc.get("upper", 0) + acc.get("lower", 0)
-                accuracy_hits.append(int(d.get("hits", 0)))
-                accuracy_shots.append(int(d.get("shots_fired", 0)))
-                outcomes_acc.append(outcome)
-                enc["accuracy"] = acc["hit_pct"]
-
-            encounters.append(enc)
-
-        # Bursts that landed nothing. They carry no movement or crosshair data
-        # (there is no victim to measure against), but their bullets belong in
-        # the accuracy denominator — they are the engagements that went worst.
-        for w in r.get("whiffed_engagements", []):
-            shots = int(w.get("shots_fired", 0))
-            if shots <= 0:
-                continue
-            accuracy_values.append(0.0)
-            accuracy_hits.append(0)
-            accuracy_shots.append(shots)
-            first_bullet_hits.append(False)
-            outcomes_acc.append("whiff")
-            encounters.append({"outcome": "whiff", "accuracy": 0.0})
-
-    n_mov = len(movement_qualities)
-    n_aim = len(preaim_qualities)
-
-    movement = {}
-    if shot_speeds:
-        standing = sum(1 for q in movement_qualities if q == "standing")
-        cs = sum(1 for q in movement_qualities if q == "counter-strafed")
-        stopped = sum(1 for q in movement_qualities if q == "stopped")
-        running = sum(1 for q in movement_qualities if q == "running")
-        # Identify which kills used low-penalty weapons
-        low_penalty_flags = [
-            w in _LOW_PENALTY_WEAPONS for w in kill_weapons
-        ]
-        running_low = sum(
-            1 for q, lp in zip(movement_qualities, low_penalty_flags)
-            if q == "running" and lp
-        )
-        # Counter-strafe rate, scored only where the technique decides the
-        # shot: rifles, not crouched, and only engagements that actually
-        # needed a stop.  Reporting counter-strafes as a share of *all*
-        # engagements buried the signal — running and standing shots, which
-        # say nothing about stopping ability, made up most of the denominator.
-        #
-        # The same engagements are also split by how fast the peek was.  The
-        # overall rate hides the question worth asking: a player who stops
-        # cleanly off a walk and coasts off every full-speed peek scores the
-        # same as one who is merely inconsistent, and only the first has a
-        # specific thing to practise.
-        cs_attempts = 0
-        cs_good = 0
-        cs_by_peek: dict[str, list[int]] = {k: [0, 0] for k, _, _, _ in _PEEK_BUCKETS}
-        for q, w, crouch, peak in zip(
-            movement_qualities, kill_weapons, movement_crouched, peek_speeds,
-        ):
-            if crouch or w not in _COUNTERSTRAFE_WEAPONS:
-                continue
-            if q not in ("counter-strafed", "stopped"):
-                continue
-            good = q == "counter-strafed"
-            cs_attempts += 1
-            if good:
-                cs_good += 1
-            bucket = _peek_bucket(peak)
-            if bucket:
-                cs_by_peek[bucket][0] += 1
-                if good:
-                    cs_by_peek[bucket][1] += 1
-
-        movement = {
-            **_summarise(shot_speeds, 1),
-            "speeds": [round(s, 1) for s in shot_speeds],
-            "weapons": kill_weapons,
-            "low_penalty": low_penalty_flags,
-            "crouched": movement_crouched,
-            "outcomes": outcomes_mov,
-            "crouched_pct": round(
-                sum(1 for c in movement_crouched if c) / n_mov * 100, 1
-            ) if n_mov else 0,
-            "counterstrafe_attempts": cs_attempts,
-            "counterstrafe_good": cs_good,
-            "counterstrafe_rate": round(cs_good / cs_attempts * 100, 1) if cs_attempts else None,
-            "counterstrafe_by_peek": [
-                {
-                    "bucket": key,
-                    "label": label,
-                    "min": lo,
-                    "max": None if hi == float("inf") else hi,
-                    "attempts": cs_by_peek[key][0],
-                    "good": cs_by_peek[key][1],
-                    "rate": round(cs_by_peek[key][1] / cs_by_peek[key][0] * 100, 1)
-                    if cs_by_peek[key][0] else None,
-                }
-                for key, label, lo, hi in _PEEK_BUCKETS
-            ],
-            "standing_pct": round(standing / n_mov * 100, 1) if n_mov else 0,
-            "counterstrafed_pct": round(cs / n_mov * 100, 1) if n_mov else 0,
-            "stopped_pct": round(stopped / n_mov * 100, 1) if n_mov else 0,
-            "running_pct": round(running / n_mov * 100, 1) if n_mov else 0,
-            "running_total": running,
-            "running_low_penalty": running_low,
-        }
-
-    # How fast the player was moving on the way into the duel, measured as the
-    # peak speed over the half second ending at the first shot.  Reported, never
-    # graded and never fed into the rating: a slow approach is correct when
-    # holding an angle and wrong when entering a site, and the demo does not say
-    # which the player intended.  Its value is as the x-axis for the metrics
-    # that *are* graded — above all the counter-strafe, which is the technique
-    # that has to absorb whatever speed the peek carried in.
-    peek = {}
-    if peek_speeds:
-        n_peek = len(peek_speeds)
-        zone_counts = [0] * len(_PEEK_ZONES)
-        for s in peek_speeds:
-            zone_counts[_peek_zone_index(s)] += 1
-        by_zone = [
-            {
-                "label": zone["label"],
-                "at": zone["at"],
-                "n": count,
-                "pct": round(count / n_peek * 100, 1),
-            }
-            for zone, count in zip(_PEEK_ZONES, zone_counts)
-        ]
-        peek = {
-            **_summarise(peek_speeds, 1),
-            "values": [round(s, 1) for s in peek_speeds],
-            "outcomes": outcomes_mov,
-            "diagnostic_only": True,
-            # The share of engagements in each region of the axis, so a legend
-            # can name the same bands the chart shades.
-            "by_zone": by_zone,
-            # Headline shortcuts, read off the same counts rather than
-            # recomputed: the bottom region is a held angle (never fast enough
-            # to need a stop) and the top one is a committed full-speed peek.
-            "held_pct": by_zone[0]["pct"],
-            "full_pct": by_zone[-1]["pct"],
-        }
-
-    preaim = {}
-    if preaim_errors:
-        exc = sum(1 for q in preaim_qualities if q == "excellent")
-        good = sum(1 for q in preaim_qualities if q == "good")
-        mod = sum(1 for q in preaim_qualities if q == "moderate")
-        poor = sum(1 for q in preaim_qualities if q == "poor")
-        preaim = {
-            **_summarise(preaim_errors, 1),
-            "errors": [round(e, 1) for e in preaim_errors],
-            "outcomes": outcomes_preaim,
-            "excellent_pct": round(exc / n_aim * 100, 1) if n_aim else 0,
-            "good_pct": round(good / n_aim * 100, 1) if n_aim else 0,
-            "moderate_pct": round(mod / n_aim * 100, 1) if n_aim else 0,
-            "poor_pct": round(poor / n_aim * 100, 1) if n_aim else 0,
-        }
-
-    ttk = {}
-    if ttk_values:
-        # Drop engagements long enough that they stopped being about aim.  The
-        # outcomes list runs parallel to the values, so it has to be filtered
-        # in lockstep or the scatter plot mislabels every point after the first
-        # exclusion.
-        kept = [
-            (v, o) for v, o in zip(ttk_values, outcomes_ttk)
-            if v < _TTK_OUTLIER_SECONDS
-        ]
-        excluded = len(ttk_values) - len(kept)
-        if kept:
-            kept_values = [v for v, _ in kept]
-            total_shots = sum(ttk_shots)
-            total_hits = sum(ttk_hits)
-            ttk = {
-                **_summarise(kept_values, 3),
-                "values": [round(v, 3) for v in kept_values],
-                "outcomes": [o for _, o in kept],
-                "excluded_outliers": excluded,
-                "total_shots": total_shots,
-                "total_hits": total_hits,
-                "accuracy_pct": round(total_hits / total_shots * 100, 1) if total_shots else 0,
-            }
-
-    reaction = {}
-    if reaction_values:
-        n_rxn = len(reaction_values)
-        lightning = sum(1 for c in reaction_categories if c == "lightning")
-        fast = sum(1 for c in reaction_categories if c == "fast")
-        average = sum(1 for c in reaction_categories if c == "average")
-        slow = sum(1 for c in reaction_categories if c == "slow")
-        reaction = {
-            **_summarise(reaction_values, 1),
-            # Reported for inspection only — see _AIM_RATING_WEIGHTS for why it
-            # does not feed the rating.
-            "diagnostic_only": True,
-            "values": [round(v, 1) for v in reaction_values],
-            "outcomes": outcomes_rxn,
-            "lightning_pct": round(lightning / n_rxn * 100, 1),
-            "fast_pct": round(fast / n_rxn * 100, 1),
-            "average_pct": round(average / n_rxn * 100, 1),
-            "slow_pct": round(slow / n_rxn * 100, 1),
-        }
-
-    accuracy = {}
-    if accuracy_values:
-        n_acc = len(accuracy_values)
-        fb_hit = sum(1 for fb in first_bullet_hits if fb)
-        total_acc_hits = sum(accuracy_hits)
-        total_acc_shots = sum(accuracy_shots)
-        accuracy = {
-            **_summarise(accuracy_values, 1),
-            # Accuracy is a rate, so the headline pools every bullet rather
-            # than averaging per-engagement percentages.  A one-bullet exchange
-            # scores 100% and a thirty-round spray that lands ten scores 33%;
-            # treating those as two equal observations put the median 20 points
-            # above the rate the player actually shot at.
-            "pooled_pct": round(total_acc_hits / total_acc_shots * 100, 1)
-            if total_acc_shots else None,
-            "total_hits": total_acc_hits,
-            "total_shots": total_acc_shots,
-            "values": [round(v, 1) for v in accuracy_values],
-            "outcomes": outcomes_acc,
-            "first_bullet_pct": round(fb_hit / n_acc * 100, 1) if n_acc else 0,
-            "head_pct": round(hitgroup_head / hitgroup_total * 100, 1) if hitgroup_total else 0,
-            "upper_pct": round(hitgroup_upper / hitgroup_total * 100, 1) if hitgroup_total else 0,
-            "lower_pct": round(hitgroup_lower / hitgroup_total * 100, 1) if hitgroup_total else 0,
-            "head_count": hitgroup_head,
-            "upper_count": hitgroup_upper,
-            "lower_count": hitgroup_lower,
-        }
-
-    # ------------------------------------------------------------------ #
-    # Aim rating (0-100)                                                   #
-    #                                                                      #
-    # Each component scores off the *median* of its samples, then carries  #
-    # weight proportional to how much evidence stands behind it.  Absent   #
-    # components are dropped and the remaining weights renormalised —      #
-    # previously they were filled in at 50, which meant a match where a    #
-    # metric could not be measured was rated partly on a constant.  That   #
-    # is untenable once these weights become user-adjustable: someone who  #
-    # cares mostly about one metric would be scored on a placeholder.      #
-    # ------------------------------------------------------------------ #
-    components: list[tuple[str, float, int]] = []
-
-    preaim_median = _median(preaim_errors)
-    if preaim_median is not None:
-        # 0° = 100, 20°+ = 0
-        components.append((
-            "preaim",
-            max(0.0, min(100.0, 100.0 - preaim_median * 5.0)),
-            len(preaim_errors),
-        ))
-
-    if n_mov:
-        good_mov = sum(1 for q in movement_qualities if q != "running")
-        components.append(("movement", good_mov / n_mov * 100.0, n_mov))
-
-    ttk_median = _median([v for v in ttk_values if v < _TTK_OUTLIER_SECONDS])
-    if ttk_median is not None:
-        # 0.15s = 100, 0.8s+ = 0
-        components.append((
-            "ttk",
-            max(0.0, min(100.0, (0.8 - ttk_median) / 0.65 * 100.0)),
-            len([v for v in ttk_values if v < _TTK_OUTLIER_SECONDS]),
-        ))
-
-    aim_rating: float | None = None
-    rating_inputs: list[dict[str, Any]] = []
-    if components:
-        weighted_sum = 0.0
-        total_weight = 0.0
-        for name, score, n in components:
-            weight = _AIM_RATING_WEIGHTS[name] * (n / (n + _CONFIDENCE_K))
-            weighted_sum += score * weight
-            total_weight += weight
-            rating_inputs.append({
-                "metric": name,
-                "score": round(score, 1),
-                "n": n,
-                "weight": round(weight, 4),
-            })
-        if total_weight > 0:
-            aim_rating = round(min(100.0, max(0.0, weighted_sum / total_weight)), 1)
-            for item in rating_inputs:
-                item["weight_share"] = round(item["weight"] / total_weight, 3)
-
-    return {
-        "thresholds": _AIM_THRESHOLDS,
-        "aim_rating_inputs": rating_inputs,
-        "movement": movement,
-        "peek": peek,
-        "preaim": preaim,
-        "ttk": ttk,
-        "reaction": reaction,
-        "accuracy": accuracy,
-        "aim_rating": aim_rating,
-        "encounters": encounters,
-    }
-
-
-# ---------------------------------------------------------------------------
-# Round win probability
-#
-# P(CT wins the round | ct_alive, t_alive, bomb_planted), measured from this
-# installation's own demo corpus: 40 demos, ~800 rounds, 6045 observed states.
-# Every state below has at least 8 observations behind it.
-#
-# The table validates against known truths, which is the main reason to trust
-# it: 5v5 with no bomb comes out at 0.501 on 793 observations, the even states
-# (4v4, 3v3, 2v2) all sit within a couple of points of 0.500, man advantage is
-# monotone in both directions, and planting the bomb moves every state toward
-# the T side. None of that was imposed — it fell out of the data.
-#
-# It is one player's matchmaking pool, so it encodes that pool's tendencies.
-# Recalibrate with scripts/calibrate_winprob.py as the corpus grows.
-# ---------------------------------------------------------------------------
-_WIN_PROB: dict[tuple[int, int, int], float] = {
-    (1, 1, 0): 0.667,       # n=51
-    (1, 1, 1): 0.299,       # n=107
-    (1, 2, 0): 0.298,       # n=57
-    (1, 2, 1): 0.099,       # n=142
-    (1, 3, 0): 0.039,       # n=51
-    (1, 3, 1): 0.056,       # n=108
-    (1, 4, 0): 0.000,       # n=40
-    (1, 4, 1): 0.027,       # n=74
-    (1, 5, 0): 0.000,       # n=26
-    (1, 5, 1): 0.000,       # n=27
-    (2, 1, 0): 0.828,       # n=122
-    (2, 1, 1): 0.683,       # n=79
-    (2, 2, 0): 0.513,       # n=148
-    (2, 2, 1): 0.387,       # n=119
-    (2, 3, 0): 0.290,       # n=145
-    (2, 3, 1): 0.137,       # n=95
-    (2, 4, 0): 0.123,       # n=114
-    (2, 4, 1): 0.077,       # n=78
-    (2, 5, 0): 0.068,       # n=74
-    (2, 5, 1): 0.030,       # n=33
-    (3, 1, 0): 0.956,       # n=137
-    (3, 1, 1): 0.939,       # n=33
-    (3, 2, 0): 0.738,       # n=210
-    (3, 2, 1): 0.727,       # n=66
-    (3, 3, 0): 0.498,       # n=257
-    (3, 3, 1): 0.456,       # n=68
-    (3, 4, 0): 0.315,       # n=232
-    (3, 4, 1): 0.238,       # n=63
-    (3, 5, 0): 0.141,       # n=170
-    (3, 5, 1): 0.038,       # n=26
-    (4, 1, 0): 0.991,       # n=109
-    (4, 1, 1): 1.000,       # n=11
-    (4, 2, 0): 0.921,       # n=178
-    (4, 2, 1): 0.864,       # n=22
-    (4, 3, 0): 0.688,       # n=282
-    (4, 3, 1): 0.684,       # n=38
-    (4, 4, 0): 0.520,       # n=369
-    (4, 4, 1): 0.468,       # n=47
-    (4, 5, 0): 0.310,       # n=364
-    (4, 5, 1): 0.321,       # n=28
-    (5, 1, 0): 1.000,       # n=51
-    (5, 2, 0): 0.961,       # n=102
-    (5, 3, 0): 0.812,       # n=208
-    (5, 3, 1): 0.750,       # n=12
-    (5, 4, 0): 0.672,       # n=415
-    (5, 4, 1): 0.640,       # n=25
-    (5, 5, 0): 0.501,       # n=793
-    (5, 5, 1): 0.513,       # n=39
-}
-
-
-def _win_probability(ct_alive: int, t_alive: int, bomb_planted: bool) -> float:
-    """P(CT wins) for a round state, falling back when the state is unmeasured.
-
-    Falls back to the same man-count without the bomb, and finally to a plain
-    function of the man advantage, so that rare states still return something
-    monotone rather than dropping the kill out of the swing calculation.
-    """
-    if ct_alive <= 0:
-        return 0.0
-    if t_alive <= 0:
-        return 1.0
-
-    planted = 1 if bomb_planted else 0
-    exact = _WIN_PROB.get((ct_alive, t_alive, planted))
-    if exact is not None:
-        return exact
-
-    no_bomb = _WIN_PROB.get((ct_alive, t_alive, 0))
-    if no_bomb is not None:
-        # Planting is worth roughly a tenth of a round to the T side across the
-        # measured states; apply that shift when the planted cell is missing.
-        return max(0.0, min(1.0, no_bomb - 0.10)) if planted else no_bomb
-
-    diff = ct_alive - t_alive
-    return max(0.0, min(1.0, 0.5 + 0.18 * diff - (0.10 if planted else 0.0)))
 
 
 # ---------------------------------------------------------------------------
@@ -1389,836 +409,33 @@ def _win_probability(ct_alive: int, t_alive: int, bomb_planted: bool) -> float:
 # ``calibration: "heuristic"`` so a consumer can tell.  Replacing these with
 # percentiles needs a corpus far larger than one player's match history.
 
-# Map-specific enemies-flashed benchmarks (24-round base).
-_FLASH_BENCHMARKS: dict[str, tuple[int, int, int]] = {
-    # (high_amateur_floor, average_floor, below_average_ceiling)
-    # Pro ≥ high_amateur_floor+x depending on map, but we use ranges:
-    # Pro: >= t1, High Amateur: >= t2, Average: >= t3, Below Average: < t3
-    "de_dust2":   (14, 8, 3),   # Pro 14-22, HA 8-14, Avg 3-7, BA <3
-    "de_inferno": (9, 6, 3),    # Pro 9-15, HA 6-9, Avg 2-5, BA <3
-    # Default for maps not specifically listed
-    "_default":   (10, 6, 3),
-}
 
 
-def _classify_tier_lower_better(value: float, pro_max: float, ha_max: float, avg_max: float) -> str:
-    """Classify where lower values are better (speed, offset, times)."""
-    if value <= pro_max:
-        return "pro"
-    if value <= ha_max:
-        return "high_amateur"
-    if value <= avg_max:
-        return "average"
-    return "below_average"
 
 
-def _classify_tier_higher_better(value: float, pro_min: float, ha_min: float, avg_min: float) -> str:
-    """Classify where higher values are better (flash count, damage)."""
-    if value >= pro_min:
-        return "pro"
-    if value >= ha_min:
-        return "high_amateur"
-    if value >= avg_min:
-        return "average"
-    return "below_average"
 
 
-def compute_benchmarks(
-    aim_stats: dict[str, Any],
-    utility_data: dict[str, Any],
-    total_rounds: int,
-    map_name: str,
-) -> dict[str, Any]:
-    """Compute benchmark tier labels for key metrics.
-
-    Returns a dict of metric_key → {value, tier, unit, n, confidence,
-    calibration} where tier is one of "pro", "high_amateur", "average",
-    "below_average" and ``calibration`` is always "heuristic" for now — see the
-    note above the threshold tables.
-    """
-    benchmarks: dict[str, Any] = {}
-    # Normalisation factor: benchmarks assume a 24-round (MR12) map
-    norm = 24 / max(total_rounds, 1)
-
-    # --- Utility benchmarks ---
-    if utility_data:
-        # Enemies Flashed / Map (normalised to 24 rounds)
-        fl = utility_data.get("flash", {})
-        enemies_flashed = fl.get("enemies_flashed", 0)
-        flashed_norm = round(enemies_flashed * norm, 1)
-        thresholds = _FLASH_BENCHMARKS.get(map_name, _FLASH_BENCHMARKS["_default"])
-        benchmarks["enemies_flashed"] = {
-            "value": flashed_norm,
-            "raw": enemies_flashed,
-            "tier": _classify_tier_higher_better(flashed_norm, thresholds[0], thresholds[1], thresholds[2]),
-            "unit": "per map",
-        }
-
-        # $ Wasted on Utility (% of total utility spend)
-        eco = utility_data.get("economics", {})
-        total_spent = eco.get("total_spent", 0)
-        total_wasted = eco.get("total_wasted", 0)
-        waste_pct = round(total_wasted / total_spent * 100, 1) if total_spent > 0 else 0
-        benchmarks["utility_waste_pct"] = {
-            "value": waste_pct,
-            "tier": _classify_tier_lower_better(waste_pct, 12, 22, 40),
-            "unit": "%",
-        }
-
-        # Utility Damage / Map (HE + Molotov, normalised to 24 rounds)
-        he_dmg = utility_data.get("he", {}).get("total_damage", 0)
-        molly_dmg = utility_data.get("molotov", {}).get("total_damage", 0)
-        util_dmg = he_dmg + molly_dmg
-        util_dmg_norm = round(util_dmg * norm, 1)
-        benchmarks["utility_damage"] = {
-            "value": util_dmg_norm,
-            "raw": util_dmg,
-            "tier": _classify_tier_higher_better(util_dmg_norm, 150, 80, 25),
-            "unit": "HP per map",
-        }
-
-    # --- Aim benchmarks ---
-    if aim_stats:
-        # All of these read the median rather than the mean: with a dozen-odd
-        # samples per match a single bad engagement was enough to drop a tier.
-
-        # Speed When Shooting (u/s) — lower is better
-        mv = aim_stats.get("movement", {})
-        if mv.get("median") is not None:
-            benchmarks["shot_speed"] = {
-                "value": mv["median"],
-                "n": mv.get("n"),
-                "confidence": mv.get("confidence"),
-                "tier": _classify_tier_lower_better(mv["median"], *_aim_bounds("movement")),
-                "unit": "u/s",
-            }
-
-        # Counter-strafe rate — of the rifle engagements that actually needed
-        # a stop, how many were stopped properly rather than coasted.  Graded
-        # on its own sample size, which is much smaller than the movement
-        # sample it comes from once crouches and non-rifles are excluded.
-        cs_rate = mv.get("counterstrafe_rate")
-        if cs_rate is not None:
-            cs_n = mv.get("counterstrafe_attempts", 0)
-            benchmarks["counterstrafe"] = {
-                "value": cs_rate,
-                "n": cs_n,
-                "confidence": _confidence(cs_n),
-                "tier": _classify_tier_higher_better(cs_rate, *_aim_bounds("counterstrafe")),
-                "unit": "% of rifle stops",
-            }
-
-        # Pre-Aim Offset (degrees) — lower is better
-        pa = aim_stats.get("preaim", {})
-        if pa.get("median") is not None:
-            benchmarks["preaim_offset"] = {
-                "value": pa["median"],
-                "n": pa.get("n"),
-                "confidence": pa.get("confidence"),
-                "tier": _classify_tier_lower_better(pa["median"], *_aim_bounds("preaim")),
-                "unit": "°",
-            }
-
-        # Reaction Time (ms) — reported, but flagged: see _AIM_RATING_WEIGHTS.
-        rxn = aim_stats.get("reaction", {})
-        if rxn.get("median") is not None:
-            benchmarks["reaction_time"] = {
-                "value": rxn["median"],
-                "n": rxn.get("n"),
-                "confidence": rxn.get("confidence"),
-                "diagnostic_only": True,
-                "tier": _classify_tier_lower_better(rxn["median"], *_aim_bounds("reaction")),
-                "unit": "ms",
-            }
-
-        # Engagement Time to Kill (ms) — lower is better
-        ttk = aim_stats.get("ttk", {})
-        if ttk.get("median") is not None:
-            ttk_ms = round(ttk["median"] * 1000, 0)
-            benchmarks["engagement_ttk"] = {
-                "value": ttk_ms,
-                "n": ttk.get("n"),
-                "confidence": ttk.get("confidence"),
-                "tier": _classify_tier_lower_better(ttk_ms, *[b * 1000 for b in _aim_bounds("ttk")]),
-                "unit": "ms",
-            }
-
-    # Every threshold in this function is a hand-set guess.  Marking each entry
-    # keeps that visible to consumers instead of leaving the tier looking like
-    # a measured comparison.
-    for entry in benchmarks.values():
-        entry["calibration"] = "heuristic"
-
-    return benchmarks
 
 
 # ---------------------------------------------------------------------------
 # Utility & Economics
 # ---------------------------------------------------------------------------
 
-# Enemy blind time (seconds) below which a flash did not really achieve
-# anything.  A quarter of the enemy flashes in the stored matches land under a
-# second, which is barely a flinch — counting those the same as a four-second
-# blind is what made "enemies flashed" a poor guide to flash quality.
-_EFFECTIVE_BLIND_SECONDS = 1.0
-
-# Relative weights for the utility rating.  Smoke placement is deliberately
-# absent — see the note at the rating itself.
-_UTILITY_RATING_WEIGHTS = {
-    "use_rate": 0.35,
-    "flash": 0.35,
-    "damage": 0.30,
-}
-
-
-# Internal grenade key → cost in CS2
-_GRENADE_ITEMS: dict[str, int] = {
-    "flashbang": 200,
-    "smokegrenade": 300,
-    "hegrenade": 300,
-    "molotov": 400,
-    "incgrenade": 400,
-    "decoy": 50,
-}
-
-_GRENADE_DISPLAY: dict[str, str] = {
-    "flashbang": "Flash",
-    "smokegrenade": "Smoke",
-    "hegrenade": "HE",
-    "molotov": "Molotov",
-    "incgrenade": "Incendiary",
-    "decoy": "Decoy",
-}
-
-# demoparser2 item_purchase "item_name" display values → internal key
-_PURCHASE_NAME_MAP: dict[str, str] = {
-    "flashbang": "flashbang",
-    "smoke grenade": "smokegrenade",
-    "high explosive grenade": "hegrenade",
-    "molotov": "molotov",
-    "incendiary grenade": "incgrenade",
-    "decoy grenade": "decoy",
-}
-
-# demoparser2 weapon_fire "weapon" values → internal key
-_WEAPON_NAME_MAP: dict[str, str] = {
-    "weapon_flashbang": "flashbang",
-    "weapon_smokegrenade": "smokegrenade",
-    "weapon_hegrenade": "hegrenade",
-    "weapon_molotov": "molotov",
-    "weapon_incgrenade": "incgrenade",
-    "weapon_decoy": "decoy",
-}
-
-# Weapon slot classification for teamplayer drop detection.
-# item_purchase "item_name" (lowered) → slot name.
-# If a player buys more than 1 item in the same slot per round,
-# the extras were dropped for teammates.
-_WEAPON_SLOT: dict[str, str] = {
-    # Primaries
-    "ak-47": "primary", "ak47": "primary",
-    "m4a1-s": "primary", "m4a1": "primary", "m4a1_silencer": "primary",
-    "m4a4": "primary",
-    "awp": "primary",
-    "galil ar": "primary", "galilar": "primary",
-    "famas": "primary",
-    "sg 553": "primary", "sg556": "primary",
-    "aug": "primary",
-    "ssg 08": "primary", "ssg08": "primary",
-    "scar-20": "primary", "scar20": "primary",
-    "g3sg1": "primary",
-    "mac-10": "primary", "mac10": "primary",
-    "mp9": "primary",
-    "mp7": "primary",
-    "mp5-sd": "primary", "mp5sd": "primary",
-    "ump-45": "primary", "ump45": "primary",
-    "p90": "primary",
-    "pp-bizon": "primary", "bizon": "primary",
-    "nova": "primary",
-    "xm1014": "primary",
-    "mag-7": "primary", "mag7": "primary",
-    "sawed-off": "primary", "sawedoff": "primary",
-    "m249": "primary",
-    "negev": "primary",
-    # Pistols
-    "glock-18": "secondary", "glock": "secondary",
-    "usp-s": "secondary", "usp_silencer": "secondary",
-    "p2000": "secondary", "hkp2000": "secondary",
-    "p250": "secondary",
-    "five-seven": "secondary", "fiveseven": "secondary",
-    "tec-9": "secondary", "tec9": "secondary",
-    "cz75-auto": "secondary", "cz75a": "secondary",
-    "dual berettas": "secondary", "elite": "secondary",
-    "desert eagle": "secondary", "deagle": "secondary",
-    "r8 revolver": "secondary", "revolver": "secondary",
-}
 
 
 
-def _genuine_purchases(purchase_df: pd.DataFrame) -> pd.DataFrame:
-    """Purchases we can actually stand behind.
-
-    item_purchase carries two things that are not buys. Refunds come back with
-    ``was_sold`` set, and the game periodically re-emits a player's whole
-    inventory as a burst of rows sharing one tick with the slot numbers
-    restarting at zero. A re-emitted rifle looked exactly like buying a second
-    one, which is how the drop detector reported weapons nobody bought.
-
-    Only single-row ticks are kept. Roughly a third of rows sit in bursts and
-    not all of them are snapshots, so this discards some real purchases too —
-    the trade is deliberate: under-reporting drops beats inventing them.
-    """
-    if purchase_df.empty:
-        return purchase_df
-    df = purchase_df
-    if "was_sold" in df.columns:
-        df = df[df["was_sold"] != True]  # noqa: E712
-    id_col = _find_id_col(df, ("steamid", "attacker_steamid", "user_steamid"))
-    if id_col is None or "tick" not in df.columns:
-        return df
-    counts = df.groupby([id_col, "tick"])[id_col].transform("size")
-    return df[counts == 1]
 
 
 
-def _calculate_utility_stats(
-    enriched_rounds: list[dict[str, Any]],
-    parsed_data: dict[str, Any],
-    steam_id: str,
-    total_rounds: int,
-    map_name: str,
-) -> dict[str, Any]:
-    """Aggregate utility economics and efficiency across all rounds.
-
-    Returns a dict with:
-      - economics: purchase/use/waste tracking per grenade type
-      - efficiency: flash, HE, molotov impact metrics
-      - smokes: spatial impact assessment (zone coverage)
-      - per_round: per-round utility breakdown
-      - utility_rating: 0-100 overall utility score
-    """
-    sid = str(steam_id)
-    blind_df = parsed_data.get("player_blind", pd.DataFrame())
-    hurt_df = parsed_data.get("player_hurt", pd.DataFrame())
-    purchase_df = parsed_data.get("item_purchase", pd.DataFrame())
-    weapon_fire_df = parsed_data.get("weapon_fire", pd.DataFrame())
-    smoke_det_df = parsed_data.get("smoke_detonate", pd.DataFrame())
-    molotov_det_df = parsed_data.get("molotov_detonate", pd.DataFrame())
-
-    # ------------------------------------------------------------------ #
-    # T1: Economics — bought vs. thrown vs. wasted                         #
-    # ------------------------------------------------------------------ #
-    bought: dict[str, int] = {g: 0 for g in _GRENADE_ITEMS}
-    thrown: dict[str, int] = {g: 0 for g in _GRENADE_ITEMS}
-
-    # CS2 per-round grenade carry limits
-    _MAX_PER_ROUND: dict[str, int] = {
-        "flashbang": 2, "smokegrenade": 1, "hegrenade": 1,
-        "molotov": 1, "incgrenade": 1, "decoy": 1,
-    }
-
-    # Count purchases (deduplicated: cap at carry limit per round)
-    _bought_source = purchase_df
-    if not purchase_df.empty and "was_sold" in purchase_df.columns:
-        _bought_source = purchase_df[purchase_df["was_sold"] != True]  # noqa: E712
-    if not _bought_source.empty:
-        id_col = _find_id_col(_bought_source, ("steamid", "attacker_steamid", "user_steamid"))
-        if id_col:
-            name_col = "item_name" if "item_name" in _bought_source.columns else (
-                "weapon" if "weapon" in _bought_source.columns else None
-            )
-            if name_col and "round" in _bought_source.columns:
-                player_buys = _bought_source[_bought_source[id_col].astype(str) == sid]
-                for rnd_num in player_buys["round"].unique():
-                    rnd_buys = player_buys[player_buys["round"] == rnd_num]
-                    rnd_counts: dict[str, int] = {}
-                    for _, row in rnd_buys.iterrows():
-                        raw = str(row[name_col]).lower()
-                        key = _PURCHASE_NAME_MAP.get(raw)
-                        if key is None:
-                            key = raw.replace("weapon_", "")
-                        if key in _GRENADE_ITEMS:
-                            rnd_counts[key] = rnd_counts.get(key, 0) + 1
-                    for key, cnt in rnd_counts.items():
-                        bought[key] += min(cnt, _MAX_PER_ROUND.get(key, 1))
-
-    # Count throws from weapon_fire
-    if not weapon_fire_df.empty:
-        id_col = _find_id_col(weapon_fire_df, ("user_steamid", "steamid", "attacker_steamid"))
-        if id_col:
-            wep_col = "weapon" if "weapon" in weapon_fire_df.columns else None
-            if wep_col:
-                fires = weapon_fire_df[weapon_fire_df[id_col].astype(str) == sid]
-                for _, row in fires.iterrows():
-                    raw = str(row[wep_col]).lower()
-                    key = _WEAPON_NAME_MAP.get(raw)
-                    if key is None:
-                        key = raw.replace("weapon_", "")
-                    if key in _GRENADE_ITEMS:
-                        thrown[key] += 1
-
-    total_bought = sum(bought.values())
-    total_thrown = sum(thrown.values())
-    total_spent = sum(bought[g] * _GRENADE_ITEMS[g] for g in _GRENADE_ITEMS)
-    total_wasted_value = sum(
-        max(0, bought[g] - thrown[g]) * _GRENADE_ITEMS[g] for g in _GRENADE_ITEMS
-    )
-    use_rate = round(total_thrown / total_bought * 100, 1) if total_bought > 0 else 0.0
-
-    economics: dict[str, Any] = {
-        "total_spent": total_spent,
-        "total_wasted": total_wasted_value,
-        "use_rate": use_rate,
-        "per_type": {},
-    }
-    for g in _GRENADE_ITEMS:
-        if bought[g] > 0 or thrown[g] > 0:
-            economics["per_type"][_GRENADE_DISPLAY.get(g, g)] = {
-                "bought": bought[g],
-                "thrown": thrown[g],
-                "wasted": max(0, bought[g] - thrown[g]),
-                "cost": bought[g] * _GRENADE_ITEMS[g],
-                "wasted_value": max(0, bought[g] - thrown[g]) * _GRENADE_ITEMS[g],
-            }
-
-    # ------------------------------------------------------------------ #
-    # T2: Efficiency — direct impact of utility                            #
-    # ------------------------------------------------------------------ #
-
-    # --- Flashbangs ---
-    enemy_flashes = 0
-    team_flashes = 0
-    total_enemy_blind_duration = 0.0
-    total_team_blind_duration = 0.0
-    flash_assists = 0
-    self_flashes = 0
-    total_self_blind_duration = 0.0
-    enemy_blind_durations: list[float] = []
-
-    if not blind_df.empty:
-        id_col = _find_id_col(blind_df, ("attacker_steamid", "user_steamid", "steamid"))
-        if id_col:
-            player_blinds = blind_df[blind_df[id_col].astype(str) == sid]
-            if not player_blinds.empty and "blind_duration" in player_blinds.columns:
-                # Determine victim's team vs. attacker's team
-                atk_team_col = "attacker_team_num" if "attacker_team_num" in player_blinds.columns else None
-                vic_team_col = "user_team_num" if "user_team_num" in player_blinds.columns else None
-
-                for _, brow in player_blinds.iterrows():
-                    dur = float(brow.get("blind_duration", 0))
-                    # Blinding yourself is not a team flash. Same team by
-                    # definition, so the team check alone charged every
-                    # self-flash to the player as if they had blinded a mate.
-                    if str(brow.get("user_steamid", "")) == sid:
-                        self_flashes += 1
-                        total_self_blind_duration += dur
-                        continue
-                    is_team = False
-                    if atk_team_col and vic_team_col:
-                        try:
-                            is_team = int(brow[atk_team_col]) == int(brow[vic_team_col])
-                        except (ValueError, TypeError):
-                            pass
-                    if is_team:
-                        team_flashes += 1
-                        total_team_blind_duration += dur
-                    else:
-                        enemy_flashes += 1
-                        total_enemy_blind_duration += dur
-                        enemy_blind_durations.append(dur)
-
-    # Flash assists from death events
-    death_df = parsed_data.get("player_death", pd.DataFrame())
-    if not death_df.empty and "assistedflash" in death_df.columns:
-        fa = death_df[
-            (death_df.get("assister_steamid", pd.Series(dtype=str)).astype(str) == sid)
-            & (death_df["assistedflash"] == True)  # noqa: E712
-        ]
-        flash_assists = len(fa)
-
-    flashes_thrown = thrown.get("flashbang", 0)
-    effective_flashes = sum(
-        1 for d in enemy_blind_durations if d >= _EFFECTIVE_BLIND_SECONDS
-    )
-
-    flash_efficiency: dict[str, Any] = {
-        "thrown": flashes_thrown,
-        "enemies_flashed": enemy_flashes,
-        "team_flashed": team_flashes,
-        "self_flashed": self_flashes,
-        "self_blind_duration": round(total_self_blind_duration, 1),
-        "avg_enemy_blind_duration": round(
-            total_enemy_blind_duration / enemy_flashes, 1
-        ) if enemy_flashes > 0 else 0.0,
-        "median_enemy_blind_duration": round(_median(enemy_blind_durations), 2)
-        if enemy_blind_durations else None,
-        "total_enemy_blind_duration": round(total_enemy_blind_duration, 1),
-        "flash_assists": flash_assists,
-        "enemies_per_flash": round(
-            enemy_flashes / flashes_thrown, 2
-        ) if flashes_thrown > 0 else 0.0,
-        # A count of enemies flashed treats a 0.3 s glance and a 4 s blind as
-        # the same event, and a quarter of these land under a second.  Blind
-        # seconds delivered per flash thrown is the figure that tracks whether
-        # the flash actually bought anything.
-        "effective_flashes": effective_flashes,
-        "effective_flash_pct": round(
-            effective_flashes / enemy_flashes * 100, 1
-        ) if enemy_flashes > 0 else 0.0,
-        "blind_seconds_per_flash": round(
-            total_enemy_blind_duration / flashes_thrown, 2
-        ) if flashes_thrown > 0 else 0.0,
-    }
-
-    # --- HE Grenades ---
-    total_he_damage = 0
-    he_hits = 0
-    if not hurt_df.empty and "weapon" in hurt_df.columns:
-        id_col = _find_id_col(hurt_df, ("attacker_steamid",))
-        if id_col:
-            he_dmg = hurt_df[
-                (hurt_df[id_col].astype(str) == sid)
-                & (hurt_df["weapon"].astype(str).str.contains("hegrenade", case=False, na=False))
-            ]
-            if not he_dmg.empty and "dmg_health" in he_dmg.columns:
-                total_he_damage = int(he_dmg["dmg_health"].sum())
-                he_hits = len(he_dmg)
-
-    he_efficiency: dict[str, Any] = {
-        "thrown": thrown.get("hegrenade", 0),
-        "total_damage": total_he_damage,
-        "hits": he_hits,
-        "avg_damage_per_throw": round(
-            total_he_damage / thrown["hegrenade"], 1
-        ) if thrown.get("hegrenade", 0) > 0 else 0.0,
-    }
-
-    # --- Molotovs / Incendiaries ---
-    total_molly_damage = 0
-    molly_hits = 0
-    if not hurt_df.empty and "weapon" in hurt_df.columns:
-        id_col = _find_id_col(hurt_df, ("attacker_steamid",))
-        if id_col:
-            molly_dmg = hurt_df[
-                (hurt_df[id_col].astype(str) == sid)
-                & (hurt_df["weapon"].astype(str).str.contains(
-                    "inferno|molotov", case=False, na=False
-                ))
-            ]
-            if not molly_dmg.empty and "dmg_health" in molly_dmg.columns:
-                total_molly_damage = int(molly_dmg["dmg_health"].sum())
-                molly_hits = len(molly_dmg)
-
-    molly_efficiency: dict[str, Any] = {
-        "thrown": thrown.get("molotov", 0) + thrown.get("incgrenade", 0),
-        "total_damage": total_molly_damage,
-        "hits": molly_hits,
-        "avg_damage_per_throw": round(
-            total_molly_damage / max(1, thrown.get("molotov", 0) + thrown.get("incgrenade", 0)),
-            1,
-        ) if (thrown.get("molotov", 0) + thrown.get("incgrenade", 0)) > 0 else 0.0,
-    }
-
-    # ------------------------------------------------------------------ #
-    # T3: Smokes — spatial enablement (zone coverage)                      #
-    # ------------------------------------------------------------------ #
-    smoke_count = thrown.get("smokegrenade", 0)
-    smoke_locations: list[dict[str, Any]] = []
-
-    if not smoke_det_df.empty:
-        id_col = _find_id_col(smoke_det_df, ("user_steamid", "steamid", "attacker_steamid"))
-        if id_col:
-            player_smokes = smoke_det_df[smoke_det_df[id_col].astype(str) == sid]
-            for _, srow in player_smokes.iterrows():
-                sx = float(srow.get("x", 0))
-                sy = float(srow.get("y", 0))
-                rnd = int(srow.get("round", 0)) if "round" in srow.index else 0
-                callout = "unknown"
-                if is_map_supported(map_name):
-                    callout = get_callout(map_name, sx, sy)
-                smoke_locations.append({
-                    "round": rnd,
-                    "location": callout,
-                    "x": round(sx, 1),
-                    "y": round(sy, 1),
-                })
-
-    # Check if smokes extinguished *enemy* molotovs (within ~300 unit radius).
-    # Own molotovs have to be excluded: smokes and fire both get thrown at the
-    # same chokepoints, so counting every molotov in the round credited players
-    # for smoking out their own utility.
-    molly_extinguishes = 0
-    enemy_molly_det = molotov_det_df
-    if not molotov_det_df.empty:
-        molly_id_col = _find_id_col(
-            molotov_det_df, ("user_steamid", "steamid", "attacker_steamid")
-        )
-        if molly_id_col:
-            enemy_molly_det = molotov_det_df[
-                molotov_det_df[molly_id_col].astype(str) != sid
-            ]
-    if smoke_locations and not enemy_molly_det.empty and "x" in enemy_molly_det.columns:
-        for sm in smoke_locations:
-            for _, mrow in enemy_molly_det.iterrows():
-                mx = float(mrow.get("x", 0))
-                my = float(mrow.get("y", 0))
-                m_rnd = int(mrow.get("round", 0)) if "round" in mrow.index else 0
-                if m_rnd == sm["round"]:
-                    dist = ((sm["x"] - mx) ** 2 + (sm["y"] - my) ** 2) ** 0.5
-                    if dist < 300:
-                        molly_extinguishes += 1
-                        break  # one extinguish per smoke max
-
-    # Summarise smoke zone coverage
-    zone_counts: dict[str, int] = {}
-    for sl in smoke_locations:
-        loc = sl["location"]
-        if loc != "unknown":
-            zone_counts[loc] = zone_counts.get(loc, 0) + 1
-    top_zones = sorted(zone_counts.items(), key=lambda x: -x[1])[:5]
-
-    smoke_efficiency: dict[str, Any] = {
-        "thrown": smoke_count,
-        "locations": smoke_locations,
-        "top_zones": [{"zone": z, "count": c} for z, c in top_zones],
-        "molotov_extinguishes": molly_extinguishes,
-    }
-
-    # ------------------------------------------------------------------ #
-    # Per-round utility breakdown                                          #
-    # ------------------------------------------------------------------ #
-    per_round: list[dict[str, Any]] = []
-    for er in enriched_rounds:
-        rnd = er.get("round", 0)
-        eco = er.get("economy", {})
-        util = er.get("utility", {})
-        items = eco.get("items", [])
-        nade_items = [
-            i for i in items if _PURCHASE_NAME_MAP.get(i.lower()) is not None
-        ]
-        nade_spend = sum(
-            _GRENADE_ITEMS.get(_PURCHASE_NAME_MAP.get(i.lower(), ""), 0)
-            for i in nade_items
-        )
-        per_round.append({
-            "round": rnd,
-            "side": er.get("side", "?"),
-            "nades_bought": len(nade_items),
-            "nade_spend": nade_spend,
-            "enemies_flashed": util.get("enemies_flashed", 0),
-            "enemy_blind_duration": round(
-                sum(
-                    f.get("duration", 0)
-                    for f in util.get("flash_instances", [])
-                    if not f.get("is_friendly") and not f.get("is_self")
-                ),
-                1,
-            ),
-            "flash_assists": util.get("flash_assists", 0),
-            "he_damage": util.get("he_damage", 0),
-            "molotov_damage": sum(
-                d.get("damage", 0) for d in util.get("molotov_damage", [])
-            ),
-        })
-
-    # ------------------------------------------------------------------ #
-    # Utility rating (0-100)                                               #
-    #                                                                      #
-    # Same construction as the aim rating: each component scores off what   #
-    # was actually observed, carries weight proportional to how much        #
-    # evidence stands behind it, and is dropped entirely when there is no   #
-    # evidence rather than being filled in at 50.                           #
-    #                                                                      #
-    # Smoke placement used to be 20% of this and has been removed.  It      #
-    # scored resolved-callout ÷ smokes-thrown, which measures how complete   #
-    # our callout map is and whether detonation events survived the parse —  #
-    # not whether the smoke was any good.  Across 76 stored matches it       #
-    # produced values from 0 to 100 on identical play.  Smoke locations are  #
-    # still reported; they are just no longer scored.                        #
-    # ------------------------------------------------------------------ #
-    util_components: list[tuple[str, float, int]] = []
-
-    if total_bought > 0:
-        util_components.append(("use_rate", min(100.0, use_rate), total_bought))
-
-    if flashes_thrown > 0:
-        # ~2 s of enemy blindness per flash thrown is a good flash.
-        bspf = total_enemy_blind_duration / flashes_thrown
-        util_components.append((
-            "flash", min(100.0, bspf / 2.0 * 100.0), flashes_thrown,
-        ))
-
-    total_dmg_nades = (
-        thrown.get("hegrenade", 0) + thrown.get("molotov", 0) + thrown.get("incgrenade", 0)
-    )
-    if total_dmg_nades > 0:
-        avg_dmg = (total_he_damage + total_molly_damage) / total_dmg_nades
-        util_components.append((
-            "damage", min(100.0, avg_dmg * 2.5), total_dmg_nades,  # 40 dmg/nade = 100
-        ))
-
-    rating: float | None = None
-    rating_inputs: list[dict[str, Any]] = []
-    if util_components:
-        weighted_sum = 0.0
-        total_weight = 0.0
-        for name, score, n in util_components:
-            weight = _UTILITY_RATING_WEIGHTS[name] * (n / (n + _CONFIDENCE_K))
-            weighted_sum += score * weight
-            total_weight += weight
-            rating_inputs.append({
-                "metric": name, "score": round(score, 1),
-                "n": n, "weight": round(weight, 4),
-            })
-        if total_weight > 0:
-            rating = weighted_sum / total_weight
-            for item in rating_inputs:
-                item["weight_share"] = round(item["weight"] / total_weight, 3)
-            # Teamplayer penalty — minimal: minor incidents are normal in CS2.
-            # Team flash: only penalise beyond 3 flashes (−0.5 each)
-            if team_flashes > 3:
-                rating -= (team_flashes - 3) * 0.5
-            rating = round(min(100.0, max(0.0, rating)), 1)
-
-    # ------------------------------------------------------------------ #
-    # Teamplayer — per-round: teammate attacks, drops, team flashes        #
-    # ------------------------------------------------------------------ #
-    team_attacks_total = 0
-    team_attack_damage_total = 0
-    drops_total = 0
-    team_flashes_total = 0
-    teamplayer_rounds: list[dict[str, Any]] = []
-
-    # Pre-filter once: player's team-hits (hurt where same team, not self)
-    _team_hit_rows = pd.DataFrame()
-    if not hurt_df.empty:
-        id_col = _find_id_col(hurt_df, ("attacker_steamid",))
-        if id_col and "attacker_team_num" in hurt_df.columns and "user_team_num" in hurt_df.columns:
-            player_attacks = hurt_df[hurt_df[id_col].astype(str) == sid]
-            if not player_attacks.empty:
-                same_team = player_attacks[
-                    player_attacks["attacker_team_num"] == player_attacks["user_team_num"]
-                ]
-                vic_id_col = "user_steamid" if "user_steamid" in same_team.columns else None
-                if vic_id_col:
-                    _team_hit_rows = same_team[same_team[vic_id_col].astype(str) != sid]
-                else:
-                    _team_hit_rows = same_team
-
-    # Pre-filter once: player's team-flashes from blind_df
-    _team_flash_rows = pd.DataFrame()
-    if not blind_df.empty:
-        id_col = _find_id_col(blind_df, ("attacker_steamid", "user_steamid", "steamid"))
-        if id_col:
-            player_blinds = blind_df[blind_df[id_col].astype(str) == sid]
-            if not player_blinds.empty:
-                atk_t = "attacker_team_num" if "attacker_team_num" in player_blinds.columns else None
-                vic_t = "user_team_num" if "user_team_num" in player_blinds.columns else None
-                if atk_t and vic_t:
-                    _team_flash_rows = player_blinds[
-                        (player_blinds[atk_t] == player_blinds[vic_t])
-                        & (player_blinds["user_steamid"].astype(str) != sid)
-                    ]
-
-    # Pre-compute per-round weapon drops
-    _drop_rounds: dict[int, list[str]] = {}
-    _drop_source = _genuine_purchases(purchase_df)
-    if not _drop_source.empty:
-        id_col = _find_id_col(_drop_source, ("steamid", "attacker_steamid", "user_steamid"))
-        if id_col:
-            name_col = "item_name" if "item_name" in _drop_source.columns else (
-                "weapon" if "weapon" in _drop_source.columns else None
-            )
-            if name_col and "round" in _drop_source.columns:
-                player_buys = _drop_source[_drop_source[id_col].astype(str) == sid]
-                for rnd_num in player_buys["round"].unique():
-                    rnd_buys = player_buys[player_buys["round"] == rnd_num]
-                    slot_items: dict[str, list[str]] = {}
-                    for _, row in rnd_buys.iterrows():
-                        raw = str(row[name_col]).lower()
-                        slot = _WEAPON_SLOT.get(raw)
-                        if slot:
-                            slot_items.setdefault(slot, []).append(raw)
-                    dropped: list[str] = []
-                    for slot, items in slot_items.items():
-                        if len(items) > 1:
-                            # First item kept, rest dropped
-                            dropped.extend(items[1:])
-                    if dropped:
-                        _drop_rounds[int(rnd_num)] = dropped
-
-    # Build per-round teamplayer breakdown
-    all_rounds = sorted(set(
-        [int(r) for r in _team_hit_rows["round"].unique()] if "round" in _team_hit_rows.columns and not _team_hit_rows.empty else []
-    ) | set(
-        [int(r) for r in _team_flash_rows["round"].unique()] if "round" in _team_flash_rows.columns and not _team_flash_rows.empty else []
-    ) | set(_drop_rounds.keys()))
-
-    for rnd in sorted(all_rounds):
-        rnd_entry: dict[str, Any] = {"round": rnd}
-
-        # --- Teammate attacks this round ---
-        attacks: list[dict[str, Any]] = []
-        if not _team_hit_rows.empty and "round" in _team_hit_rows.columns:
-            rnd_hits = _team_hit_rows[_team_hit_rows["round"] == rnd]
-            for _, hrow in rnd_hits.iterrows():
-                victim = str(hrow.get("user_name", "?")) if "user_name" in rnd_hits.columns else "?"
-                dmg = int(hrow.get("dmg_health", 0)) if "dmg_health" in rnd_hits.columns else 0
-                weapon = str(hrow.get("weapon", "?")) if "weapon" in rnd_hits.columns else "?"
-                attacks.append({"victim": victim, "damage": dmg, "weapon": weapon})
-                team_attacks_total += 1
-                team_attack_damage_total += dmg
-        rnd_entry["attacks"] = attacks
-
-        # --- Team flashes this round ---
-        flashes: list[dict[str, Any]] = []
-        if not _team_flash_rows.empty and "round" in _team_flash_rows.columns:
-            rnd_flashes = _team_flash_rows[_team_flash_rows["round"] == rnd]
-            vic_name_col = "user_name" if "user_name" in rnd_flashes.columns else None
-            for _, frow in rnd_flashes.iterrows():
-                victim = str(frow.get(vic_name_col, "?")) if vic_name_col else "?"
-                dur = round(float(frow.get("blind_duration", 0)), 1) if "blind_duration" in rnd_flashes.columns else 0
-                flashes.append({"victim": victim, "duration": dur})
-                team_flashes_total += 1
-        rnd_entry["team_flashes"] = flashes
-
-        # --- Drops this round ---
-        rnd_drops = _drop_rounds.get(rnd, [])
-        rnd_entry["drops"] = rnd_drops
-        drops_total += len(rnd_drops)
-
-        teamplayer_rounds.append(rnd_entry)
-
-    teamplayer: dict[str, Any] = {
-        "team_attacks": team_attacks_total,
-        "team_attack_damage": team_attack_damage_total,
-        "team_flashes": team_flashes_total,
-        "drops_for_teammates": drops_total,
-        "per_round": teamplayer_rounds,
-    }
-
-    return {
-        "utility_rating_inputs": rating_inputs,
-        "economics": economics,
-        "flash": flash_efficiency,
-        "he": he_efficiency,
-        "molotov": molly_efficiency,
-        "smoke": smoke_efficiency,
-        "per_round": per_round,
-        "utility_rating": rating,
-        "teamplayer": teamplayer,
-    }
 
 
-def _find_id_col(
-    df: pd.DataFrame,
-    candidates: tuple[str, ...],
-) -> str | None:
-    """Return the first column from *candidates* that exists in *df*."""
-    for col in candidates:
-        if col in df.columns:
-            return col
-    return None
+
+
+
+
+
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -2229,414 +446,15 @@ def _find_id_col(
 # Each role lists the callout names that indicate that role.
 # Order matters: first match wins when a player has multiple positions.
 
-_ROLE_ZONES: dict[str, dict[str, dict[str, list[str]]]] = {
-    "de_mirage": {
-        "CT": {
-            "A Anchor": [
-                "A Site", "A Default", "Ticket", "Firebox", "A Ramp",
-            ],
-            "Connector / Jungle": [
-                "Jungle", "Stairs", "Connector", "A Main",
-            ],
-            "Window (AWP)": [
-                "Window", "Mid Window", "Snipers Nest", "Ladder Room",
-            ],
-            "Short / Catwalk": [
-                "Short", "Catwalk", "Underpass", "Mid", "Mid Area",
-                "Top Mid",
-            ],
-            "B Anchor": [
-                "B Site", "Bench", "B Van", "Market", "Market Door",
-                "Kitchen", "B Apartments", "B Apartments Entrance",
-                "B Short",
-            ],
-        },
-        "T": {
-            "Mid Pack": [
-                "Top Mid", "Mid", "Mid Area", "Short", "Catwalk",
-                "Underpass", "Connector", "Window", "Mid Window",
-                "Snipers Nest",
-            ],
-            "A Lurk / Palace": [
-                "A Ramp", "A Palace", "A Site", "A Default", "Ticket",
-                "Firebox", "Jungle", "Stairs", "Tetris", "A Main",
-                "A Side", "Chair",
-            ],
-            "B Apps": [
-                "B Apartments", "B Apartments Entrance", "B Short",
-                "B Site", "Bench", "B Van", "Market", "Market Door",
-                "Kitchen", "B Side",
-            ],
-        },
-    },
-    "de_inferno": {
-        "CT": {
-            "Pit / A Anchor": [
-                "Pit", "A Site", "Truck", "Graveyard", "Balcony", "A Side",
-            ],
-            "A Short / Boiler": [
-                "Top Mid", "Boiler", "Library", "Arch",
-            ],
-            "Arch / Speedway": [
-                "Mid", "Alt Mid", "Underpass",
-            ],
-            "B Rotator (CT/Spools)": [
-                "CT", "New Box", "Construction",
-            ],
-            "B Anchor (Banana)": [
-                "B Site", "Banana", "Oranges", "Car", "Dark", "Coffins", "B Side",
-                "Apartments", "T Apartments", "Second Mid", "T Approach",
-            ],
-        },
-        "T": {
-            "Banana Pack": [
-                "Banana", "Car", "Oranges", "B Site", "Dark", "Coffins",
-                "Construction", "New Box", "CT", "B Side",
-            ],
-            "Apps Control": [
-                "T Apartments", "Apartments", "Second Mid", "Boiler",
-                "Balcony",
-            ],
-            "Mid / Arch Lurk": [
-                "Mid", "Alt Mid", "Underpass", "Top Mid", "Arch",
-                "Library", "A Site", "Pit", "Truck", "Graveyard",
-                "A Side",
-            ],
-        },
-    },
-    "de_nuke": {
-        "CT": {
-            "A Anchor (Hut/Mini)": [
-                "A Site", "Hut", "Squeaky", "Main",
-            ],
-            "Heaven (Rotator)": [
-                "Heaven", "Hell",
-            ],
-            "Outside": [
-                "Outside",
-            ],
-            "Secret / Lower": [
-                "Secret", "B Site",
-            ],
-            "Ramp Anchor": [
-                "Ramp", "Lobby",
-            ],
-        },
-        "T": {
-            "Outside Pack": [
-                "Outside", "Secret",
-            ],
-            "Lobby / Hut Control": [
-                "Lobby", "Main", "Hut", "Squeaky", "A Site", "Heaven",
-                "Hell",
-            ],
-            "Ramp Entry / Lurk": [
-                "Ramp", "B Site",
-            ],
-        },
-    },
-    "de_ancient": {
-        "CT": {
-            "B Anchor": [
-                "B Site", "B Pillar",
-            ],
-            "Cave / Short B": [
-                "B Connector", "B Main",
-            ],
-            "Mid": [
-                "Mid", "Top Mid",
-            ],
-            "Donut (Rotator)": [
-                "A Connector",
-            ],
-            "A Anchor": [
-                "A Site", "A Main", "A Bridge",
-            ],
-        },
-        "T": {
-            "Mid Control": [
-                "Mid", "Top Mid", "A Connector", "B Connector",
-            ],
-            "A Main Lurk": [
-                "A Main", "A Bridge", "A Site",
-            ],
-            "B Ramp / Cave Pack": [
-                "B Main", "B Site", "B Pillar",
-            ],
-        },
-    },
-    "de_anubis": {
-        "CT": {
-            "B Anchor": [
-                "B Site", "B Pillar",
-            ],
-            "Palace / B Connector": [
-                "B Connector", "B Main",
-            ],
-            "Mid (AWP)": [
-                "Mid", "Top Mid",
-            ],
-            "A Connector / Water": [
-                "A Connector",
-            ],
-            "A Anchor": [
-                "A Site", "A Main", "A Bridge",
-            ],
-        },
-        "T": {
-            "Water / Canals Pack": [
-                "A Connector", "B Connector",
-            ],
-            "Bridge / Mid": [
-                "Mid", "Top Mid",
-            ],
-            "A Main Lurk": [
-                "A Main", "A Bridge", "A Site",
-            ],
-            "B Main": [
-                "B Main", "B Site", "B Pillar",
-            ],
-        },
-    },
-    "de_overpass": {
-        "CT": {
-            "A Long Anchor": [
-                "A Long",
-            ],
-            "Toilets / Mid": [
-                "Toilets", "Mid", "Connector", "Party", "Balloons",
-            ],
-            "Heaven / Sniper": [
-                "Heaven", "Sniper",
-            ],
-            "B Short / Water": [
-                "B Short", "Water", "Sandbags",
-            ],
-            "B Anchor (Monster)": [
-                "B Site", "Monster", "Pit", "Pillar", "Barrels",
-            ],
-        },
-        "T": {
-            "Lower / Water Pack": [
-                "B Short", "Water", "Connector", "B Site", "Monster",
-            ],
-            "Toilets / Mid Pack": [
-                "Toilets", "Mid", "Party", "Balloons",
-            ],
-            "Extremity Lurks": [
-                "A Long", "A Site",
-            ],
-        },
-    },
-    "de_dust2": {
-        "CT": {
-            "B Anchor": [
-                "B Site", "B Window", "B Back Site", "B Car", "B Doors",
-            ],
-            "Mid (AWP)": [
-                "Mid", "Lower Tunnels", "Mid Doors", "Xbox",
-            ],
-            "Short / Catwalk": [
-                "Catwalk", "A Short (Cat)",
-            ],
-            "Long A (Rotator)": [
-                "A Long", "A Long Doors",
-            ],
-            "A Anchor": [
-                "A Site", "Goose", "A Ramp", "A Car", "A Pit",
-            ],
-        },
-        "T": {
-            "Long A Pack": [
-                "A Long Doors", "A Long", "A Site", "A Pit", "A Car",
-            ],
-            "Mid / Catwalk Control": [
-                "Mid", "Mid Doors", "Catwalk", "A Short (Cat)", "Xbox",
-                "Lower Tunnels",
-            ],
-            "Upper Tunnels Lurk": [
-                "Upper Tunnels", "B Tunnels", "B Site", "B Doors",
-                "B Window", "B Back Site", "B Car",
-            ],
-        },
-    },
-    "de_cache": {
-        "CT": {
-            "A Anchor": [
-                "A Site", "CT Short",
-            ],
-            "Catwalk (AWP)": [
-                "Catwalk", "Mid", "Squeaky", "Mid Area",
-            ],
-            "B Anchor": [
-                "B Site", "Boiler", "B Ramp",
-            ],
-            "CT Spawn Rotator": [
-                "CT Spawn", "Garage",
-            ],
-        },
-        "T": {
-            "Highway / A Pack": [
-                "Highway", "A Main", "A Site", "A Side",
-            ],
-            "Mid / Catwalk": [
-                "Mid", "Catwalk", "Squeaky", "Boiler", "Mid Area",
-            ],
-            "B Halls / Ramp Pack": [
-                "B Halls", "B Ramp", "B Site", "B Side",
-            ],
-            "Garage Lurk": [
-                "Garage", "T Spawn", "T Area",
-            ],
-        },
-    },
-}
+# Callout → role mapping lives in src/domain/metrics/role_zones/*.json, one
+# file per map. The callout names there have to match the labels in
+# src/domain/callouts/zones/, and tests/test_role_zones.py checks that they do:
+# a name matching nothing contributes no score and the role quietly stops being
+# detected, which is not a failure anything else would notice.
 
 
-def _classify_round_role(
-    enriched_round: dict[str, Any],
-    map_name: str,
-    round_positions: list[tuple[str, int]] | None = None,
-) -> dict[str, float]:
-    """Classify the player's role for a single round based on positions.
-
-    Uses sampled mid-round positions (time-weighted: first 30s = 3× weight)
-    plus kill/death positions. Returns a dict of role_name → normalised
-    score (0-1) for every role on this side.  Empty dict when no data.
-    """
-    side = enriched_round.get("side")
-    if not side or map_name not in _ROLE_ZONES:
-        return {}
-    side_roles = _ROLE_ZONES[map_name].get(side)
-    if not side_roles:
-        return {}
-
-    # Build weighted callout list from sampled positions + kill/death
-    weighted: list[tuple[str, float]] = []
-
-    # Sampled positions: (callout, tick_offset)
-    _EARLY_CUTOFF = 1920  # 30s at 64-tick
-    if round_positions:
-        for callout, tick_offset in round_positions:
-            if callout == "unknown":
-                continue
-            w = 3.0 if tick_offset <= _EARLY_CUTOFF else 1.0
-            weighted.append((callout, w))
-
-    # Kill positions (weight 4 — strongest signal of actual role)
-    for k in enriched_round.get("kills_detail", []):
-        p = k.get("attacker_position")
-        if p and p != "unknown":
-            weighted.append((p, 4.0))
-    # Death position (weight 4)
-    death = enriched_round.get("death_detail")
-    if death:
-        p = death.get("victim_position")
-        if p and p != "unknown":
-            weighted.append((p, 4.0))
-
-    if not weighted:
-        return {}
-
-    # Score each role
-    scores: dict[str, float] = {}
-    for role_name, callouts in side_roles.items():
-        callout_set = set(callouts)
-        scores[role_name] = sum(w for c, w in weighted if c in callout_set)
-
-    total = sum(scores.values())
-    if total <= 0:
-        return {}
-    # Normalise to 0-1
-    for k in scores:
-        scores[k] = round(scores[k] / total, 3)
-    return scores
 
 
-def _calculate_roles(
-    enriched_rounds: list[dict[str, Any]],
-    map_name: str,
-    round_positions_df: Any = None,
-    steam_id: str = "",
-) -> dict[str, Any] | None:
-    """Classify roles for every round and produce a summary.
-
-    Returns:
-      { "map": str,
-        "roles_ct": [role_name, ...],   -- ordered axes for spider chart
-        "roles_t":  [role_name, ...],
-        "rounds": [{"round": int, "side": str, "role": str|null,
-                     "scores": {role: float}, ...}...],
-        "ct_summary": {role: count},
-        "t_summary":  {role: count},
-        "ct_primary": str|null,
-        "t_primary":  str|null }
-    """
-    if map_name not in _ROLE_ZONES:
-        return None
-
-    import pandas as pd
-
-    # Pre-index sampled positions per round for the target player
-    round_pos_lookup: dict[int, list[tuple[str, int]]] = {}
-    if (
-        round_positions_df is not None
-        and isinstance(round_positions_df, pd.DataFrame)
-        and not round_positions_df.empty
-        and steam_id
-    ):
-        sid = str(steam_id)
-        mask = round_positions_df["steamid"] == sid
-        player_pos = round_positions_df.loc[mask]
-        for _, row in player_pos.iterrows():
-            rnd = int(row.get("round", 0))
-            x, y = row.get("X", 0), row.get("Y", 0)
-            callout = get_callout(map_name, x, y)
-            offset = int(row.get("tick_offset", 0))
-            round_pos_lookup.setdefault(rnd, []).append((callout, offset))
-
-    # Ordered role lists per side (stable axis order for spider chart)
-    roles_ct = list(_ROLE_ZONES[map_name].get("CT", {}).keys())
-    roles_t = list(_ROLE_ZONES[map_name].get("T", {}).keys())
-
-    round_roles: list[dict[str, Any]] = []
-    ct_counts: dict[str, int] = {}
-    t_counts: dict[str, int] = {}
-
-    for r in enriched_rounds:
-        side = r.get("side")
-        rnd = r["round"]
-        sampled = round_pos_lookup.get(rnd)
-        scores = _classify_round_role(r, map_name, sampled)
-
-        role = max(scores, key=scores.get) if scores else None
-
-        round_roles.append({
-            "round": rnd,
-            "side": side,
-            "role": role,
-            "scores": scores,
-        })
-
-        if role:
-            if side == "CT":
-                ct_counts[role] = ct_counts.get(role, 0) + 1
-            elif side == "T":
-                t_counts[role] = t_counts.get(role, 0) + 1
-
-    ct_primary = max(ct_counts, key=ct_counts.get) if ct_counts else None
-    t_primary = max(t_counts, key=t_counts.get) if t_counts else None
-
-    return {
-        "map": map_name,
-        "roles_ct": roles_ct,
-        "roles_t": roles_t,
-        "rounds": round_roles,
-        "ct_summary": ct_counts,
-        "t_summary": t_counts,
-        "ct_primary": ct_primary,
-        "t_primary": t_primary,
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -2725,7 +543,7 @@ def calculate_all_players_stats(
         impact = round(
             2.13 * kpr + 0.42 * (assists / total_rounds) - 0.41, 4
         )
-        hltv_rating = _compute_hltv_rating(kast, kpr, dpr, impact, adr)
+        hltv_rating = compute_hltv_rating(kast, kpr, dpr, impact, adr)
         kd_ratio = round(kills / deaths, 2) if deaths > 0 else float(kills)
         multikills = _count_multikill_rounds(round_stats)
 
@@ -2785,7 +603,13 @@ def _collect_all_steam_ids(death_df: pd.DataFrame) -> list[str]:
                 death_df[col].dropna().astype(str).unique()
             )
     # Filter out obvious non-player IDs (e.g. "0", empty, "None")
-    return [s for s in ids if s and s not in ("0", "None", "nan")]
+    #
+    # Sorted, because iterating the set directly hands back a different order in
+    # every process — Python randomises string hashing per run. That made the
+    # all_players scoreboard, and so the match_players insert order, differ
+    # between two imports of the same demo. get_match_players re-sorts by team
+    # and kills on read, which hid it in the UI for everyone except tied rows.
+    return sorted(s for s in ids if s and s not in ("0", "None", "nan"))
 
 
 # ---------------------------------------------------------------------------
@@ -2833,8 +657,8 @@ def _count_valid_assists(
     """Count assists where the player dealt damage to the victim in the same round.
 
     The demo engine sometimes credits assists for damage dealt in previous
-    rounds.  Platforms like Refrag/Leetify only count assists where the
-    assister damaged the victim in the round the kill happened.
+    rounds.  Requiring the damage to have happened in the same round as the
+    kill is what makes the number mean what the word does.
     """
     if assist_df.empty:
         return 0
@@ -2928,7 +752,7 @@ def _calculate_damage(hurt_df: pd.DataFrame, steam_id: str) -> int:
         return _sum_capped_damage(enemy_hurt[mask])
 
     total = 0
-    for rnd, grp in enemy_hurt.groupby("round"):
+    for _, grp in enemy_hurt.groupby("round"):
         victim_hp: dict[str, int] = {}
         for _, row in grp.sort_values("tick").iterrows():
             vid = str(row["user_steamid"])
@@ -3057,130 +881,6 @@ def _build_round_stats(
     return stats
 
 
-def _calculate_impact_stats(
-    parsed_data: dict[str, Any],
-    steam_id: str,
-    total_rounds: int,
-    round_team_map: dict[int, str],
-) -> dict[str, Any]:
-    """Score every kill and death by how much it moved the round.
-
-    Walks each round's deaths in order, tracking who is alive and whether the
-    bomb is down, and prices each event as the change in the player's team's
-    chance of winning.  A kill that turns 5v5 into 5v4 is worth far more than
-    one that turns 4v1 into 4v0, and the same kill is worth more after the
-    bomb is planted — differences that counting kills cannot express.
-
-    Credit here goes entirely to whoever landed the kill.  Splitting it with
-    the players who did the damage, traded, or threw the flash is the next
-    step, and needs attribution this function does not yet do.
-    """
-    death_df = parsed_data.get("player_death", pd.DataFrame())
-    bomb_df = parsed_data.get("bomb_planted", pd.DataFrame())
-    sid = str(steam_id)
-
-    required = {"round", "tick", "user_team_num", "user_steamid"}
-    if death_df.empty or not required.issubset(death_df.columns):
-        # Without a tick to order deaths by, or a team to attribute them to,
-        # the round state cannot be reconstructed and no swing is measurable.
-        return {}
-
-    plant_tick_by_round: dict[int, int] = {}
-    if not bomb_df.empty and "round" in bomb_df.columns and "tick" in bomb_df.columns:
-        for _, row in bomb_df.iterrows():
-            try:
-                rnd = int(row["round"])
-                tick = int(row["tick"])
-            except (TypeError, ValueError):
-                continue
-            plant_tick_by_round.setdefault(rnd, tick)
-
-    kill_swings: list[float] = []
-    death_swings: list[float] = []
-    per_round: list[dict[str, Any]] = []
-
-    for rnd in range(1, total_rounds + 1):
-        rows = death_df[death_df["round"] == rnd]
-        if rows.empty:
-            continue
-        rows = rows.sort_values("tick")
-
-        side = round_team_map.get(rnd)
-        if side not in ("CT", "T"):
-            continue
-        player_is_ct = side == "CT"
-
-        ct_alive, t_alive = 5, 5
-        plant_tick = plant_tick_by_round.get(rnd)
-        round_kill_swing = 0.0
-        round_death_swing = 0.0
-
-        for _, row in rows.iterrows():
-            try:
-                tick = int(row["tick"])
-                victim_team = int(row["user_team_num"])
-            except (TypeError, ValueError):
-                continue
-            if victim_team not in (2, 3):
-                continue
-
-            planted = plant_tick is not None and tick >= plant_tick
-            before_ct = _win_probability(ct_alive, t_alive, planted)
-
-            if victim_team == 3:
-                ct_after, t_after = ct_alive - 1, t_alive
-            else:
-                ct_after, t_after = ct_alive, t_alive - 1
-            after_ct = _win_probability(ct_after, t_after, planted)
-
-            # Expressed from the player's own side.
-            before = before_ct if player_is_ct else 1.0 - before_ct
-            after = after_ct if player_is_ct else 1.0 - after_ct
-            swing = after - before
-
-            attacker = str(row.get("attacker_steamid", ""))
-            victim = str(row.get("user_steamid", ""))
-            if attacker == sid and victim != sid:
-                kill_swings.append(swing)
-                round_kill_swing += swing
-            if victim == sid:
-                death_swings.append(swing)
-                round_death_swing += swing
-
-            ct_alive, t_alive = ct_after, t_after
-            if ct_alive <= 0 or t_alive <= 0:
-                break
-
-        if round_kill_swing or round_death_swing:
-            per_round.append({
-                "round": rnd,
-                "side": side,
-                "kill_swing": round(round_kill_swing, 4),
-                "death_swing": round(round_death_swing, 4),
-                "net_swing": round(round_kill_swing + round_death_swing, 4),
-            })
-
-    if not kill_swings and not death_swings:
-        return {}
-
-    total_kill = sum(kill_swings)
-    total_death = sum(death_swings)
-    net = total_kill + total_death
-    n_events = len(kill_swings) + len(death_swings)
-
-    return {
-        "n": n_events,
-        "confidence": _confidence(n_events),
-        "kills_scored": len(kill_swings),
-        "deaths_scored": len(death_swings),
-        "kill_swing_total": round(total_kill, 3),
-        "death_swing_total": round(total_death, 3),
-        "net_swing_total": round(net, 3),
-        "net_swing_per_round": round(net / total_rounds, 4) if total_rounds else 0.0,
-        "best_kill_swing": round(max(kill_swings), 4) if kill_swings else None,
-        "median_kill_swing": round(_median(kill_swings), 4) if kill_swings else None,
-        "per_round": per_round,
-    }
 
 
 def _calculate_kast_rounds(round_stats: list[dict[str, Any]]) -> int:
@@ -3255,66 +955,6 @@ def _calculate_match_score(
     return {"team_score": team_wins, "enemy_score": enemy_wins, "result": result}
 
 
-def _build_round_team_map(
-    death_df: pd.DataFrame,
-    steam_id: str,
-    round_end_df: pd.DataFrame,
-) -> dict[int, str]:
-    """Build a mapping of round number → player team ("CT" or "T").
-
-    Inspects kill/death events to find the player's ``team_num`` for each
-    round they appear in.  For rounds with no player events (survived
-    without kills), the team is carried forward from the last known round.
-    """
-    _TEAM_MAP = {2: "T", 3: "CT"}
-    if death_df.empty or "round" not in death_df.columns:
-        return {}
-
-    sid = str(steam_id)
-    round_team: dict[int, str] = {}
-
-    # Collect team observations from kill events (as attacker) and death
-    # events (as victim).  Prefer earlier ticks for each round.
-    for id_col, team_col in [
-        ("attacker_steamid", "attacker_team_num"),
-        ("user_steamid", "user_team_num"),
-    ]:
-        if id_col not in death_df.columns or team_col not in death_df.columns:
-            continue
-        mask = death_df[id_col].astype(str) == sid
-        subset = death_df.loc[mask, ["round", team_col]].dropna()
-        for _, row in subset.iterrows():
-            rnd = int(row["round"])
-            if rnd in round_team:
-                continue  # already have data for this round
-            team = _TEAM_MAP.get(int(row[team_col]))
-            if team:
-                round_team[rnd] = team
-
-    if not round_team:
-        return {}
-
-    # Fill gaps: for rounds where the player had no events, carry forward
-    # from the last known round (team only changes at halftime boundaries).
-    all_rounds = sorted(int(r) for r in round_end_df["round"].dropna().unique())
-    known_sorted = sorted(round_team.keys())
-    last_known: str | None = None
-    for rnd in all_rounds:
-        if rnd in round_team:
-            last_known = round_team[rnd]
-        elif last_known is not None:
-            round_team[rnd] = last_known
-
-    # Back-fill: if the first few rounds were missing, fill backward from
-    # the first known round.
-    if all_rounds and all_rounds[0] not in round_team:
-        first_known = round_team[known_sorted[0]]
-        for rnd in all_rounds:
-            if rnd in round_team:
-                break
-            round_team[rnd] = first_known
-
-    return round_team
 
 
 def _detect_player_team(
@@ -3353,24 +993,6 @@ def _detect_player_team(
     return None
 
 
-def _compute_hltv_rating(
-    kast: float,
-    kpr: float,
-    dpr: float,
-    impact: float,
-    adr: float,
-) -> float:
-    """Apply the HLTV 2.0 rating formula and return a rounded result."""
-    c = _HLTV_COEFFICIENTS
-    rating = (
-        c["kast_weight"] * kast
-        + c["kpr_weight"] * kpr
-        + c["dpr_weight"] * dpr
-        + c["impact_weight"] * impact
-        + c["adr_weight"] * adr
-        + c["intercept"]
-    )
-    return round(rating, 4)
 
 
 # ---------------------------------------------------------------------------
@@ -3944,9 +1566,6 @@ _AIM_ON_TARGET_DEG = 8.0
 # Ticks of the look-back window before the first shot for reaction analysis.
 _REACTION_WINDOW = 64  # ≈ 1 s at 64-tick
 
-# A damage encounter counts as a lost duel ("death" outcome) when the player
-# dies to that same enemy within this many ticks of last hitting them.
-_LOST_DUEL_WINDOW = 160  # ≈ 2.5 s at 64-tick
 
 
 def _analyze_reaction_time(

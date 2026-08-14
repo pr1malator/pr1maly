@@ -1,0 +1,183 @@
+{
+  "map": "de_overpass",
+  "_order_matters": "Zones are tested in order and the first match wins, so a specific zone must come before the larger one that encloses it.",
+  "zones": [
+    {
+      "label": "A Site",
+      "min_x": -2200,
+      "max_x": -1400,
+      "min_y": -750,
+      "max_y": 50,
+      "area": "A site area"
+    },
+    {
+      "label": "A Long",
+      "min_x": -1400,
+      "max_x": -400,
+      "min_y": -750,
+      "max_y": 200,
+      "area": "A site area"
+    },
+    {
+      "label": "Toilets",
+      "min_x": -2500,
+      "max_x": -1800,
+      "min_y": 100,
+      "max_y": 800,
+      "area": "Upper / Mid / Toilets"
+    },
+    {
+      "label": "Party",
+      "min_x": -3100,
+      "max_x": -2500,
+      "min_y": -200,
+      "max_y": 500,
+      "area": "Upper / Mid / Toilets"
+    },
+    {
+      "label": "Balloons",
+      "min_x": -3500,
+      "max_x": -2800,
+      "min_y": 200,
+      "max_y": 800,
+      "area": "Upper / Mid / Toilets"
+    },
+    {
+      "label": "Connector",
+      "min_x": -2700,
+      "max_x": -2000,
+      "min_y": -400,
+      "max_y": 200,
+      "area": "Connector"
+    },
+    {
+      "label": "Heaven",
+      "min_x": -3200,
+      "max_x": -2500,
+      "min_y": -1600,
+      "max_y": -900,
+      "area": "Heaven / Sniper (overlook B)"
+    },
+    {
+      "label": "Sniper",
+      "min_x": -2500,
+      "max_x": -1800,
+      "min_y": -1400,
+      "max_y": -800,
+      "area": "Heaven / Sniper (overlook B)"
+    },
+    {
+      "label": "B Site",
+      "min_x": -3500,
+      "max_x": -2600,
+      "min_y": -2200,
+      "max_y": -1500,
+      "area": "B site area"
+    },
+    {
+      "label": "Pillar",
+      "min_x": -3200,
+      "max_x": -2700,
+      "min_y": -1700,
+      "max_y": -1300,
+      "area": "B site area"
+    },
+    {
+      "label": "Barrels",
+      "min_x": -2600,
+      "max_x": -2100,
+      "min_y": -2100,
+      "max_y": -1600,
+      "area": "B site area"
+    },
+    {
+      "label": "Pit",
+      "min_x": -3600,
+      "max_x": -3000,
+      "min_y": -1600,
+      "max_y": -1000,
+      "area": "B site area"
+    },
+    {
+      "label": "B Short",
+      "min_x": -2600,
+      "max_x": -1800,
+      "min_y": -1100,
+      "max_y": -400,
+      "area": "B approaches"
+    },
+    {
+      "label": "Water",
+      "min_x": -3300,
+      "max_x": -2600,
+      "min_y": -900,
+      "max_y": -200,
+      "area": "B approaches"
+    },
+    {
+      "label": "Sandbags",
+      "min_x": -2200,
+      "max_x": -1700,
+      "min_y": -1600,
+      "max_y": -1000,
+      "area": "B approaches"
+    },
+    {
+      "label": "Monster",
+      "min_x": -3800,
+      "max_x": -3200,
+      "min_y": -2400,
+      "max_y": -1700,
+      "area": "B approaches"
+    },
+    {
+      "label": "Mid",
+      "min_x": -2200,
+      "max_x": -1400,
+      "min_y": 200,
+      "max_y": 900,
+      "area": "Mid"
+    },
+    {
+      "label": "CT Spawn",
+      "min_x": -2000,
+      "max_x": -1200,
+      "min_y": -1800,
+      "max_y": -1000,
+      "area": "Spawns"
+    },
+    {
+      "label": "T Spawn",
+      "min_x": -1300,
+      "max_x": -400,
+      "min_y": 800,
+      "max_y": 1600,
+      "area": "Spawns"
+    },
+    {
+      "label": "A Side",
+      "min_x": -2500,
+      "max_x": -400,
+      "min_y": -800,
+      "max_y": 300,
+      "area": "Fallback"
+    },
+    {
+      "label": "B Side",
+      "min_x": -3800,
+      "max_x": -2000,
+      "min_y": -2500,
+      "max_y": -800,
+      "area": "Fallback"
+    },
+    {
+      "label": "Mid Area",
+      "min_x": -2800,
+      "max_x": -1200,
+      "min_y": 100,
+      "max_y": 1000,
+      "area": "Fallback"
+    }
+  ],
+  "provenance": "Calibrated from de_overpass radar: pos_x=-4831, pos_y=1781, scale=5.2. Game coords: gx = px*5.2 - 4831, gy = 1781 - py*5.2 Specific zones first; first match wins."
+}

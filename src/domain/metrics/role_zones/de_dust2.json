@@ -1,0 +1,62 @@
+{
+  "map": "de_dust2",
+  "_what_this_is": "Which map callouts indicate which positional role, per side. The callout names must match the labels in src/domain/callouts/zones/<map>.json; a name that matches nothing silently contributes no score, which is how a role can quietly stop being detected.",
+  "sides": {
+    "CT": {
+      "B Anchor": [
+        "B Site",
+        "B Window",
+        "B Back Site",
+        "B Car",
+        "B Doors"
+      ],
+      "Mid (AWP)": [
+        "Mid",
+        "Lower Tunnels",
+        "Mid Doors",
+        "Xbox"
+      ],
+      "Short / Catwalk": [
+        "Catwalk",
+        "A Short (Cat)"
+      ],
+      "Long A (Rotator)": [
+        "A Long",
+        "A Long Doors"
+      ],
+      "A Anchor": [
+        "A Site",
+        "Goose",
+        "A Ramp",
+        "A Car",
+        "A Pit"
+      ]
+    },
+    "T": {
+      "Long A Pack": [
+        "A Long Doors",
+        "A Long",
+        "A Site",
+        "A Pit",
+        "A Car"
+      ],
+      "Mid / Catwalk Control": [
+        "Mid",
+        "Mid Doors",
+        "Catwalk",
+        "A Short (Cat)",
+        "Xbox",
+        "Lower Tunnels"
+      ],
+      "Upper Tunnels Lurk": [
+        "Upper Tunnels",
+        "B Tunnels",
+        "B Site",
+        "B Doors",
+        "B Window",
+        "B Back Site",
+        "B Car"
+      ]
+    }
+  }
+}

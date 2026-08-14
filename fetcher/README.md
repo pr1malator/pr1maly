@@ -7,7 +7,7 @@ It writes `.dem` files (plus a `.dem.info` sidecar) into your CS2 replays
 folder. From there the app's normal **Sync Folder** flow imports them — nothing
 in `api.py` or the frontend changes.
 
-It ships with the release. `build-release.ps1` copies the source and the
+It ships with the release. `tools/build_release.py` copies the source and the
 lockfile, never `node_modules/` (npm rebuilds that) and never `data/` — your
 Steam tokens and match ledger stay on the machine that made them.
 
@@ -244,8 +244,9 @@ bind mount, so a token created with `npm run auth` on your machine is visible
 inside the container immediately. Run `npm install` locally once if you want to
 use the CLI there too.
 
-Both of these are stripped from the public release by `build-release.ps1`: no
-Node in the image, and the mount goes back to `:ro`.
+Both ship as they are. The fetcher is part of the release, so the image needs
+Node and the demo folder has to stay writable — it is where downloaded demos
+land for Sync Folder to pick up.
 
 ---
 

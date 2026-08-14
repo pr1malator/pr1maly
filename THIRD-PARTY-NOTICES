@@ -79,11 +79,17 @@ modification, are permitted provided that the conditions of the BSD 3-Clause
 License are met.
 
 
+The four entries below are redistributed with this software rather than
+fetched from a CDN at runtime — see frontend/vendor/. The app is meant to run
+with no network, so its stylesheet, icons and fonts have to be present.
+
+
 Tailwind CSS
 ------------
 License: MIT
 Repository: https://github.com/tailwindlabs/tailwindcss
 Copyright (c) Tailwind Labs, Inc.
+Bundled: frontend/vendor/tailwind.js (the browser build, unmodified)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files, to deal in the Software
@@ -95,6 +101,18 @@ Google Fonts — Space Grotesk
 License: SIL Open Font License, Version 1.1
 Repository: https://github.com/nicholasflorez/space-grotesk
 Copyright (c) 2018 Florian Karsten
+Bundled: frontend/vendor/fonts/ (Latin subsets, unmodified)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is available at https://opensource.org/licenses/OFL-1.1
+
+
+Google Fonts — Manrope
+----------------------
+License: SIL Open Font License, Version 1.1
+Repository: https://github.com/sharanda/manrope
+Copyright (c) 2018 The Manrope Project Authors
+Bundled: frontend/vendor/fonts/ (Latin subsets, unmodified)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is available at https://opensource.org/licenses/OFL-1.1
@@ -105,6 +123,7 @@ Material Symbols
 License: Apache License 2.0
 Repository: https://github.com/google/material-design-icons
 Copyright (c) Google LLC
+Bundled: frontend/vendor/fonts/ (the outlined variable font, unmodified)
 
 Licensed under the Apache License, Version 2.0. You may obtain a copy of the
 License at http://www.apache.org/licenses/LICENSE-2.0

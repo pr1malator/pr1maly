@@ -1,0 +1,97 @@
+{
+  "map": "de_nuke",
+  "_order_matters": "Zones are tested in order and the first match wins, so a specific zone must come before the larger one that encloses it.",
+  "zones": [
+    {
+      "label": "A Site",
+      "min_x": -300,
+      "max_x": 400,
+      "min_y": -1200,
+      "max_y": -500
+    },
+    {
+      "label": "Hut",
+      "min_x": 400,
+      "max_x": 800,
+      "min_y": -1200,
+      "max_y": -700
+    },
+    {
+      "label": "Heaven",
+      "min_x": -800,
+      "max_x": -200,
+      "min_y": -1400,
+      "max_y": -800
+    },
+    {
+      "label": "Hell",
+      "min_x": -600,
+      "max_x": 0,
+      "min_y": -800,
+      "max_y": -400
+    },
+    {
+      "label": "Squeaky",
+      "min_x": 400,
+      "max_x": 800,
+      "min_y": -700,
+      "max_y": -300
+    },
+    {
+      "label": "Main",
+      "min_x": -200,
+      "max_x": 400,
+      "min_y": -500,
+      "max_y": 200
+    },
+    {
+      "label": "Lobby",
+      "min_x": -600,
+      "max_x": 200,
+      "min_y": 200,
+      "max_y": 800
+    },
+    {
+      "label": "Ramp",
+      "min_x": -50,
+      "max_x": 500,
+      "min_y": 800,
+      "max_y": 1600
+    },
+    {
+      "label": "Outside",
+      "min_x": 600,
+      "max_x": 1800,
+      "min_y": -600,
+      "max_y": 600
+    },
+    {
+      "label": "Secret",
+      "min_x": 400,
+      "max_x": 1000,
+      "min_y": 1400,
+      "max_y": 2200
+    },
+    {
+      "label": "B Site",
+      "min_x": -300,
+      "max_x": 400,
+      "min_y": -1200,
+      "max_y": -500
+    },
+    {
+      "label": "T Spawn",
+      "min_x": -400,
+      "max_x": 400,
+      "min_y": 1800,
+      "max_y": 2800
+    },
+    {
+      "label": "CT Spawn",
+      "min_x": -400,
+      "max_x": 400,
+      "min_y": -2400,
+      "max_y": -1600
+    }
+  ]
+}

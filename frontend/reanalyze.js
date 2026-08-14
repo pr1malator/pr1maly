@@ -10,9 +10,13 @@
  * rest of the queue with it.
  */
 
+import { registerActions, actionArgs } from './js/actions.js';
+import { API } from './js/api.js';
+
 // How many matches "Newest N outdated" picks. Deliberately small: while the
 // metrics are being tuned the point is a readable sample, not a full re-parse
 // of the library on every iteration.
+
 const REANALYZE_RECENT_N = 5;
 
 const REANALYZE_PANEL_HTML = `
@@ -29,10 +33,10 @@ const REANALYZE_PANEL_HTML = `
   <div id="reanalyze-summary" class="grid grid-cols-3 gap-2 mb-3"></div>
 
   <div class="flex flex-wrap items-center gap-2 mb-1">
-    <button onclick="selectReanalyzable('recent')" class="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors">Newest 5 outdated</button>
-    <button onclick="selectReanalyzable('stale')" class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">All outdated</button>
-    <button onclick="selectReanalyzable('all')" class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">Everything</button>
-    <button onclick="selectReanalyzable('none')" class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">Clear</button>
+    <button data-action="selectReanalyzable" data-args='["recent"]' class="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors">Newest 5 outdated</button>
+    <button data-action="selectReanalyzable" data-args='["stale"]' class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">All outdated</button>
+    <button data-action="selectReanalyzable" data-args='["all"]' class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">Everything</button>
+    <button data-action="selectReanalyzable" data-args='["none"]' class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">Clear</button>
   </div>
   <p class="text-[9px] text-on-surface-variant mb-3 leading-relaxed">
     A handful of recent matches is usually enough to see whether a metric change did what it
@@ -57,7 +61,7 @@ const REANALYZE_PANEL_HTML = `
     </p>
   </div>
 
-  <button id="reanalyze-btn" onclick="runReanalyze()" disabled class="w-full bg-primary/20 text-primary py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors disabled:opacity-40 disabled:pointer-events-none">
+  <button id="reanalyze-btn" data-action="runReanalyze" disabled class="w-full bg-primary/20 text-primary py-2.5 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest hover:bg-primary/30 transition-colors disabled:opacity-40 disabled:pointer-events-none">
     Select matches to re-analyze
   </button>
   <div id="reanalyze-result" class="text-[9px] text-on-surface-variant mt-2 leading-relaxed space-y-0.5"></div>
@@ -69,7 +73,7 @@ function _reanalyzeApi() {
   return (typeof API !== 'undefined' && API) ? API : (window.location.origin + '/api');
 }
 
-async function loadReanalyzeList() {
+export async function loadReanalyzeList() {
   const panel = document.getElementById('settings-reanalyze-panel');
   if (!panel) return;
   if (!panel.dataset.built) {
@@ -125,7 +129,7 @@ function _reanalyzeRow(m) {
   return `<label class="flex items-center gap-2 p-2 rounded-lg bg-surface-container-highest/50 ${canDo ? 'cursor-pointer hover:bg-surface-container-highest' : 'opacity-50 cursor-not-allowed'} transition-colors">
     <input type="checkbox" class="reanalyze-check accent-primary" value="${m.match_id}"
            data-stale="${m.analysis_stale ? '1' : '0'}" ${canDo ? '' : 'disabled'}
-           onchange="updateReanalyzeButton()"/>
+           data-action="updateReanalyzeButton" data-event="change"/>
     <span class="text-[10px] font-bold w-16 shrink-0">${map}</span>
     <span class="text-[10px] text-on-surface-variant w-12 shrink-0">${score}</span>
     <span class="text-[10px] text-on-surface-variant w-20 shrink-0">${m.date || ''}</span>
@@ -215,7 +219,7 @@ async function runReanalyze() {
 /* Banner for pages that list matches: says how many are outdated and opens
  * the panel. Without this the state is only visible to someone who already
  * knows to look inside Settings. */
-async function renderStaleBanner(containerId) {
+export async function renderStaleBanner(containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
   try {
@@ -233,7 +237,7 @@ async function renderStaleBanner(containerId) {
           Analyzer is at v${v.analyzer_version}. Re-analyze to bring them up to date.
         </div>
       </div>
-      <button onclick="openSettingsModal('reanalyze')" class="shrink-0 px-3 py-1.5 rounded-lg bg-amber-400/20 text-amber-300 text-[10px] font-bold uppercase tracking-widest hover:bg-amber-400/30 transition-colors">
+      <button data-action="openSettingsModal" data-args='["reanalyze"]' class="shrink-0 px-3 py-1.5 rounded-lg bg-amber-400/20 text-amber-300 text-[10px] font-bold uppercase tracking-widest hover:bg-amber-400/30 transition-colors">
         Re-analyze
       </button>
     </div>`;
@@ -241,3 +245,11 @@ async function renderStaleBanner(containerId) {
     el.classList.add('hidden');
   }
 }
+
+
+/* What this file offers the markup. See js/actions.js. */
+registerActions({
+  runReanalyze,
+  selectReanalyzable,
+  updateReanalyzeButton,
+});

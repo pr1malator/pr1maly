@@ -1,0 +1,79 @@
+{
+  "map": "de_inferno",
+  "_what_this_is": "Which map callouts indicate which positional role, per side. The callout names must match the labels in src/domain/callouts/zones/<map>.json; a name that matches nothing silently contributes no score, which is how a role can quietly stop being detected.",
+  "sides": {
+    "CT": {
+      "Pit / A Anchor": [
+        "Pit",
+        "A Site",
+        "Truck",
+        "Graveyard",
+        "Balcony",
+        "A Side"
+      ],
+      "A Short / Boiler": [
+        "Top Mid",
+        "Boiler",
+        "Library",
+        "Arch"
+      ],
+      "Arch / Speedway": [
+        "Mid",
+        "Alt Mid",
+        "Underpass"
+      ],
+      "B Rotator (CT/Spools)": [
+        "CT",
+        "New Box",
+        "Construction"
+      ],
+      "B Anchor (Banana)": [
+        "B Site",
+        "Banana",
+        "Oranges",
+        "Car",
+        "Dark",
+        "Coffins",
+        "B Side",
+        "Apartments",
+        "T Apartments",
+        "Second Mid",
+        "T Approach"
+      ]
+    },
+    "T": {
+      "Banana Pack": [
+        "Banana",
+        "Car",
+        "Oranges",
+        "B Site",
+        "Dark",
+        "Coffins",
+        "Construction",
+        "New Box",
+        "CT",
+        "B Side"
+      ],
+      "Apps Control": [
+        "T Apartments",
+        "Apartments",
+        "Second Mid",
+        "Boiler",
+        "Balcony"
+      ],
+      "Mid / Arch Lurk": [
+        "Mid",
+        "Alt Mid",
+        "Underpass",
+        "Top Mid",
+        "Arch",
+        "Library",
+        "A Site",
+        "Pit",
+        "Truck",
+        "Graveyard",
+        "A Side"
+      ]
+    }
+  }
+}

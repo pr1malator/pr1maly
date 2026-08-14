@@ -11,7 +11,6 @@ from typing import Any
 
 import pandas as pd
 
-
 _CS2_ENTITY_SCHEMA_BREAK_PATCH = 14152
 
 
@@ -657,7 +656,7 @@ def parse_info_file(info_bytes: bytes) -> dict[str, Any]:
         if wtype == 0:  # varint
             val, pos = _read_varint(info_bytes, pos)
             if field == 2 and 1_000_000_000 < val < 2_000_000_000:
-                dt = datetime.datetime.fromtimestamp(val, tz=datetime.timezone.utc)
+                dt = datetime.datetime.fromtimestamp(val, tz=datetime.UTC)
                 result["match_date"] = dt.date().isoformat()
         elif wtype == 2:  # length-delimited
             length, pos = _read_varint(info_bytes, pos)
@@ -700,9 +699,10 @@ def parse_info_file(info_bytes: bytes) -> dict[str, Any]:
                     swtype = stag & 0x07
                     if swtype == 0:
                         sval, sub_pos = _read_varint(payload, sub_pos)
-                        if sfield == 2:  # repeated field 2 = account IDs
-                            sub_sub_pos = 0
-                            # field 2 is a packed/submessage of repeated varints
+                        if sfield == 2:
+                            # Account IDs arrive as a length-delimited submessage,
+                            # decoded in the swtype == 2 branch below. A bare varint
+                            # here carries no account ID, so there is nothing to read.
                             pass
                     elif swtype == 2:
                         slen, sub_pos = _read_varint(payload, sub_pos)

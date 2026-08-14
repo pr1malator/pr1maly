@@ -1,0 +1,134 @@
+# pr1maly — project metadata and tool configuration.
+#
+# The application is still run from the repository root (`uvicorn api:app`), so
+# nothing is installed as a package yet; see [tool.setuptools] below. This file
+# exists so that dependencies, lint rules, and test settings have one home
+# instead of being spread across requirements.txt, the README, and nowhere.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pr1maly"
+version = "1.0.0"
+description = "CS2 local analytics and trend tracker — parses demos, tracks performance over time, stores everything locally"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+# The pseudonym, deliberately: this string is copied into the LICENSE, into the
+# installed package metadata, and into every release archive. A copyright notice
+# may name whoever holds the copyright by any name they go by, and this project
+# is published under this one. tests/test_release_build.py fails if it changes.
+authors = [{ name = "pr1malator" }]
+
+# Ranges here, exact pins in requirements.txt. Applications want a reproducible
+# install; this table describes what the code actually supports.
+dependencies = [
+    "demoparser2==0.41.2",
+    "pandas>=2.0,<4",
+    "fastapi>=0.111,<2",
+    "uvicorn[standard]>=0.30,<1",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "httpx>=0.27",   # also the FastAPI TestClient transport
+    "ruff>=0.16",
+    "mypy>=1.11",
+]
+
+# Nothing is packaged yet. `pip install -e ".[dev]"` therefore installs only the
+# dependencies, which is exactly what is wanted while the code still lives as
+# api.py + src/ at the repository root. This flips to packages = ["pr1maly"]
+# when the package lands.
+[tool.setuptools]
+packages = []
+py-modules = []
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The suite does `from api import app` and `from src... import ...`, which only
+# worked because `python -m pytest` happens to put the CWD on sys.path. Stating
+# it here means a bare `pytest` works too, which is what CI runs.
+pythonpath = ["."]
+addopts = "-q"
+
+# ---------------------------------------------------------------------------
+# ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["release", "frontend", "fetcher", "docs", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    # Deferred deliberately, not permanently:
+    #
+    # B904 (raise ... from) is 9 occurrences, all in api.py route handlers that
+    # re-raise parse failures as HTTPException. They move wholesale when the
+    # routers are split out, so fixing them here would only create conflicts.
+    "B904",
+    # B905 (zip strict=) is 7 occurrences in the metrics code, where the pairs
+    # are known-equal-length by construction. Revisit when those functions move
+    # into domain/metrics/ and can be given real signatures.
+    "B905",
+]
+
+# `ruff format` is intentionally NOT enforced yet. It would strip the aligned
+# `# n=` observation counts off the _WIN_PROB calibration table and explode
+# every hand-curated lookup (_WEAPON_NAMES, _NON_AIM_FIRE, _MAX_PER_ROUND) to
+# one entry per line — ~2,800 lines of churn concentrated on exactly the data
+# tables that are moving to JSON. Adopt it once they have.
+
+[tool.ruff.lint.flake8-bugbear]
+# `def upload(file: UploadFile = File(...), steam_id: str = Form(default=""))`
+# is how FastAPI declares multipart parameters — the call in the default is the
+# framework's interface, not the mutable-default bug B008 looks for.
+extend-immutable-calls = [
+    "fastapi.File", "fastapi.Form", "fastapi.Body", "fastapi.Depends",
+    "File", "Form", "Body", "Depends",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "api"]
+# Without this, `from x import (a, b as c)` is split into one statement per
+# aliased name — four separate `from src.ai_service import ...` lines where one
+# grouped block reads better.
+combine-as-imports = true
+
+[tool.ruff.lint.pycodestyle]
+# The formatter targets 120, but E501 only complains past 140. Every line in
+# this codebase between the two is a prompt string, an LLM instruction, or a
+# data literal — none of which a formatter can split, so flagging them would
+# only buy `# noqa` comments.
+max-line-length = 140
+
+[tool.ruff.lint.per-file-ignores]
+# Tests build fixture data with deliberately wide literal tables.
+"tests/*" = ["E501"]
+# _DEFAULT_CONFIG holds the built-in AI prompt templates as single-line strings
+# (the longest is 174 chars). They move to config/defaults.py as JSON data,
+# where line length stops being a Python concern.
+"src/ai_service.py" = ["E501"]
+
+# ---------------------------------------------------------------------------
+# mypy
+# ---------------------------------------------------------------------------
+# Scoped to the pure modules that have no I/O and no pandas in their signatures.
+# This is a beachhead, widened module by module as logic moves into domain/.
+[tool.mypy]
+python_version = "3.11"
+files = ["src/callouts.py"]
+strict = true
+warn_unused_configs = true
+# Add `[[tool.mypy.overrides]] module = ["pandas.*", "demoparser2.*"]` with
+# ignore_missing_imports when the scope widens to modules that import them.

@@ -1,0 +1,955 @@
+{
+  "models": {
+    "AIConfigUpdate": {
+      "properties": [
+        "active_model",
+        "active_provider",
+        "prompts",
+        "providers",
+        "system_instructions"
+      ],
+      "required": []
+    },
+    "AccountCreate": {
+      "properties": [
+        "display_name",
+        "name",
+        "rank",
+        "steam_id"
+      ],
+      "required": [
+        "name",
+        "steam_id"
+      ]
+    },
+    "AccountUpdate": {
+      "properties": [
+        "display_name",
+        "name",
+        "rank"
+      ],
+      "required": []
+    },
+    "AutoSyncIn": {
+      "properties": [
+        "enabled",
+        "idle_check_minutes",
+        "interval_minutes",
+        "pause_when_playing"
+      ],
+      "required": []
+    },
+    "Body_detect_player_api_matches_detect_player_post": {
+      "properties": [
+        "demo_file",
+        "info_file"
+      ],
+      "required": [
+        "info_file"
+      ]
+    },
+    "Body_reimport_match_api_matches__match_id__reimport_post": {
+      "properties": [
+        "file",
+        "info_file",
+        "steam_id"
+      ],
+      "required": [
+        "file"
+      ]
+    },
+    "Body_upload_demo_api_matches_upload_post": {
+      "properties": [
+        "context_notes",
+        "file",
+        "info_file",
+        "match_date",
+        "steam_id",
+        "tags"
+      ],
+      "required": [
+        "file"
+      ]
+    },
+    "Body_upload_demos_bulk_api_matches_upload_bulk_post": {
+      "properties": [
+        "files",
+        "info_files",
+        "steam_id"
+      ],
+      "required": [
+        "files"
+      ]
+    },
+    "ChatMessageIn": {
+      "properties": [
+        "message",
+        "model",
+        "provider"
+      ],
+      "required": [
+        "message"
+      ]
+    },
+    "ConfigResponse": {
+      "properties": [
+        "steam_id"
+      ],
+      "required": [
+        "steam_id"
+      ]
+    },
+    "ConfigUpdate": {
+      "properties": [
+        "steam_id"
+      ],
+      "required": [
+        "steam_id"
+      ]
+    },
+    "FriendCreate": {
+      "properties": [
+        "name",
+        "steam_id"
+      ],
+      "required": [
+        "steam_id"
+      ]
+    },
+    "HTTPValidationError": {
+      "properties": [
+        "detail"
+      ],
+      "required": []
+    },
+    "NotesUpdate": {
+      "properties": [
+        "notes"
+      ],
+      "required": [
+        "notes"
+      ]
+    },
+    "SteamApiKeyIn": {
+      "properties": [
+        "account",
+        "api_key"
+      ],
+      "required": [
+        "api_key"
+      ]
+    },
+    "SteamCodesIn": {
+      "properties": [
+        "auth_code",
+        "share_code"
+      ],
+      "required": [
+        "auth_code",
+        "share_code"
+      ]
+    },
+    "SteamDownloadIn": {
+      "properties": [
+        "limit"
+      ],
+      "required": []
+    },
+    "SteamTogglesIn": {
+      "properties": [
+        "download_enabled",
+        "walk_enabled"
+      ],
+      "required": []
+    },
+    "TagCreate": {
+      "properties": [
+        "tag"
+      ],
+      "required": [
+        "tag"
+      ]
+    },
+    "UpdateConfig": {
+      "properties": [
+        "enabled"
+      ],
+      "required": [
+        "enabled"
+      ]
+    },
+    "UpdateStatusResponse": {
+      "properties": [
+        "checked_at",
+        "current",
+        "enabled",
+        "error",
+        "latest",
+        "notes",
+        "released",
+        "update_available"
+      ],
+      "required": [
+        "current"
+      ]
+    },
+    "ValidationError": {
+      "properties": [
+        "ctx",
+        "input",
+        "loc",
+        "msg",
+        "type"
+      ],
+      "required": [
+        "loc",
+        "msg",
+        "type"
+      ]
+    }
+  },
+  "routes": {
+    "DELETE /api/accounts/{steam_id}": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:steam_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "DELETE /api/friends/{steam_id}": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:steam_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "DELETE /api/matches/{match_id}": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:match_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "DELETE /api/matches/{match_id}/chat": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:match_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/accounts": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/ai/config": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/ai/providers": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/analyzer/version": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/config": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": "ConfigResponse"
+      }
+    },
+    "GET /api/friends": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/health": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/matches": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "query:player_steam_id"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/matches/career-averages": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/matches/{match_id}": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:match_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/matches/{match_id}/chat": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:match_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/matches/{match_id}/minimap": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:match_id!",
+        "query:round_number"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/matches/{match_id}/replay": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:match_id!",
+        "query:round_number"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/metrics": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/minimap/{map_name}/debug-positions": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:map_name!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/minimap/{map_name}/schematic": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:map_name!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/onboarding": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/performance": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "query:maps",
+        "query:steam_ids"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/performance/ai-assessment": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "query:maps"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/steam/auto-sync": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/steam/job": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/steam/presence": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "query:force"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/steam/status": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/storage/config": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/storage/status": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "query:fetched_only",
+        "query:keep_recent",
+        "query:per_account"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/sync/config": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "GET /api/sync/scan": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "query:steam_id"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/trends": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "query:maps",
+        "query:steam_ids"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "GET /api/updates": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": "UpdateStatusResponse"
+      }
+    },
+    "POST /api/accounts": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "AccountCreate",
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "201": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/factory-reset": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "POST /api/friends": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "FriendCreate",
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "201": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/matches/detect-player": {
+      "body_content": [
+        "multipart/form-data"
+      ],
+      "body_model": null,
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/matches/upload": {
+      "body_content": [
+        "multipart/form-data"
+      ],
+      "body_model": null,
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/matches/upload-bulk": {
+      "body_content": [
+        "multipart/form-data"
+      ],
+      "body_model": null,
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/matches/{match_id}/chat": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "ChatMessageIn",
+      "body_required": true,
+      "params": [
+        "path:match_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/matches/{match_id}/reanalyze": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:match_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/matches/{match_id}/reimport": {
+      "body_content": [
+        "multipart/form-data"
+      ],
+      "body_model": null,
+      "body_required": true,
+      "params": [
+        "path:match_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/matches/{match_id}/tags": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "TagCreate",
+      "body_required": true,
+      "params": [
+        "path:match_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/minimap/zones": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": null,
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/performance/ai-assessment": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "query:maps",
+        "query:model",
+        "query:provider"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/steam/auth/{name}": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:name!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/steam/check": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "POST /api/steam/download": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "SteamDownloadIn",
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/steam/job/cancel": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null
+      }
+    },
+    "POST /api/storage/cleanup": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/sync/process": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": null,
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "POST /api/updates/check": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [],
+      "responses": {
+        "200": "UpdateStatusResponse"
+      }
+    },
+    "PUT /api/accounts/{steam_id}": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "AccountUpdate",
+      "body_required": true,
+      "params": [
+        "path:steam_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/accounts/{steam_id}/activate": {
+      "body_content": [],
+      "body_model": null,
+      "body_required": false,
+      "params": [
+        "path:steam_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/ai/config": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "AIConfigUpdate",
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/config": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "ConfigUpdate",
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/matches/{match_id}/notes": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "NotesUpdate",
+      "body_required": true,
+      "params": [
+        "path:match_id!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/onboarding": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": null,
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/steam/accounts/{name}": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "SteamCodesIn",
+      "body_required": true,
+      "params": [
+        "path:name!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/steam/accounts/{name}/toggles": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "SteamTogglesIn",
+      "body_required": true,
+      "params": [
+        "path:name!"
+      ],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/steam/api-key": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "SteamApiKeyIn",
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/steam/auto-sync": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "AutoSyncIn",
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/storage/config": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": null,
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/sync/config": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": null,
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": null,
+        "422": "HTTPValidationError"
+      }
+    },
+    "PUT /api/updates/config": {
+      "body_content": [
+        "application/json"
+      ],
+      "body_model": "UpdateConfig",
+      "body_required": true,
+      "params": [],
+      "responses": {
+        "200": "UpdateStatusResponse",
+        "422": "HTTPValidationError"
+      }
+    }
+  }
+}

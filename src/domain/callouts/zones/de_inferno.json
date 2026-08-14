@@ -1,0 +1,239 @@
+{
+  "map": "de_inferno",
+  "_order_matters": "Zones are tested in order and the first match wins, so a specific zone must come before the larger one that encloses it.",
+  "zones": [
+    {
+      "label": "A Site",
+      "min_x": 1800,
+      "max_x": 2400,
+      "min_y": 200,
+      "max_y": 800,
+      "area": "A site"
+    },
+    {
+      "label": "Pit",
+      "min_x": 2100,
+      "max_x": 2700,
+      "min_y": -600,
+      "max_y": 300,
+      "area": "A site"
+    },
+    {
+      "label": "Balcony",
+      "min_x": 1600,
+      "max_x": 2000,
+      "min_y": 800,
+      "max_y": 1200,
+      "area": "A site"
+    },
+    {
+      "label": "Library",
+      "min_x": 1200,
+      "max_x": 1700,
+      "min_y": 800,
+      "max_y": 1400,
+      "area": "A site"
+    },
+    {
+      "label": "Boiler",
+      "min_x": 1000,
+      "max_x": 1400,
+      "min_y": 400,
+      "max_y": 800,
+      "area": "T side"
+    },
+    {
+      "label": "Arch",
+      "min_x": 1000,
+      "max_x": 1500,
+      "min_y": 200,
+      "max_y": 800,
+      "area": "A site"
+    },
+    {
+      "label": "Graveyard",
+      "min_x": 2200,
+      "max_x": 2700,
+      "min_y": 600,
+      "max_y": 1100,
+      "area": "A site"
+    },
+    {
+      "label": "Truck",
+      "min_x": 1600,
+      "max_x": 2250,
+      "min_y": -100,
+      "max_y": 400,
+      "area": "A site"
+    },
+    {
+      "label": "Mid",
+      "min_x": 600,
+      "max_x": 1300,
+      "min_y": -100,
+      "max_y": 800,
+      "area": "Mid"
+    },
+    {
+      "label": "Alt Mid",
+      "min_x": -300,
+      "max_x": 700,
+      "min_y": 400,
+      "max_y": 1000,
+      "area": "Mid"
+    },
+    {
+      "label": "Underpass",
+      "min_x": 400,
+      "max_x": 900,
+      "min_y": -600,
+      "max_y": 50,
+      "area": "Mid"
+    },
+    {
+      "label": "Top Mid",
+      "min_x": 400,
+      "max_x": 900,
+      "min_y": 800,
+      "max_y": 1400,
+      "area": "Mid"
+    },
+    {
+      "label": "B Site",
+      "min_x": 100,
+      "max_x": 700,
+      "min_y": -1200,
+      "max_y": -600,
+      "area": "B site"
+    },
+    {
+      "label": "Banana",
+      "min_x": 100,
+      "max_x": 800,
+      "min_y": -2200,
+      "max_y": -1200,
+      "area": "B site"
+    },
+    {
+      "label": "Oranges",
+      "min_x": 50,
+      "max_x": 400,
+      "min_y": -1600,
+      "max_y": -1200,
+      "area": "B site"
+    },
+    {
+      "label": "Car",
+      "min_x": 50,
+      "max_x": 500,
+      "min_y": -1200,
+      "max_y": -800,
+      "area": "B site"
+    },
+    {
+      "label": "Dark",
+      "min_x": -200,
+      "max_x": 200,
+      "min_y": -1100,
+      "max_y": -700,
+      "area": "B site"
+    },
+    {
+      "label": "CT",
+      "min_x": 50,
+      "max_x": 600,
+      "min_y": -700,
+      "max_y": -200,
+      "area": "B site"
+    },
+    {
+      "label": "Construction",
+      "min_x": -400,
+      "max_x": 200,
+      "min_y": -1400,
+      "max_y": -900,
+      "area": "B site"
+    },
+    {
+      "label": "New Box",
+      "min_x": 50,
+      "max_x": 500,
+      "min_y": -900,
+      "max_y": -500,
+      "area": "B site"
+    },
+    {
+      "label": "Coffins",
+      "min_x": 500,
+      "max_x": 900,
+      "min_y": -1000,
+      "max_y": -500,
+      "area": "B site"
+    },
+    {
+      "label": "T Spawn",
+      "min_x": -200,
+      "max_x": 400,
+      "min_y": -3000,
+      "max_y": -2200,
+      "area": "T side"
+    },
+    {
+      "label": "T Apartments",
+      "min_x": 800,
+      "max_x": 1800,
+      "min_y": 1200,
+      "max_y": 2100,
+      "area": "T side"
+    },
+    {
+      "label": "Apartments",
+      "min_x": 100,
+      "max_x": 1800,
+      "min_y": 1400,
+      "max_y": 2800,
+      "area": "T side"
+    },
+    {
+      "label": "Second Mid",
+      "min_x": 100,
+      "max_x": 1200,
+      "min_y": 1000,
+      "max_y": 2000,
+      "area": "T side"
+    },
+    {
+      "label": "A Side",
+      "min_x": 1000,
+      "max_x": 2800,
+      "min_y": -600,
+      "max_y": 1600,
+      "area": "Fallback"
+    },
+    {
+      "label": "B Side",
+      "min_x": -600,
+      "max_x": 1000,
+      "min_y": -2400,
+      "max_y": -200,
+      "area": "Fallback"
+    },
+    {
+      "label": "T Area",
+      "min_x": -400,
+      "max_x": 800,
+      "min_y": -3400,
+      "max_y": -1800,
+      "area": "Fallback"
+    },
+    {
+      "label": "T Approach",
+      "min_x": 200,
+      "max_x": 800,
+      "min_y": 2000,
+      "max_y": 3500,
+      "area": "Fallback"
+    }
+  ],
+  "provenance": "Calibrated from actual demo position data (2026-03). Format: (label, min_x, max_x, min_y, max_y) in Source engine units. Zones are ordered specific-first; first match wins."
+}

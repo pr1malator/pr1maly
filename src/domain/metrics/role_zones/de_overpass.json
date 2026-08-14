@@ -1,0 +1,54 @@
+{
+  "map": "de_overpass",
+  "_what_this_is": "Which map callouts indicate which positional role, per side. The callout names must match the labels in src/domain/callouts/zones/<map>.json; a name that matches nothing silently contributes no score, which is how a role can quietly stop being detected.",
+  "sides": {
+    "CT": {
+      "A Long Anchor": [
+        "A Site",
+        "A Long"
+      ],
+      "Toilets / Mid": [
+        "Toilets",
+        "Mid",
+        "Connector",
+        "Party",
+        "Balloons"
+      ],
+      "Heaven / Sniper": [
+        "Heaven",
+        "Sniper"
+      ],
+      "B Short / Water": [
+        "B Short",
+        "Water",
+        "Sandbags"
+      ],
+      "B Anchor (Monster)": [
+        "B Site",
+        "Monster",
+        "Pit",
+        "Pillar",
+        "Barrels"
+      ]
+    },
+    "T": {
+      "Lower / Water Pack": [
+        "B Short",
+        "Water",
+        "Connector",
+        "B Site",
+        "Monster"
+      ],
+      "Toilets / Mid Pack": [
+        "Toilets",
+        "Mid",
+        "Party",
+        "Balloons"
+      ],
+      "Extremity Lurks": [
+        "A Long",
+        "A Site"
+      ]
+    }
+  }
+}

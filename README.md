@@ -1,13 +1,17 @@
-﻿# pr1maly — CS2 Local Analytics & Trend Tracker
+# pr1maly — CS2 Local Analytics & Trend Tracker
 
 A standalone, locally-hosted application for Counter-Strike 2. Upload `.dem`
 files, extract advanced player metrics, and track performance trends over
 time — all stored locally with no external services required.
 
+**[Try it without installing anything →](https://www.pr1maly.com/demo/match-breakdown.html?id=demo-01)**
+A real 41-match history in the real interface, with every name and Steam ID
+replaced. Click a round, open the minimap, play the 2D replay.
+
 ## Features
 
-- **HLTV 2.0 Rating, ADR, KAST%, K/D, Impact, KPR/DPR** — HP-accurate ADR
-  (no overkill, matches Refrag/Leetify)
+- **HLTV 2.0 Rating, ADR, KAST%, K/D, Impact, KPR/DPR** — ADR counts damage
+  against the health the victim actually had, so overkill does not inflate it
 - **Multi-kill rounds** (2K–5K), **clutch detection** (1vX), **trade detection**
 - **Full 10-player scoreboard** with team split and rank extraction
 - **Round-by-round enriched data**: economy, buy type, kill/death callout
@@ -40,7 +44,6 @@ time — all stored locally with no external services required.
 - **Friends list**: friends highlighted on scoreboards
 - **Sync folder**: point at your CS2 replays directory, scan for new demos per
   player, selectively import
-<!-- >>> steam-fetcher — stripped from the public release by build-release.ps1 -->
 - **Manual Fetch from Steam** *(optional)*: download demos directly from Valve
   instead of saving each one in-game — check for new matches and pull the
   backlog on demand. One-time setup lives in **Settings → Steam**. Requires the
@@ -48,7 +51,6 @@ time — all stored locally with no external services required.
 - **Auto-Sync** *(optional)*: leave it on and it works through your backlog
   unattended — one demo downloaded, analysed, then a configurable pause
   (default 5 minutes) before the next. Pauses by itself while CS2 is running
-<!-- <<< steam-fetcher -->
 - **Storage management**: a demo costs ~280 MB on disk but ~1.3 MB once
   analysed. Keep a rolling window of recent demos for re-analysis and reclaim
   the rest — **Settings → Storage**, with a live preview of what each retention
@@ -71,14 +73,19 @@ time — all stored locally with no external services required.
 
 ## Architecture
 
-| Layer | Purpose | Tech |
-|-------|---------|------|
-| **1 – Parser** | Reads raw `.dem` files into DataFrames | `demoparser2` |
-| **2 – Processor** | Filters events by Steam ID, calculates stats | `pandas` |
-| **3 – Storage** | Persists matches, round timelines, tags, players | `sqlite3` |
-| **4 – API** | REST endpoints + serves the frontend | `FastAPI`, `uvicorn` |
-| **5 – Frontend** | Interactive HTML/JS pages | Vanilla JS, Chart.js |
-| **6 – AI** | Match coaching & role assessment | OpenAI / Anthropic / Gemini / Mistral |
+| Layer | Purpose | Where | Tech |
+|-------|---------|-------|------|
+| **1 – Parser** | Reads raw `.dem` files into DataFrames | `src/parser.py` | `demoparser2` |
+| **2 – Metrics** | Filters events by Steam ID, calculates stats | `src/processor.py`, `src/domain/` | `pandas` |
+| **3 – Storage** | Persists matches, round timelines, tags, players | `src/database.py` | `sqlite3` |
+| **4 – Services** | Imports, Steam jobs, Auto-Sync, demo retention | `src/services/` | — |
+| **5 – API** | REST endpoints + serves the frontend | `api.py`, `src/api/` | `FastAPI`, `uvicorn` |
+| **6 – Frontend** | Interactive HTML/JS pages | `frontend/` | Vanilla JS, Chart.js |
+| **7 – AI** | Match coaching & role assessment | `src/ai_service.py`, `src/services/ai_context.py` | OpenAI / Anthropic / Gemini / Mistral |
+
+[ARCHITECTURE.md](ARCHITECTURE.md) covers this properly: how a request flows
+through the layers, which boundaries are load-bearing and why, and the decisions
+worth knowing before changing anything.
 
 ---
 
@@ -120,10 +127,32 @@ docker compose down
 
 The SQLite database is persisted in `./data/` on your host via a Docker volume.
 
-> **Sync Folder**: the Docker Compose file mounts the default CS2 replays
-> directory (`C:/Program Files (x86)/Steam/steamapps/common/Counter-Strike Global Offensive/game/csgo/replays`)
-> as `/demos` inside the container. Edit the path in `docker-compose.yml` if
-> your Steam library lives elsewhere.
+> **Sync Folder**: your CS2 replays directory is mounted as `/demos` inside the
+> container, which is the path you enter in the Sync Folder UI. The host side
+> defaults to the standard Windows Steam location; on Linux or macOS, or if your
+> library lives elsewhere, copy `.env.example` to `.env` and set `DEMO_HOST_DIR`.
+
+The application runs as a non-root user (uid 1000) and the container reports a
+health status, so `docker compose ps` tells you whether the app is actually
+answering rather than merely running.
+
+The container starts as root only long enough to hand `/app/data` over to that
+user, then drops privileges. That step exists because an earlier version ran as
+root, and a database it wrote stays root-owned — which the app can read and not
+write, and which SQLite reports as *"attempt to write a readonly database"*
+while naming neither the file nor the reason. If you are on an older image and
+hit that, this fixes it without rebuilding:
+
+```bash
+docker compose exec -u root api chown -R 1000:1000 /app/data
+```
+
+To skip the root step altogether, run as yourself — the entrypoint notices and
+does nothing:
+
+```bash
+docker compose run --user "$(id -u):$(id -g)" api
+```
 
 ---
 
@@ -313,6 +342,18 @@ Or edit `data/ai_config.json` directly (created on first use).
 
 ---
 
+## What the Numbers Mean
+
+Every figure the app shows has an entry in **[METRICS.md](METRICS.md)** — what it
+measures, how it is worked out, and, where it grades you, where that grade came
+from. The same text is in the app: the ⓘ beside a figure explains it in place.
+
+Read the grading note there before treating a tier as a ranking. Most of the
+cut-offs in this app are hand-set targets rather than percentiles of a real
+player population, and the reference says which are which.
+
+---
+
 ## Behavioral Assessment — How It Works
 
 The 5-axis behavioral chart scores your playstyle on each side (CT and T)
@@ -362,8 +403,14 @@ translates into actual round wins.
 
 ## API Reference
 
-All endpoints are prefixed with `/api`. CORS is enabled for all origins.
-Interactive Swagger docs are at **http://localhost:8000/docs**.
+All endpoints are prefixed with `/api`. Interactive Swagger docs are at
+**http://localhost:8000/docs**.
+
+CORS is restricted to loopback — `localhost`, `127.0.0.1` and `[::1]`, on any
+port. It is not open to all origins, and should not be: with credentials
+allowed, that setting makes the browser hand your match history, your account
+list and the Steam IDs of everyone you have played with to any website you
+happen to have open while the app is running.
 
 ### Config & Accounts
 
@@ -458,7 +505,6 @@ are never touched.
 heavily-played account cannot push another account's demos out of it. Turn it
 off for a single global window, which bounds total disk use more tightly.
 
-<!-- >>> steam-fetcher — stripped from the public release by build-release.ps1 -->
 ### Fetch from Steam *(optional)*
 
 Setup (API key, per-account codes, QR sign-in) is in **Settings → Steam**. The
@@ -520,7 +566,6 @@ running. Failures back off exponentially (1 min → 30 min ceiling), and a demo
 that fails to parse three times is set aside so the rest of the queue can carry
 on. If it was left on, it resumes on startup.
 
-<!-- <<< steam-fetcher -->
 ### Replay
 
 | Method | Endpoint | Description |
@@ -535,6 +580,47 @@ curl -X POST http://localhost:8000/api/matches/upload \
   -F "context_notes=ranked game" \
   -F "tags=solo queue,good game"
 ```
+
+---
+
+## Update Checks (Optional, off by default)
+
+**Settings → Updates** shows the version you are running and, if you ask,
+whether a newer one exists. Nothing about this is automatic on a fresh install.
+
+There are two ways to ask. **Check now** looks once — pressing it is the
+permission, so it works whatever the setting says. The tickbox above it turns on
+a check once a day, and the answer is cached for 24 hours, so leaving it on
+costs one request per day and works offline in between.
+
+What the request is: a plain `GET` for `https://www.pr1maly.com/latest.json`, a
+small static file listing the current version and a link to its release notes.
+It carries nothing about your install — not your version, not an identifier, not
+a count of anything — so what reaches the other end is an IP address and a
+timestamp, which is true of any request to anything. The comparison happens on
+your machine.
+
+And that IP is not written down. The file is served from this project's own
+server rather than a hosting service, and that server logs nothing for this one
+path:
+
+```nginx
+location = /latest.json { access_log off; }
+```
+
+Which means nobody counts installs, including me. Handing the file to GitHub or
+a CDN to serve would have moved the log rather than removed it; this way the
+answer to "what happens to my address" is a line of configuration you can read
+here rather than an assurance you have to take.
+
+Nothing is ever installed for you. This application owns your match database and
+migrates its schema when it starts; upgrading that unattended is a worse trade
+than running a version behind. If an update exists you are shown the command for
+how you installed it, and you run it when you choose.
+
+`docker compose exec api cat /app/data/update_config.json` shows the setting,
+and factory reset removes it — consent belongs to whoever gave it, not to the
+next person using the machine.
 
 ---
 
@@ -568,12 +654,16 @@ not stored — only the extracted statistics.
 
 ## Project Structure
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for what each part is responsible for.
+
 ```
 pr1maly/
-├── api.py                # FastAPI REST backend (Layer 4)
+├── api.py                # Builds the app and registers the routers
+├── pyproject.toml        # Package metadata, ruff / pytest / mypy config
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
+├── .env.example          # DEMO_HOST_DIR and friends
 ├── data/
 │   ├── steamID           # Active Steam ID (legacy, managed by accounts)
 │   ├── onboarding.json   # Onboarding wizard state
@@ -583,30 +673,47 @@ pr1maly/
 │   ├── ai_roles.json     # Persisted AI role assessments
 │   ├── sync_config.json  # Sync folder path configuration
 │   ├── storage_config.json    # Demo retention settings
-<!-- >>> steam-fetcher — stripped from the public release by build-release.ps1 -->
 │   ├── auto_sync.json         # Auto-Sync settings (survives restarts)
 │   ├── steam_tokens.json      # Steam refresh tokens (fetcher, owner-only)
 │   └── steam_sharecodes.json  # Match ledger + Web API key (fetcher, owner-only)
-<!-- <<< steam-fetcher -->
 ├── frontend/
 │   ├── performance.html  # Main dashboard
 │   ├── breakdown.html    # Aggregated performance breakdown
 │   ├── match-breakdown.html  # Single match detail
 │   ├── replay.html       # 2D tick-by-tick replay viewer
 │   ├── calibrate.html    # Callout calibration tool
+│   ├── charts.js         # Chart rendering, shared with the landing site
 │   ├── theme.css / theme.js  # Dark/light theme support
+│   ├── js/               # Scripts shared between pages
+│   │   ├── accounts.js       # Account and friend management
+│   │   └── steam-panel.js    # Fetch-from-Steam panel
+│   ├── vendor/           # Tailwind + fonts, bundled so the app runs offline
 │   ├── img/radar/        # Map radar images (1024×1024)
 │   ├── img/maps/         # Map icons (512×512), named as in the DB
 ├── src/
 │   ├── parser.py         # Demo parsing (Layer 1)
-│   ├── processor.py      # Metrics calculation (Layer 2)
+│   ├── processor.py      # Composes the metrics into one stored match
 │   ├── database.py       # SQLite storage (Layer 3)
 │   ├── callouts.py       # Map coordinate → callout translation
-│   └── ai_service.py     # Multi-provider AI integration
-└── tests/
-    ├── test_api.py
-    ├── test_processor.py
-    └── test_database.py
+│   ├── ai_service.py     # Multi-provider AI integration
+│   ├── api/              # HTTP layer
+│   │   ├── deps.py           # Shared application state
+│   │   ├── schemas.py        # Request / response models
+│   │   └── routers/          # One module per group of endpoints
+│   ├── domain/           # Pure logic — no HTTP, no database, no filesystem
+│   │   ├── metrics/          # The measurements, each registered and versioned
+│   │   │   ├── registry.py       # MetricSpec catalogue, served by GET /api/metrics
+│   │   │   └── role_zones/       # Positional role definitions per map (JSON)
+│   │   ├── calibration/      # Win probability, HLTV coefficients
+│   │   ├── callouts/zones/   # Map callout rectangles (JSON)
+│   │   └── blobs.py          # Decoding the stored JSON columns
+│   ├── services/         # Imports, Steam jobs, Auto-Sync, retention, AI context
+│   ├── metrics/behavior.py   # Cross-match behavioural axes and archetypes
+│   └── config/           # Paths, and the JSON config store
+├── tools/
+│   └── build_release.py  # Builds the public source tree and landing site
+├── fetcher/              # Node companion that downloads demos from Steam
+└── tests/                # Including the API, schema and analysis snapshots
 ```
 
 ## Credits & Licensing

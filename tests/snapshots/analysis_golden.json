@@ -1,0 +1,2421 @@
+{
+  "adr": 200.0,
+  "aim_stats": {
+    "_metric_version": 1,
+    "accuracy": {
+      "avg": 100.0,
+      "confidence": "medium",
+      "first_bullet_pct": 100.0,
+      "head_count": 4,
+      "head_pct": 50.0,
+      "lower_count": 0,
+      "lower_pct": 0.0,
+      "max": 100.0,
+      "median": 100.0,
+      "min": 100.0,
+      "n": 8,
+      "outcomes": [
+        "kill",
+        "kill",
+        "kill",
+        "kill",
+        "kill",
+        "kill",
+        "kill",
+        "kill"
+      ],
+      "pooled_pct": 100.0,
+      "total_hits": 8,
+      "total_shots": 8,
+      "upper_count": 4,
+      "upper_pct": 50.0,
+      "values": [
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0
+      ]
+    },
+    "aim_rating": 94.2,
+    "aim_rating_inputs": [
+      {
+        "metric": "ttk",
+        "n": 8,
+        "score": 94.2,
+        "weight": 0.12,
+        "weight_share": 1.0
+      }
+    ],
+    "encounters": [
+      {
+        "accuracy": 100.0,
+        "outcome": "kill",
+        "ttk": 0.188
+      },
+      {
+        "accuracy": 100.0,
+        "outcome": "kill",
+        "ttk": 0.188
+      },
+      {
+        "accuracy": 100.0,
+        "outcome": "kill",
+        "ttk": 0.188
+      },
+      {
+        "accuracy": 100.0,
+        "outcome": "kill",
+        "ttk": 0.188
+      },
+      {
+        "accuracy": 100.0,
+        "outcome": "kill",
+        "ttk": 0.188
+      },
+      {
+        "accuracy": 100.0,
+        "outcome": "kill",
+        "ttk": 0.188
+      },
+      {
+        "accuracy": 100.0,
+        "outcome": "kill",
+        "ttk": 0.188
+      },
+      {
+        "accuracy": 100.0,
+        "outcome": "kill",
+        "ttk": 0.188
+      }
+    ],
+    "movement": {},
+    "peek": {},
+    "preaim": {},
+    "reaction": {},
+    "thresholds": {
+      "accuracy": {
+        "bounds": [
+          75,
+          50,
+          30
+        ],
+        "label": "Accuracy",
+        "lower_better": false,
+        "range": [
+          0,
+          100
+        ],
+        "unit": "%"
+      },
+      "counterstrafe": {
+        "bounds": [
+          80,
+          60,
+          35
+        ],
+        "label": "Counter-strafe Rate",
+        "lower_better": false,
+        "range": [
+          0,
+          100
+        ],
+        "unit": "%"
+      },
+      "movement": {
+        "bounds": [
+          15,
+          40,
+          100
+        ],
+        "label": "Shot Speed",
+        "lower_better": true,
+        "range": [
+          0,
+          250
+        ],
+        "unit": "u/s"
+      },
+      "peek": {
+        "bounds": [],
+        "label": "Peek Speed",
+        "lower_better": true,
+        "range": [
+          0,
+          250
+        ],
+        "unit": "u/s",
+        "zones": [
+          {
+            "at": 0.0,
+            "label": "Held"
+          },
+          {
+            "at": 85.0,
+            "label": "Walk"
+          },
+          {
+            "at": 130.0,
+            "label": "Half speed"
+          },
+          {
+            "at": 180.0,
+            "label": "Full speed"
+          }
+        ]
+      },
+      "preaim": {
+        "bounds": [
+          5,
+          10,
+          20
+        ],
+        "label": "Crosshair Placement",
+        "lower_better": true,
+        "range": [
+          0,
+          45
+        ],
+        "unit": "\u00b0"
+      },
+      "reaction": {
+        "bounds": [
+          150,
+          200,
+          300
+        ],
+        "label": "Reaction Time",
+        "lower_better": true,
+        "range": [
+          0,
+          800
+        ],
+        "unit": "ms"
+      },
+      "stop_ticks": {
+        "bounds": [
+          3,
+          7,
+          15
+        ],
+        "label": "Counter-strafe",
+        "lower_better": true,
+        "range": [
+          0,
+          32
+        ],
+        "unit": "ticks"
+      },
+      "ttk": {
+        "bounds": [
+          0.4,
+          0.65,
+          1.1
+        ],
+        "label": "Engagement Time",
+        "lower_better": true,
+        "range": [
+          0,
+          1.0
+        ],
+        "unit": "s"
+      }
+    },
+    "ttk": {
+      "accuracy_pct": 100.0,
+      "avg": 0.188,
+      "confidence": "medium",
+      "excluded_outliers": 0,
+      "max": 0.188,
+      "median": 0.188,
+      "min": 0.188,
+      "n": 8,
+      "outcomes": [
+        "kill",
+        "kill",
+        "kill",
+        "kill",
+        "kill",
+        "kill",
+        "kill",
+        "kill"
+      ],
+      "total_hits": 8,
+      "total_shots": 8,
+      "values": [
+        0.188,
+        0.188,
+        0.188,
+        0.188,
+        0.188,
+        0.188,
+        0.188,
+        0.188
+      ]
+    }
+  },
+  "all_players": [
+    {
+      "adr": 200.0,
+      "assists": 0,
+      "comp_wins": 0,
+      "deaths": 4,
+      "hltv_rating": 2.6272,
+      "is_user": true,
+      "kast": 100.0,
+      "kd_ratio": 2.0,
+      "kills": 8,
+      "mvps": 0,
+      "name": "TestPlayer",
+      "rank": 0,
+      "rank_change": 0.0,
+      "rank_old": 0,
+      "rank_type_id": 0,
+      "rounds_2k": 4,
+      "rounds_3k": 0,
+      "rounds_4k": 0,
+      "rounds_5k": 0,
+      "steam_id": "76561198012345678",
+      "team": "CT"
+    },
+    {
+      "adr": 100.0,
+      "assists": 0,
+      "comp_wins": 0,
+      "deaths": 0,
+      "hltv_rating": 1.9758,
+      "is_user": false,
+      "kast": 100.0,
+      "kd_ratio": 4.0,
+      "kills": 4,
+      "mvps": 0,
+      "name": "Enemy2",
+      "rank": 0,
+      "rank_change": 0.0,
+      "rank_old": 0,
+      "rank_type_id": 0,
+      "rounds_2k": 0,
+      "rounds_3k": 0,
+      "rounds_4k": 0,
+      "rounds_5k": 0,
+      "steam_id": "76561198000000003",
+      "team": "T"
+    },
+    {
+      "adr": 0.0,
+      "assists": 0,
+      "comp_wins": 0,
+      "deaths": 4,
+      "hltv_rating": -0.4715,
+      "is_user": false,
+      "kast": 0.0,
+      "kd_ratio": 0.0,
+      "kills": 0,
+      "mvps": 0,
+      "name": "Enemy0",
+      "rank": 0,
+      "rank_change": 0.0,
+      "rank_old": 0,
+      "rank_type_id": 0,
+      "rounds_2k": 0,
+      "rounds_3k": 0,
+      "rounds_4k": 0,
+      "rounds_5k": 0,
+      "steam_id": "76561198000000001",
+      "team": "T"
+    },
+    {
+      "adr": 0.0,
+      "assists": 0,
+      "comp_wins": 0,
+      "deaths": 4,
+      "hltv_rating": -0.4715,
+      "is_user": false,
+      "kast": 0.0,
+      "kd_ratio": 0.0,
+      "kills": 0,
+      "mvps": 0,
+      "name": "Enemy1",
+      "rank": 0,
+      "rank_change": 0.0,
+      "rank_old": 0,
+      "rank_type_id": 0,
+      "rounds_2k": 0,
+      "rounds_3k": 0,
+      "rounds_4k": 0,
+      "rounds_5k": 0,
+      "steam_id": "76561198000000002",
+      "team": "T"
+    }
+  ],
+  "analyzer_version": 20,
+  "assists": 0,
+  "benchmarks": {
+    "enemies_flashed": {
+      "calibration": "heuristic",
+      "raw": 4,
+      "tier": "pro",
+      "unit": "per map",
+      "value": 24.0
+    },
+    "engagement_ttk": {
+      "calibration": "heuristic",
+      "confidence": "medium",
+      "n": 8,
+      "tier": "pro",
+      "unit": "ms",
+      "value": 188.0
+    },
+    "utility_damage": {
+      "calibration": "heuristic",
+      "raw": 0,
+      "tier": "below_average",
+      "unit": "HP per map",
+      "value": 0.0
+    },
+    "utility_waste_pct": {
+      "calibration": "heuristic",
+      "tier": "pro",
+      "unit": "%",
+      "value": 0.0
+    }
+  },
+  "deaths": 4,
+  "dpr": 1.0,
+  "enemy_score": 2,
+  "enriched_rounds": [
+    {
+      "bomb": null,
+      "clutch": null,
+      "damage_encounters": [],
+      "damage_taken": {
+        "armor": null,
+        "health": 100
+      },
+      "death_detail": {
+        "distance": 30.0,
+        "headshot": false,
+        "killer": "Enemy2",
+        "killer_position": "B Apartments Entrance",
+        "killer_steamid": "76561198000000003",
+        "killer_xy": [
+          -1200.0,
+          800.0
+        ],
+        "tick": 4500,
+        "victim_position": "B Apartments",
+        "victim_xy": [
+          -1500.0,
+          500.0
+        ],
+        "weapon": "M4A4"
+      },
+      "economy": {
+        "buy_type": "PISTOL",
+        "end_money": 1200,
+        "items": [
+          "ak47",
+          "kevlar",
+          "smokegrenade"
+        ],
+        "player_spend": 3650,
+        "start_money": 4500
+      },
+      "kills_detail": [
+        {
+          "attacker_position": "B Apartments",
+          "attacker_xy": [
+            -1500.0,
+            500.0
+          ],
+          "distance": 12.5,
+          "headshot": true,
+          "ttd": {
+            "accuracy": {
+              "first_bullet_hit": true,
+              "head": 1,
+              "hit_pct": 100.0,
+              "hitgroups": [
+                "head"
+              ],
+              "lower": 0,
+              "upper": 0
+            },
+            "first_hit_tick": 3490,
+            "first_shot_tick": 3488,
+            "hits": 1,
+            "shots_fired": 1,
+            "ttk_seconds": 0.188,
+            "ttk_ticks": 12
+          },
+          "victim": "Enemy0",
+          "victim_position": "B Apartments",
+          "victim_xy": [
+            -1400.0,
+            600.0
+          ],
+          "weapon": "AK-47"
+        },
+        {
+          "attacker_position": "B Apartments",
+          "attacker_xy": [
+            -1500.0,
+            500.0
+          ],
+          "distance": 32.5,
+          "headshot": false,
+          "ttd": {
+            "accuracy": {
+              "first_bullet_hit": true,
+              "head": 0,
+              "hit_pct": 100.0,
+              "hitgroups": [
+                "chest"
+              ],
+              "lower": 0,
+              "upper": 1
+            },
+            "first_hit_tick": 3690,
+            "first_shot_tick": 3688,
+            "hits": 1,
+            "shots_fired": 1,
+            "ttk_seconds": 0.188,
+            "ttk_ticks": 12
+          },
+          "victim": "Enemy1",
+          "victim_position": "B Apartments",
+          "victim_xy": [
+            -1300.0,
+            700.0
+          ],
+          "weapon": "AWP"
+        }
+      ],
+      "opening_duel": {
+        "opponent": "Enemy0",
+        "role": "opening_kill",
+        "weapon": "AK-47"
+      },
+      "round": 1,
+      "round_reason": "ct_win_elimination",
+      "round_winner": "CT",
+      "side": "CT",
+      "teamplayer": {
+        "team_damage": [],
+        "team_flashes": []
+      },
+      "utility": {
+        "avg_blind_duration": 2.4,
+        "enemies_flashed": 1,
+        "flash_assists": 0,
+        "flash_instances": [
+          {
+            "duration": 2.4,
+            "is_friendly": false,
+            "is_self": false,
+            "name": "Enemy0"
+          }
+        ],
+        "flash_victims": [
+          {
+            "duration": 2.4,
+            "name": "Enemy0"
+          }
+        ],
+        "grenades": [],
+        "he_damage": 0,
+        "molotov_damage": []
+      },
+      "whiffed_engagements": []
+    },
+    {
+      "bomb": null,
+      "clutch": null,
+      "damage_encounters": [],
+      "damage_taken": {
+        "armor": null,
+        "health": 100
+      },
+      "death_detail": {
+        "distance": 30.0,
+        "headshot": false,
+        "killer": "Enemy2",
+        "killer_position": "B Apartments Entrance",
+        "killer_steamid": "76561198000000003",
+        "killer_xy": [
+          -1200.0,
+          800.0
+        ],
+        "tick": 7500,
+        "victim_position": "B Apartments",
+        "victim_xy": [
+          -1500.0,
+          500.0
+        ],
+        "weapon": "M4A4"
+      },
+      "economy": {
+        "buy_type": "HALF BUY",
+        "end_money": 1200,
+        "items": [
+          "ak47",
+          "kevlar",
+          "smokegrenade"
+        ],
+        "player_spend": 3650,
+        "start_money": 4500
+      },
+      "kills_detail": [
+        {
+          "attacker_position": "B Apartments",
+          "attacker_xy": [
+            -1500.0,
+            500.0
+          ],
+          "distance": 12.5,
+          "headshot": true,
+          "ttd": {
+            "accuracy": {
+              "first_bullet_hit": true,
+              "head": 1,
+              "hit_pct": 100.0,
+              "hitgroups": [
+                "head"
+              ],
+              "lower": 0,
+              "upper": 0
+            },
+            "first_hit_tick": 6490,
+            "first_shot_tick": 6488,
+            "hits": 1,
+            "shots_fired": 1,
+            "ttk_seconds": 0.188,
+            "ttk_ticks": 12
+          },
+          "victim": "Enemy0",
+          "victim_position": "B Apartments",
+          "victim_xy": [
+            -1400.0,
+            600.0
+          ],
+          "weapon": "AK-47"
+        },
+        {
+          "attacker_position": "B Apartments",
+          "attacker_xy": [
+            -1500.0,
+            500.0
+          ],
+          "distance": 32.5,
+          "headshot": false,
+          "ttd": {
+            "accuracy": {
+              "first_bullet_hit": true,
+              "head": 0,
+              "hit_pct": 100.0,
+              "hitgroups": [
+                "chest"
+              ],
+              "lower": 0,
+              "upper": 1
+            },
+            "first_hit_tick": 6690,
+            "first_shot_tick": 6688,
+            "hits": 1,
+            "shots_fired": 1,
+            "ttk_seconds": 0.188,
+            "ttk_ticks": 12
+          },
+          "victim": "Enemy1",
+          "victim_position": "B Apartments",
+          "victim_xy": [
+            -1300.0,
+            700.0
+          ],
+          "weapon": "AWP"
+        }
+      ],
+      "opening_duel": {
+        "opponent": "Enemy0",
+        "role": "opening_kill",
+        "weapon": "AK-47"
+      },
+      "round": 2,
+      "round_reason": "t_win_elimination",
+      "round_winner": "T",
+      "side": "CT",
+      "teamplayer": {
+        "team_damage": [],
+        "team_flashes": []
+      },
+      "utility": {
+        "avg_blind_duration": 2.4,
+        "enemies_flashed": 1,
+        "flash_assists": 0,
+        "flash_instances": [
+          {
+            "duration": 2.4,
+            "is_friendly": false,
+            "is_self": false,
+            "name": "Enemy0"
+          }
+        ],
+        "flash_victims": [
+          {
+            "duration": 2.4,
+            "name": "Enemy0"
+          }
+        ],
+        "grenades": [],
+        "he_damage": 0,
+        "molotov_damage": []
+      },
+      "whiffed_engagements": []
+    },
+    {
+      "bomb": {
+        "planted": "A"
+      },
+      "clutch": null,
+      "damage_encounters": [],
+      "damage_taken": {
+        "armor": null,
+        "health": 100
+      },
+      "death_detail": {
+        "distance": 30.0,
+        "headshot": false,
+        "killer": "Enemy2",
+        "killer_position": "B Apartments Entrance",
+        "killer_steamid": "76561198000000003",
+        "killer_xy": [
+          -1200.0,
+          800.0
+        ],
+        "tick": 10500,
+        "victim_position": "B Apartments",
+        "victim_xy": [
+          -1500.0,
+          500.0
+        ],
+        "weapon": "M4A4"
+      },
+      "economy": {
+        "buy_type": "HALF BUY",
+        "end_money": 1200,
+        "items": [
+          "ak47",
+          "kevlar",
+          "smokegrenade"
+        ],
+        "player_spend": 3650,
+        "start_money": 4500
+      },
+      "kills_detail": [
+        {
+          "attacker_position": "B Apartments",
+          "attacker_xy": [
+            -1500.0,
+            500.0
+          ],
+          "distance": 12.5,
+          "headshot": true,
+          "ttd": {
+            "accuracy": {
+              "first_bullet_hit": true,
+              "head": 1,
+              "hit_pct": 100.0,
+              "hitgroups": [
+                "head"
+              ],
+              "lower": 0,
+              "upper": 0
+            },
+            "first_hit_tick": 9490,
+            "first_shot_tick": 9488,
+            "hits": 1,
+            "shots_fired": 1,
+            "ttk_seconds": 0.188,
+            "ttk_ticks": 12
+          },
+          "victim": "Enemy0",
+          "victim_position": "B Apartments",
+          "victim_xy": [
+            -1400.0,
+            600.0
+          ],
+          "weapon": "AK-47"
+        },
+        {
+          "attacker_position": "B Apartments",
+          "attacker_xy": [
+            -1500.0,
+            500.0
+          ],
+          "distance": 32.5,
+          "headshot": false,
+          "ttd": {
+            "accuracy": {
+              "first_bullet_hit": true,
+              "head": 0,
+              "hit_pct": 100.0,
+              "hitgroups": [
+                "chest"
+              ],
+              "lower": 0,
+              "upper": 1
+            },
+            "first_hit_tick": 9690,
+            "first_shot_tick": 9688,
+            "hits": 1,
+            "shots_fired": 1,
+            "ttk_seconds": 0.188,
+            "ttk_ticks": 12
+          },
+          "victim": "Enemy1",
+          "victim_position": "B Apartments",
+          "victim_xy": [
+            -1300.0,
+            700.0
+          ],
+          "weapon": "AWP"
+        }
+      ],
+      "opening_duel": {
+        "opponent": "Enemy0",
+        "role": "opening_kill",
+        "weapon": "AK-47"
+      },
+      "round": 3,
+      "round_reason": "target_bombed",
+      "round_winner": "T",
+      "side": "T",
+      "teamplayer": {
+        "team_damage": [],
+        "team_flashes": []
+      },
+      "utility": {
+        "avg_blind_duration": 2.4,
+        "enemies_flashed": 1,
+        "flash_assists": 0,
+        "flash_instances": [
+          {
+            "duration": 2.4,
+            "is_friendly": false,
+            "is_self": false,
+            "name": "Enemy0"
+          }
+        ],
+        "flash_victims": [
+          {
+            "duration": 2.4,
+            "name": "Enemy0"
+          }
+        ],
+        "grenades": [],
+        "he_damage": 0,
+        "molotov_damage": []
+      },
+      "whiffed_engagements": []
+    },
+    {
+      "bomb": {
+        "planted": "A"
+      },
+      "clutch": null,
+      "damage_encounters": [],
+      "damage_taken": {
+        "armor": null,
+        "health": 100
+      },
+      "death_detail": {
+        "distance": 30.0,
+        "headshot": false,
+        "killer": "Enemy2",
+        "killer_position": "B Apartments Entrance",
+        "killer_steamid": "76561198000000003",
+        "killer_xy": [
+          -1200.0,
+          800.0
+        ],
+        "tick": 13500,
+        "victim_position": "B Apartments",
+        "victim_xy": [
+          -1500.0,
+          500.0
+        ],
+        "weapon": "M4A4"
+      },
+      "economy": {
+        "buy_type": "HALF BUY",
+        "end_money": 1200,
+        "items": [
+          "ak47",
+          "kevlar",
+          "smokegrenade"
+        ],
+        "player_spend": 3650,
+        "start_money": 4500
+      },
+      "kills_detail": [
+        {
+          "attacker_position": "B Apartments",
+          "attacker_xy": [
+            -1500.0,
+            500.0
+          ],
+          "distance": 12.5,
+          "headshot": true,
+          "ttd": {
+            "accuracy": {
+              "first_bullet_hit": true,
+              "head": 1,
+              "hit_pct": 100.0,
+              "hitgroups": [
+                "head"
+              ],
+              "lower": 0,
+              "upper": 0
+            },
+            "first_hit_tick": 12490,
+            "first_shot_tick": 12488,
+            "hits": 1,
+            "shots_fired": 1,
+            "ttk_seconds": 0.188,
+            "ttk_ticks": 12
+          },
+          "victim": "Enemy0",
+          "victim_position": "B Apartments",
+          "victim_xy": [
+            -1400.0,
+            600.0
+          ],
+          "weapon": "AK-47"
+        },
+        {
+          "attacker_position": "B Apartments",
+          "attacker_xy": [
+            -1500.0,
+            500.0
+          ],
+          "distance": 32.5,
+          "headshot": false,
+          "ttd": {
+            "accuracy": {
+              "first_bullet_hit": true,
+              "head": 0,
+              "hit_pct": 100.0,
+              "hitgroups": [
+                "chest"
+              ],
+              "lower": 0,
+              "upper": 1
+            },
+            "first_hit_tick": 12690,
+            "first_shot_tick": 12688,
+            "hits": 1,
+            "shots_fired": 1,
+            "ttk_seconds": 0.188,
+            "ttk_ticks": 12
+          },
+          "victim": "Enemy1",
+          "victim_position": "B Apartments",
+          "victim_xy": [
+            -1300.0,
+            700.0
+          ],
+          "weapon": "AWP"
+        }
+      ],
+      "opening_duel": {
+        "opponent": "Enemy0",
+        "role": "opening_kill",
+        "weapon": "AK-47"
+      },
+      "round": 4,
+      "round_reason": "ct_win_defuse",
+      "round_winner": "CT",
+      "side": "T",
+      "teamplayer": {
+        "team_damage": [],
+        "team_flashes": []
+      },
+      "utility": {
+        "avg_blind_duration": 2.4,
+        "enemies_flashed": 1,
+        "flash_assists": 0,
+        "flash_instances": [
+          {
+            "duration": 2.4,
+            "is_friendly": false,
+            "is_self": false,
+            "name": "Enemy0"
+          }
+        ],
+        "flash_victims": [
+          {
+            "duration": 2.4,
+            "name": "Enemy0"
+          }
+        ],
+        "grenades": [],
+        "he_damage": 0,
+        "molotov_damage": []
+      },
+      "whiffed_engagements": []
+    }
+  ],
+  "hltv_rating": 2.6272,
+  "impact": 3.85,
+  "impact_stats": {
+    "_metric_version": 1,
+    "best_kill_swing": 0.191,
+    "confidence": "medium",
+    "death_swing_total": -0.648,
+    "deaths_scored": 4,
+    "kill_swing_total": 1.342,
+    "kills_scored": 8,
+    "median_kill_swing": 0.17,
+    "n": 12,
+    "net_swing_per_round": 0.1735,
+    "net_swing_total": 0.694,
+    "per_round": [
+      {
+        "death_swing": -0.124,
+        "kill_swing": 0.311,
+        "net_swing": 0.187,
+        "round": 1,
+        "side": "CT"
+      },
+      {
+        "death_swing": -0.124,
+        "kill_swing": 0.311,
+        "net_swing": 0.187,
+        "round": 2,
+        "side": "CT"
+      },
+      {
+        "death_swing": -0.2,
+        "kill_swing": 0.36,
+        "net_swing": 0.16,
+        "round": 3,
+        "side": "T"
+      },
+      {
+        "death_swing": -0.2,
+        "kill_swing": 0.36,
+        "net_swing": 0.16,
+        "round": 4,
+        "side": "T"
+      }
+    ]
+  },
+  "kast": 100.0,
+  "kd_ratio": 2.0,
+  "kills": 8,
+  "kpr": 2.0,
+  "map_name": "de_mirage",
+  "match_result": "draw",
+  "player_name": "TestPlayer",
+  "replay_data": {
+    "1": {
+      "events": [
+        {
+          "attacker": "76561198012345678",
+          "headshot": true,
+          "t": 400,
+          "type": "kill",
+          "victim": "76561198000000001",
+          "weapon": "ak47"
+        },
+        {
+          "attacker": "76561198012345678",
+          "headshot": false,
+          "t": 600,
+          "type": "kill",
+          "victim": "76561198000000002",
+          "weapon": "awp"
+        },
+        {
+          "attacker": "76561198000000003",
+          "headshot": false,
+          "t": 1400,
+          "type": "kill",
+          "victim": "76561198012345678",
+          "weapon": "m4a1"
+        },
+        {
+          "grenade": "flash",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "he",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "smoke",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "molotov",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        }
+      ],
+      "frames": [
+        [
+          0,
+          {
+            "76561198000000001": [
+              -1200.0,
+              700.0,
+              100
+            ],
+            "76561198000000011": [
+              -1200.0,
+              700.0,
+              100
+            ],
+            "76561198012345678": [
+              -1200.0,
+              700.0,
+              100
+            ]
+          }
+        ],
+        [
+          32,
+          {
+            "76561198000000001": [
+              -1190.0,
+              695.0,
+              100
+            ],
+            "76561198000000011": [
+              -1190.0,
+              695.0,
+              100
+            ],
+            "76561198012345678": [
+              -1190.0,
+              695.0,
+              100
+            ]
+          }
+        ],
+        [
+          64,
+          {
+            "76561198000000001": [
+              -1180.0,
+              690.0,
+              100
+            ],
+            "76561198000000011": [
+              -1180.0,
+              690.0,
+              100
+            ],
+            "76561198012345678": [
+              -1180.0,
+              690.0,
+              100
+            ]
+          }
+        ],
+        [
+          96,
+          {
+            "76561198000000001": [
+              -1170.0,
+              685.0,
+              100
+            ],
+            "76561198000000011": [
+              -1170.0,
+              685.0,
+              100
+            ],
+            "76561198012345678": [
+              -1170.0,
+              685.0,
+              100
+            ]
+          }
+        ],
+        [
+          128,
+          {
+            "76561198000000001": [
+              -1160.0,
+              680.0,
+              100
+            ],
+            "76561198000000011": [
+              -1160.0,
+              680.0,
+              100
+            ],
+            "76561198012345678": [
+              -1160.0,
+              680.0,
+              100
+            ]
+          }
+        ],
+        [
+          160,
+          {
+            "76561198000000001": [
+              -1150.0,
+              675.0,
+              100
+            ],
+            "76561198000000011": [
+              -1150.0,
+              675.0,
+              100
+            ],
+            "76561198012345678": [
+              -1150.0,
+              675.0,
+              100
+            ]
+          }
+        ],
+        [
+          192,
+          {
+            "76561198000000001": [
+              -1140.0,
+              670.0,
+              100
+            ],
+            "76561198000000011": [
+              -1140.0,
+              670.0,
+              100
+            ],
+            "76561198012345678": [
+              -1140.0,
+              670.0,
+              100
+            ]
+          }
+        ],
+        [
+          224,
+          {
+            "76561198000000001": [
+              -1130.0,
+              665.0,
+              100
+            ],
+            "76561198000000011": [
+              -1130.0,
+              665.0,
+              100
+            ],
+            "76561198012345678": [
+              -1130.0,
+              665.0,
+              100
+            ]
+          }
+        ],
+        [
+          256,
+          {
+            "76561198000000001": [
+              -1120.0,
+              660.0,
+              100
+            ],
+            "76561198000000011": [
+              -1120.0,
+              660.0,
+              100
+            ],
+            "76561198012345678": [
+              -1120.0,
+              660.0,
+              100
+            ]
+          }
+        ],
+        [
+          288,
+          {
+            "76561198000000001": [
+              -1110.0,
+              655.0,
+              100
+            ],
+            "76561198000000011": [
+              -1110.0,
+              655.0,
+              100
+            ],
+            "76561198012345678": [
+              -1110.0,
+              655.0,
+              100
+            ]
+          }
+        ]
+      ],
+      "players": {
+        "76561198000000001": {
+          "name": "Enemy0",
+          "team": 2
+        },
+        "76561198000000011": {
+          "name": "76561198",
+          "team": 3
+        },
+        "76561198012345678": {
+          "name": "TestPlayer",
+          "team": 3
+        }
+      }
+    },
+    "2": {
+      "events": [
+        {
+          "attacker": "76561198012345678",
+          "headshot": true,
+          "t": 400,
+          "type": "kill",
+          "victim": "76561198000000001",
+          "weapon": "ak47"
+        },
+        {
+          "attacker": "76561198012345678",
+          "headshot": false,
+          "t": 600,
+          "type": "kill",
+          "victim": "76561198000000002",
+          "weapon": "awp"
+        },
+        {
+          "attacker": "76561198000000003",
+          "headshot": false,
+          "t": 1400,
+          "type": "kill",
+          "victim": "76561198012345678",
+          "weapon": "m4a1"
+        },
+        {
+          "grenade": "flash",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "he",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "smoke",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "molotov",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        }
+      ],
+      "frames": [
+        [
+          0,
+          {
+            "76561198000000001": [
+              -1200.0,
+              700.0,
+              100
+            ],
+            "76561198000000011": [
+              -1200.0,
+              700.0,
+              100
+            ],
+            "76561198012345678": [
+              -1200.0,
+              700.0,
+              100
+            ]
+          }
+        ],
+        [
+          32,
+          {
+            "76561198000000001": [
+              -1190.0,
+              695.0,
+              100
+            ],
+            "76561198000000011": [
+              -1190.0,
+              695.0,
+              100
+            ],
+            "76561198012345678": [
+              -1190.0,
+              695.0,
+              100
+            ]
+          }
+        ],
+        [
+          64,
+          {
+            "76561198000000001": [
+              -1180.0,
+              690.0,
+              100
+            ],
+            "76561198000000011": [
+              -1180.0,
+              690.0,
+              100
+            ],
+            "76561198012345678": [
+              -1180.0,
+              690.0,
+              100
+            ]
+          }
+        ],
+        [
+          96,
+          {
+            "76561198000000001": [
+              -1170.0,
+              685.0,
+              100
+            ],
+            "76561198000000011": [
+              -1170.0,
+              685.0,
+              100
+            ],
+            "76561198012345678": [
+              -1170.0,
+              685.0,
+              100
+            ]
+          }
+        ],
+        [
+          128,
+          {
+            "76561198000000001": [
+              -1160.0,
+              680.0,
+              100
+            ],
+            "76561198000000011": [
+              -1160.0,
+              680.0,
+              100
+            ],
+            "76561198012345678": [
+              -1160.0,
+              680.0,
+              100
+            ]
+          }
+        ],
+        [
+          160,
+          {
+            "76561198000000001": [
+              -1150.0,
+              675.0,
+              100
+            ],
+            "76561198000000011": [
+              -1150.0,
+              675.0,
+              100
+            ],
+            "76561198012345678": [
+              -1150.0,
+              675.0,
+              100
+            ]
+          }
+        ],
+        [
+          192,
+          {
+            "76561198000000001": [
+              -1140.0,
+              670.0,
+              100
+            ],
+            "76561198000000011": [
+              -1140.0,
+              670.0,
+              100
+            ],
+            "76561198012345678": [
+              -1140.0,
+              670.0,
+              100
+            ]
+          }
+        ],
+        [
+          224,
+          {
+            "76561198000000001": [
+              -1130.0,
+              665.0,
+              100
+            ],
+            "76561198000000011": [
+              -1130.0,
+              665.0,
+              100
+            ],
+            "76561198012345678": [
+              -1130.0,
+              665.0,
+              100
+            ]
+          }
+        ],
+        [
+          256,
+          {
+            "76561198000000001": [
+              -1120.0,
+              660.0,
+              100
+            ],
+            "76561198000000011": [
+              -1120.0,
+              660.0,
+              100
+            ],
+            "76561198012345678": [
+              -1120.0,
+              660.0,
+              100
+            ]
+          }
+        ],
+        [
+          288,
+          {
+            "76561198000000001": [
+              -1110.0,
+              655.0,
+              100
+            ],
+            "76561198000000011": [
+              -1110.0,
+              655.0,
+              100
+            ],
+            "76561198012345678": [
+              -1110.0,
+              655.0,
+              100
+            ]
+          }
+        ]
+      ],
+      "players": {
+        "76561198000000001": {
+          "name": "Enemy0",
+          "team": 2
+        },
+        "76561198000000011": {
+          "name": "76561198",
+          "team": 3
+        },
+        "76561198012345678": {
+          "name": "TestPlayer",
+          "team": 3
+        }
+      }
+    },
+    "3": {
+      "events": [
+        {
+          "attacker": "76561198012345678",
+          "headshot": true,
+          "t": 400,
+          "type": "kill",
+          "victim": "76561198000000001",
+          "weapon": "ak47"
+        },
+        {
+          "attacker": "76561198012345678",
+          "headshot": false,
+          "t": 600,
+          "type": "kill",
+          "victim": "76561198000000002",
+          "weapon": "awp"
+        },
+        {
+          "attacker": "76561198000000003",
+          "headshot": false,
+          "t": 1400,
+          "type": "kill",
+          "victim": "76561198012345678",
+          "weapon": "m4a1"
+        },
+        {
+          "grenade": "flash",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "he",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "smoke",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "molotov",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        }
+      ],
+      "frames": [
+        [
+          0,
+          {
+            "76561198000000001": [
+              -1200.0,
+              700.0,
+              100
+            ],
+            "76561198000000011": [
+              -1200.0,
+              700.0,
+              100
+            ],
+            "76561198012345678": [
+              -1200.0,
+              700.0,
+              100
+            ]
+          }
+        ],
+        [
+          32,
+          {
+            "76561198000000001": [
+              -1190.0,
+              695.0,
+              100
+            ],
+            "76561198000000011": [
+              -1190.0,
+              695.0,
+              100
+            ],
+            "76561198012345678": [
+              -1190.0,
+              695.0,
+              100
+            ]
+          }
+        ],
+        [
+          64,
+          {
+            "76561198000000001": [
+              -1180.0,
+              690.0,
+              100
+            ],
+            "76561198000000011": [
+              -1180.0,
+              690.0,
+              100
+            ],
+            "76561198012345678": [
+              -1180.0,
+              690.0,
+              100
+            ]
+          }
+        ],
+        [
+          96,
+          {
+            "76561198000000001": [
+              -1170.0,
+              685.0,
+              100
+            ],
+            "76561198000000011": [
+              -1170.0,
+              685.0,
+              100
+            ],
+            "76561198012345678": [
+              -1170.0,
+              685.0,
+              100
+            ]
+          }
+        ],
+        [
+          128,
+          {
+            "76561198000000001": [
+              -1160.0,
+              680.0,
+              100
+            ],
+            "76561198000000011": [
+              -1160.0,
+              680.0,
+              100
+            ],
+            "76561198012345678": [
+              -1160.0,
+              680.0,
+              100
+            ]
+          }
+        ],
+        [
+          160,
+          {
+            "76561198000000001": [
+              -1150.0,
+              675.0,
+              100
+            ],
+            "76561198000000011": [
+              -1150.0,
+              675.0,
+              100
+            ],
+            "76561198012345678": [
+              -1150.0,
+              675.0,
+              100
+            ]
+          }
+        ],
+        [
+          192,
+          {
+            "76561198000000001": [
+              -1140.0,
+              670.0,
+              100
+            ],
+            "76561198000000011": [
+              -1140.0,
+              670.0,
+              100
+            ],
+            "76561198012345678": [
+              -1140.0,
+              670.0,
+              100
+            ]
+          }
+        ],
+        [
+          224,
+          {
+            "76561198000000001": [
+              -1130.0,
+              665.0,
+              100
+            ],
+            "76561198000000011": [
+              -1130.0,
+              665.0,
+              100
+            ],
+            "76561198012345678": [
+              -1130.0,
+              665.0,
+              100
+            ]
+          }
+        ],
+        [
+          256,
+          {
+            "76561198000000001": [
+              -1120.0,
+              660.0,
+              100
+            ],
+            "76561198000000011": [
+              -1120.0,
+              660.0,
+              100
+            ],
+            "76561198012345678": [
+              -1120.0,
+              660.0,
+              100
+            ]
+          }
+        ],
+        [
+          288,
+          {
+            "76561198000000001": [
+              -1110.0,
+              655.0,
+              100
+            ],
+            "76561198000000011": [
+              -1110.0,
+              655.0,
+              100
+            ],
+            "76561198012345678": [
+              -1110.0,
+              655.0,
+              100
+            ]
+          }
+        ]
+      ],
+      "players": {
+        "76561198000000001": {
+          "name": "Enemy0",
+          "team": 3
+        },
+        "76561198000000011": {
+          "name": "76561198",
+          "team": 2
+        },
+        "76561198012345678": {
+          "name": "TestPlayer",
+          "team": 2
+        }
+      }
+    },
+    "4": {
+      "events": [
+        {
+          "attacker": "76561198012345678",
+          "headshot": true,
+          "t": 400,
+          "type": "kill",
+          "victim": "76561198000000001",
+          "weapon": "ak47"
+        },
+        {
+          "attacker": "76561198012345678",
+          "headshot": false,
+          "t": 600,
+          "type": "kill",
+          "victim": "76561198000000002",
+          "weapon": "awp"
+        },
+        {
+          "attacker": "76561198000000003",
+          "headshot": false,
+          "t": 1400,
+          "type": "kill",
+          "victim": "76561198012345678",
+          "weapon": "m4a1"
+        },
+        {
+          "grenade": "flash",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "he",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "smoke",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "grenade": "molotov",
+          "t": 150,
+          "thrower": "76561198012345678",
+          "type": "grenade",
+          "x": 100.0,
+          "y": 200.0
+        }
+      ],
+      "frames": [
+        [
+          0,
+          {
+            "76561198000000001": [
+              -1200.0,
+              700.0,
+              100
+            ],
+            "76561198000000011": [
+              -1200.0,
+              700.0,
+              100
+            ],
+            "76561198012345678": [
+              -1200.0,
+              700.0,
+              100
+            ]
+          }
+        ],
+        [
+          32,
+          {
+            "76561198000000001": [
+              -1190.0,
+              695.0,
+              100
+            ],
+            "76561198000000011": [
+              -1190.0,
+              695.0,
+              100
+            ],
+            "76561198012345678": [
+              -1190.0,
+              695.0,
+              100
+            ]
+          }
+        ],
+        [
+          64,
+          {
+            "76561198000000001": [
+              -1180.0,
+              690.0,
+              100
+            ],
+            "76561198000000011": [
+              -1180.0,
+              690.0,
+              100
+            ],
+            "76561198012345678": [
+              -1180.0,
+              690.0,
+              100
+            ]
+          }
+        ],
+        [
+          96,
+          {
+            "76561198000000001": [
+              -1170.0,
+              685.0,
+              100
+            ],
+            "76561198000000011": [
+              -1170.0,
+              685.0,
+              100
+            ],
+            "76561198012345678": [
+              -1170.0,
+              685.0,
+              100
+            ]
+          }
+        ],
+        [
+          128,
+          {
+            "76561198000000001": [
+              -1160.0,
+              680.0,
+              100
+            ],
+            "76561198000000011": [
+              -1160.0,
+              680.0,
+              100
+            ],
+            "76561198012345678": [
+              -1160.0,
+              680.0,
+              100
+            ]
+          }
+        ],
+        [
+          160,
+          {
+            "76561198000000001": [
+              -1150.0,
+              675.0,
+              100
+            ],
+            "76561198000000011": [
+              -1150.0,
+              675.0,
+              100
+            ],
+            "76561198012345678": [
+              -1150.0,
+              675.0,
+              100
+            ]
+          }
+        ],
+        [
+          192,
+          {
+            "76561198000000001": [
+              -1140.0,
+              670.0,
+              100
+            ],
+            "76561198000000011": [
+              -1140.0,
+              670.0,
+              100
+            ],
+            "76561198012345678": [
+              -1140.0,
+              670.0,
+              100
+            ]
+          }
+        ],
+        [
+          224,
+          {
+            "76561198000000001": [
+              -1130.0,
+              665.0,
+              100
+            ],
+            "76561198000000011": [
+              -1130.0,
+              665.0,
+              100
+            ],
+            "76561198012345678": [
+              -1130.0,
+              665.0,
+              100
+            ]
+          }
+        ],
+        [
+          256,
+          {
+            "76561198000000001": [
+              -1120.0,
+              660.0,
+              100
+            ],
+            "76561198000000011": [
+              -1120.0,
+              660.0,
+              100
+            ],
+            "76561198012345678": [
+              -1120.0,
+              660.0,
+              100
+            ]
+          }
+        ],
+        [
+          288,
+          {
+            "76561198000000001": [
+              -1110.0,
+              655.0,
+              100
+            ],
+            "76561198000000011": [
+              -1110.0,
+              655.0,
+              100
+            ],
+            "76561198012345678": [
+              -1110.0,
+              655.0,
+              100
+            ]
+          }
+        ]
+      ],
+      "players": {
+        "76561198000000001": {
+          "name": "Enemy0",
+          "team": 3
+        },
+        "76561198000000011": {
+          "name": "76561198",
+          "team": 2
+        },
+        "76561198012345678": {
+          "name": "TestPlayer",
+          "team": 2
+        }
+      }
+    }
+  },
+  "role_data": {
+    "_metric_version": 2,
+    "ct_primary": "B Anchor",
+    "ct_summary": {
+      "B Anchor": 2
+    },
+    "map": "de_mirage",
+    "roles_ct": [
+      "A Anchor",
+      "Connector / Jungle",
+      "Window (AWP)",
+      "Short / Catwalk",
+      "B Anchor"
+    ],
+    "roles_t": [
+      "Mid Pack",
+      "A Lurk / Palace",
+      "B Apps"
+    ],
+    "rounds": [
+      {
+        "role": "B Anchor",
+        "round": 1,
+        "scores": {
+          "A Anchor": 0.0,
+          "B Anchor": 1.0,
+          "Connector / Jungle": 0.0,
+          "Short / Catwalk": 0.0,
+          "Window (AWP)": 0.0
+        },
+        "side": "CT"
+      },
+      {
+        "role": "B Anchor",
+        "round": 2,
+        "scores": {
+          "A Anchor": 0.0,
+          "B Anchor": 1.0,
+          "Connector / Jungle": 0.0,
+          "Short / Catwalk": 0.0,
+          "Window (AWP)": 0.0
+        },
+        "side": "CT"
+      },
+      {
+        "role": "B Apps",
+        "round": 3,
+        "scores": {
+          "A Lurk / Palace": 0.0,
+          "B Apps": 1.0,
+          "Mid Pack": 0.0
+        },
+        "side": "T"
+      },
+      {
+        "role": "B Apps",
+        "round": 4,
+        "scores": {
+          "A Lurk / Palace": 0.0,
+          "B Apps": 1.0,
+          "Mid Pack": 0.0
+        },
+        "side": "T"
+      }
+    ],
+    "t_primary": "B Apps",
+    "t_summary": {
+      "B Apps": 2
+    }
+  },
+  "round_stats": [
+    {
+      "assists": 0,
+      "damage": 200,
+      "deaths": 1,
+      "kills": 2,
+      "round": 1,
+      "survived": 0,
+      "traded": 0
+    },
+    {
+      "assists": 0,
+      "damage": 200,
+      "deaths": 1,
+      "kills": 2,
+      "round": 2,
+      "survived": 0,
+      "traded": 0
+    },
+    {
+      "assists": 0,
+      "damage": 200,
+      "deaths": 1,
+      "kills": 2,
+      "round": 3,
+      "survived": 0,
+      "traded": 0
+    },
+    {
+      "assists": 0,
+      "damage": 200,
+      "deaths": 1,
+      "kills": 2,
+      "round": 4,
+      "survived": 0,
+      "traded": 0
+    }
+  ],
+  "rounds_2k": 4,
+  "rounds_3k": 0,
+  "rounds_4k": 0,
+  "rounds_5k": 0,
+  "team_score": 2,
+  "total_rounds": 4,
+  "utility_data": {
+    "_metric_version": 1,
+    "economics": {
+      "per_type": {
+        "Flash": {
+          "bought": 0,
+          "cost": 0,
+          "thrown": 4,
+          "wasted": 0,
+          "wasted_value": 0
+        },
+        "HE": {
+          "bought": 0,
+          "cost": 0,
+          "thrown": 4,
+          "wasted": 0,
+          "wasted_value": 0
+        },
+        "Molotov": {
+          "bought": 0,
+          "cost": 0,
+          "thrown": 4,
+          "wasted": 0,
+          "wasted_value": 0
+        },
+        "Smoke": {
+          "bought": 4,
+          "cost": 1200,
+          "thrown": 4,
+          "wasted": 0,
+          "wasted_value": 0
+        }
+      },
+      "total_spent": 1200,
+      "total_wasted": 0,
+      "use_rate": 400.0
+    },
+    "flash": {
+      "avg_enemy_blind_duration": 2.4,
+      "blind_seconds_per_flash": 2.4,
+      "effective_flash_pct": 100.0,
+      "effective_flashes": 4,
+      "enemies_flashed": 4,
+      "enemies_per_flash": 1.0,
+      "flash_assists": 0,
+      "median_enemy_blind_duration": 2.4,
+      "self_blind_duration": 0.0,
+      "self_flashed": 0,
+      "team_flashed": 0,
+      "thrown": 4,
+      "total_enemy_blind_duration": 9.6
+    },
+    "he": {
+      "avg_damage_per_throw": 0.0,
+      "hits": 0,
+      "thrown": 4,
+      "total_damage": 0
+    },
+    "molotov": {
+      "avg_damage_per_throw": 0.0,
+      "hits": 0,
+      "thrown": 4,
+      "total_damage": 0
+    },
+    "per_round": [
+      {
+        "enemies_flashed": 1,
+        "enemy_blind_duration": 2.4,
+        "flash_assists": 0,
+        "he_damage": 0,
+        "molotov_damage": 0,
+        "nade_spend": 0,
+        "nades_bought": 0,
+        "round": 1,
+        "side": "CT"
+      },
+      {
+        "enemies_flashed": 1,
+        "enemy_blind_duration": 2.4,
+        "flash_assists": 0,
+        "he_damage": 0,
+        "molotov_damage": 0,
+        "nade_spend": 0,
+        "nades_bought": 0,
+        "round": 2,
+        "side": "CT"
+      },
+      {
+        "enemies_flashed": 1,
+        "enemy_blind_duration": 2.4,
+        "flash_assists": 0,
+        "he_damage": 0,
+        "molotov_damage": 0,
+        "nade_spend": 0,
+        "nades_bought": 0,
+        "round": 3,
+        "side": "T"
+      },
+      {
+        "enemies_flashed": 1,
+        "enemy_blind_duration": 2.4,
+        "flash_assists": 0,
+        "he_damage": 0,
+        "molotov_damage": 0,
+        "nade_spend": 0,
+        "nades_bought": 0,
+        "round": 4,
+        "side": "T"
+      }
+    ],
+    "smoke": {
+      "locations": [
+        {
+          "location": "Mid Area",
+          "round": 1,
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "location": "Mid Area",
+          "round": 2,
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "location": "Mid Area",
+          "round": 3,
+          "x": 100.0,
+          "y": 200.0
+        },
+        {
+          "location": "Mid Area",
+          "round": 4,
+          "x": 100.0,
+          "y": 200.0
+        }
+      ],
+      "molotov_extinguishes": 0,
+      "thrown": 4,
+      "top_zones": [
+        {
+          "count": 4,
+          "zone": "Mid Area"
+        }
+      ]
+    },
+    "teamplayer": {
+      "drops_for_teammates": 0,
+      "per_round": [],
+      "team_attack_damage": 0,
+      "team_attacks": 0,
+      "team_flashes": 0
+    },
+    "utility_rating": 59.3,
+    "utility_rating_inputs": [
+      {
+        "metric": "use_rate",
+        "n": 4,
+        "score": 100.0,
+        "weight": 0.0875,
+        "weight_share": 0.297
+      },
+      {
+        "metric": "flash",
+        "n": 4,
+        "score": 100.0,
+        "weight": 0.0875,
+        "weight_share": 0.297
+      },
+      {
+        "metric": "damage",
+        "n": 8,
+        "score": 0.0,
+        "weight": 0.12,
+        "weight_share": 0.407
+      }
+    ]
+  }
+}

@@ -1,0 +1,1521 @@
+{
+  "breakdown.html": {
+    "errors": [],
+    "globals": [
+      "_applyTheme",
+      "_buildThemeMenu",
+      "_peekZoneIndexAt",
+      "_refreshTC",
+      "_themeById",
+      "_zoneAlpha",
+      "_zoneChipStyle",
+      "_zoneHue",
+      "aimBounds",
+      "aimRange",
+      "aimZones",
+      "buildAimKpiMeta",
+      "closeThemeMenu",
+      "currentTheme",
+      "drawAimScatter",
+      "drawDistStrip",
+      "drawRoleRadar",
+      "drawStripChart",
+      "drawTrendChart",
+      "hexToRgba",
+      "mapAbbrev",
+      "mapIconHtml",
+      "mapIconUrl",
+      "mapKey",
+      "mapLabel",
+      "mapText",
+      "renderEconomyTimeline",
+      "setTheme",
+      "toggleTheme",
+      "toggleThemeMenu",
+      "updateThemeIcon"
+    ],
+    "handlers": [
+      {
+        "element": "#ai-overall-btn",
+        "event": "click",
+        "fires": [
+          "analyzeOverallWithAI"
+        ]
+      },
+      {
+        "element": "#ai-overall-section > div > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "openAISettings"
+        ]
+      },
+      {
+        "element": "#ai-role-btn",
+        "event": "click",
+        "fires": [
+          "analyzeWithAI"
+        ]
+      },
+      {
+        "element": "#auto-sync-interval",
+        "event": "change",
+        "fires": [
+          "saveAutoSyncSettings"
+        ]
+      },
+      {
+        "element": "#auto-sync-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeAutoSyncModal"
+        ]
+      },
+      {
+        "element": "#auto-sync-needs-setup > button",
+        "event": "click",
+        "fires": [
+          "closeAutoSyncModal",
+          "openSettingsModal",
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#auto-sync-pause-playing",
+        "event": "change",
+        "fires": [
+          "saveAutoSyncSettings"
+        ]
+      },
+      {
+        "element": "#auto-sync-toggle",
+        "event": "click",
+        "fires": [
+          "toggleAutoSync"
+        ]
+      },
+      {
+        "element": "#bulk-upload-btn",
+        "event": "click",
+        "fires": [
+          "startBulkUpload"
+        ]
+      },
+      {
+        "element": "#map-clear-btn",
+        "event": "click",
+        "fires": [
+          "clearMapSelection"
+        ]
+      },
+      {
+        "element": "#ob-next-btn",
+        "event": "click",
+        "fires": [
+          "obNext"
+        ]
+      },
+      {
+        "element": "#ob-prev-btn",
+        "event": "click",
+        "fires": [
+          "obPrev"
+        ]
+      },
+      {
+        "element": "#ob-step-4 > div > div > span:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "closeOnboarding",
+          "openSettingsModal"
+        ]
+      },
+      {
+        "element": "#pf-all",
+        "event": "click",
+        "fires": [
+          "togglePlayerFilter"
+        ]
+      },
+      {
+        "element": "#reset-btn",
+        "event": "click",
+        "fires": [
+          "doFactoryReset"
+        ]
+      },
+      {
+        "element": "#reset-confirm-check",
+        "event": "change",
+        "fires": [
+          "syncFactoryResetButton"
+        ]
+      },
+      {
+        "element": "#settings-accounts-panel > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "addAccount"
+        ]
+      },
+      {
+        "element": "#settings-ai-panel > button",
+        "event": "click",
+        "fires": [
+          "saveAISettings"
+        ]
+      },
+      {
+        "element": "#settings-friends-panel > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "addFriend"
+        ]
+      },
+      {
+        "element": "#settings-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeSettingsModal"
+        ]
+      },
+      {
+        "element": "#settings-steam-panel > div:nth-of-type(2) > div:nth-of-type(4) > button",
+        "event": "click",
+        "fires": [
+          "saveSteamApiKey"
+        ]
+      },
+      {
+        "element": "#settings-steam-panel > div:nth-of-type(2) > div:nth-of-type(7) > button",
+        "event": "click",
+        "fires": [
+          "saveSteamCodes"
+        ]
+      },
+      {
+        "element": "#settings-storage-panel > div > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "saveStorageConfig"
+        ]
+      },
+      {
+        "element": "#settings-tab-accounts",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-ai",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-friends",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-reanalyze",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-reset",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-steam",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-storage",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-updates",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#side-roles-section > div:nth-of-type(1) > div > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "openAISettings"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "openUploadModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "openSyncModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button:nth-of-type(3)",
+        "event": "click",
+        "fires": [
+          "openSteamModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button:nth-of-type(4)",
+        "event": "click",
+        "fires": [
+          "openAutoSyncModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > div > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "openSettingsModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > div > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "toggleThemeMenu"
+        ]
+      },
+      {
+        "element": "#sidebar-toggle",
+        "event": "click",
+        "fires": [
+          "toggleSidebar"
+        ]
+      },
+      {
+        "element": "#steam-check-btn",
+        "event": "click",
+        "fires": [
+          "runSteamJob"
+        ]
+      },
+      {
+        "element": "#steam-done-hint > button",
+        "event": "click",
+        "fires": [
+          "closeSteamModal",
+          "openSyncModal"
+        ]
+      },
+      {
+        "element": "#steam-download-btn",
+        "event": "click",
+        "fires": [
+          "runSteamJob"
+        ]
+      },
+      {
+        "element": "#steam-download-limit",
+        "event": "input",
+        "fires": [
+          "updateDownloadButton"
+        ]
+      },
+      {
+        "element": "#steam-job-cancel",
+        "event": "click",
+        "fires": [
+          "cancelSteamJob"
+        ]
+      },
+      {
+        "element": "#steam-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeSteamModal"
+        ]
+      },
+      {
+        "element": "#steam-needs-setup > button",
+        "event": "click",
+        "fires": [
+          "closeSteamModal",
+          "openSettingsModal",
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#steam-qr-panel > button",
+        "event": "click",
+        "fires": [
+          "hideSteamQr"
+        ]
+      },
+      {
+        "element": "#storage-delete-btn",
+        "event": "click",
+        "fires": [
+          "runStorageCleanup"
+        ]
+      },
+      {
+        "element": "#storage-fetched-only",
+        "event": "change",
+        "fires": [
+          "previewStorage"
+        ]
+      },
+      {
+        "element": "#storage-keep",
+        "event": "input",
+        "fires": [
+          "previewStorage"
+        ]
+      },
+      {
+        "element": "#storage-per-account",
+        "event": "change",
+        "fires": [
+          "previewStorage"
+        ]
+      },
+      {
+        "element": "#sync-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeSyncModal"
+        ]
+      },
+      {
+        "element": "#sync-modal > div > div:nth-of-type(2) > div > button",
+        "event": "click",
+        "fires": [
+          "saveSyncFolder"
+        ]
+      },
+      {
+        "element": "#sync-modal > div > div:nth-of-type(6) > button",
+        "event": "click",
+        "fires": [
+          "closeSyncModal",
+          "openSettingsModal"
+        ]
+      },
+      {
+        "element": "#sync-process-btn",
+        "event": "click",
+        "fires": [
+          "syncProcess"
+        ]
+      },
+      {
+        "element": "#sync-results > div:nth-of-type(1) > div > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "syncSelectAll"
+        ]
+      },
+      {
+        "element": "#sync-results > div:nth-of-type(1) > div > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "syncSelectAll"
+        ]
+      },
+      {
+        "element": "#sync-scan-btn",
+        "event": "click",
+        "fires": [
+          "syncScan"
+        ]
+      },
+      {
+        "element": "#tm-adr",
+        "event": "click",
+        "fires": [
+          "toggleTrendMetric"
+        ]
+      },
+      {
+        "element": "#tm-aim",
+        "event": "click",
+        "fires": [
+          "toggleTrendMetric"
+        ]
+      },
+      {
+        "element": "#tm-kast",
+        "event": "click",
+        "fires": [
+          "toggleTrendMetric"
+        ]
+      },
+      {
+        "element": "#tm-kd",
+        "event": "click",
+        "fires": [
+          "toggleTrendMetric"
+        ]
+      },
+      {
+        "element": "#tm-rating",
+        "event": "click",
+        "fires": [
+          "toggleTrendMetric"
+        ]
+      },
+      {
+        "element": "#tm-util",
+        "event": "click",
+        "fires": [
+          "toggleTrendMetric"
+        ]
+      },
+      {
+        "element": "#ts-10",
+        "event": "click",
+        "fires": [
+          "setTrendTimescale"
+        ]
+      },
+      {
+        "element": "#ts-20",
+        "event": "click",
+        "fires": [
+          "setTrendTimescale"
+        ]
+      },
+      {
+        "element": "#ts-5",
+        "event": "click",
+        "fires": [
+          "setTrendTimescale"
+        ]
+      },
+      {
+        "element": "#ts-all",
+        "event": "click",
+        "fires": [
+          "setTrendTimescale"
+        ]
+      },
+      {
+        "element": "#upload-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeUploadModal"
+        ]
+      },
+      {
+        "element": "#upload-mode-bulk",
+        "event": "click",
+        "fires": [
+          "switchUploadMode"
+        ]
+      },
+      {
+        "element": "#upload-mode-single",
+        "event": "click",
+        "fires": [
+          "switchUploadMode"
+        ]
+      }
+    ]
+  },
+  "calibrate.html": {
+    "errors": [],
+    "globals": [
+      "_applyTheme",
+      "_buildThemeMenu",
+      "_refreshTC",
+      "_themeById",
+      "closeThemeMenu",
+      "currentTheme",
+      "mapAbbrev",
+      "mapIconHtml",
+      "mapIconUrl",
+      "mapKey",
+      "mapLabel",
+      "mapText",
+      "setTheme",
+      "toggleTheme",
+      "toggleThemeMenu",
+      "updateThemeIcon"
+    ],
+    "handlers": [
+      {
+        "element": "#map-select",
+        "event": "change",
+        "fires": [
+          "loadMap"
+        ]
+      },
+      {
+        "element": "#output-btn",
+        "event": "click",
+        "fires": [
+          "exportJSON"
+        ]
+      },
+      {
+        "element": "#reset-btn",
+        "event": "click",
+        "fires": [
+          "resetAll"
+        ]
+      },
+      {
+        "element": "#theme-toggle-cal",
+        "event": "click",
+        "fires": [
+          "toggleThemeMenu"
+        ]
+      },
+      {
+        "element": "#undo-btn",
+        "event": "click",
+        "fires": [
+          "undoLast"
+        ]
+      }
+    ]
+  },
+  "match-breakdown.html": {
+    "errors": [],
+    "globals": [
+      "_applyTheme",
+      "_buildThemeMenu",
+      "_peekZoneIndexAt",
+      "_refreshTC",
+      "_themeById",
+      "_zoneAlpha",
+      "_zoneChipStyle",
+      "_zoneHue",
+      "aimBounds",
+      "aimRange",
+      "aimZones",
+      "buildAimKpiMeta",
+      "closeThemeMenu",
+      "currentTheme",
+      "drawAimScatter",
+      "drawDistStrip",
+      "drawRoleRadar",
+      "drawStripChart",
+      "drawTrendChart",
+      "hexToRgba",
+      "mapAbbrev",
+      "mapIconHtml",
+      "mapIconUrl",
+      "mapKey",
+      "mapLabel",
+      "mapText",
+      "renderEconomyTimeline",
+      "setTheme",
+      "toggleTheme",
+      "toggleThemeMenu",
+      "updateThemeIcon"
+    ],
+    "handlers": [
+      {
+        "element": "#ai-sparring-section > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "openAISettings"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#ai-sparring-section > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "clearChat"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#aim-accuracy-card > div:nth-of-type(1) > span:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "explain"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#aim-peek-block > div:nth-of-type(1) > span:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "explain"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#aim-reaction-card > div:nth-of-type(1) > span:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "explain"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#aim-roles-section > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > span:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "explain"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#aim-roles-section > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "explain"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#aim-roles-section > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > span:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "explain"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#auto-sync-interval",
+        "event": "change",
+        "fires": [
+          "saveAutoSyncSettings"
+        ]
+      },
+      {
+        "element": "#auto-sync-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeAutoSyncModal"
+        ]
+      },
+      {
+        "element": "#auto-sync-needs-setup > button",
+        "event": "click",
+        "fires": [
+          "closeAutoSyncModal",
+          "openSettingsModal",
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#auto-sync-pause-playing",
+        "event": "change",
+        "fires": [
+          "saveAutoSyncSettings"
+        ]
+      },
+      {
+        "element": "#auto-sync-toggle",
+        "event": "click",
+        "fires": [
+          "toggleAutoSync"
+        ]
+      },
+      {
+        "element": "#bulk-upload-btn",
+        "event": "click",
+        "fires": [
+          "startBulkUpload"
+        ]
+      },
+      {
+        "element": "#chat-send",
+        "event": "click",
+        "fires": [
+          "sendChat"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#debug-positions-btn",
+        "event": "click",
+        "fires": [
+          "toggleDebugPositions"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#delete-match-btn",
+        "event": "click",
+        "fires": [
+          "deleteCurrentMatch"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#main-content > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > h3 > button",
+        "event": "click",
+        "fires": [
+          "explain"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#main-content > section > div:nth-of-type(2) > div:nth-of-type(1) > div > button:nth-of-type(3)",
+        "event": "click",
+        "fires": [
+          "exportMatch"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#main-content > section > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > p:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "explain"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#minimap-section > div:nth-of-type(1) > div > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "minimapZoomIn"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#minimap-section > div:nth-of-type(1) > div > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "minimapZoomOut"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#minimap-section > div:nth-of-type(1) > div > button:nth-of-type(3)",
+        "event": "click",
+        "fires": [
+          "minimapResetView"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#reimport-match-btn",
+        "event": "click",
+        "fires": [
+          "reimportCurrentMatch"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-controls > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "replayPrevRound"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-controls > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)",
+        "event": "click",
+        "fires": [
+          "replayNextRound"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-controls > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "replaySetSpeed"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-controls > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "replaySetSpeed"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-controls > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(3)",
+        "event": "click",
+        "fires": [
+          "replaySetSpeed"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-controls > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(4)",
+        "event": "click",
+        "fires": [
+          "replaySetSpeed"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-controls > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(5)",
+        "event": "click",
+        "fires": [
+          "replaySetSpeed"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-link",
+        "event": "click",
+        "fires": [
+          "preventDefault",
+          "scrollToReplaySection"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-play-btn",
+        "event": "click",
+        "fires": [
+          "replayTogglePlay"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#replay-round-controls > button",
+        "event": "click",
+        "fires": [
+          "replayToggleFullscreen"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#reset-btn",
+        "event": "click",
+        "fires": [
+          "doFactoryReset"
+        ]
+      },
+      {
+        "element": "#reset-confirm-check",
+        "event": "change",
+        "fires": [
+          "syncFactoryResetButton"
+        ]
+      },
+      {
+        "element": "#roles-section > div:nth-of-type(1) > h3 > button",
+        "event": "click",
+        "fires": [
+          "explain"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#round-timeline-col > div:nth-of-type(1) > div > button",
+        "event": "click",
+        "fires": [
+          "roundsToggleFullscreen"
+        ],
+        "rerendered": true
+      },
+      {
+        "element": "#settings-accounts-panel > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "addAccount"
+        ]
+      },
+      {
+        "element": "#settings-ai-panel > button",
+        "event": "click",
+        "fires": [
+          "saveAISettings"
+        ]
+      },
+      {
+        "element": "#settings-ai-panel > div:nth-of-type(4) > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "addPromptTemplate"
+        ]
+      },
+      {
+        "element": "#settings-friends-panel > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "addFriend"
+        ]
+      },
+      {
+        "element": "#settings-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeSettingsModal"
+        ]
+      },
+      {
+        "element": "#settings-steam-panel > div:nth-of-type(2) > div:nth-of-type(4) > button",
+        "event": "click",
+        "fires": [
+          "saveSteamApiKey"
+        ]
+      },
+      {
+        "element": "#settings-steam-panel > div:nth-of-type(2) > div:nth-of-type(7) > button",
+        "event": "click",
+        "fires": [
+          "saveSteamCodes"
+        ]
+      },
+      {
+        "element": "#settings-storage-panel > div > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "saveStorageConfig"
+        ]
+      },
+      {
+        "element": "#settings-tab-accounts",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-ai",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-friends",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-reanalyze",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-reset",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-steam",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-storage",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-updates",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "openUploadModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "openSyncModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button:nth-of-type(3)",
+        "event": "click",
+        "fires": [
+          "openSteamModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button:nth-of-type(4)",
+        "event": "click",
+        "fires": [
+          "openAutoSyncModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > div > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "openSettingsModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > div > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "toggleThemeMenu"
+        ]
+      },
+      {
+        "element": "#sidebar-toggle",
+        "event": "click",
+        "fires": [
+          "toggleSidebar"
+        ]
+      },
+      {
+        "element": "#steam-check-btn",
+        "event": "click",
+        "fires": [
+          "runSteamJob"
+        ]
+      },
+      {
+        "element": "#steam-done-hint > button",
+        "event": "click",
+        "fires": [
+          "closeSteamModal",
+          "openSyncModal"
+        ]
+      },
+      {
+        "element": "#steam-download-btn",
+        "event": "click",
+        "fires": [
+          "runSteamJob"
+        ]
+      },
+      {
+        "element": "#steam-download-limit",
+        "event": "input",
+        "fires": [
+          "updateDownloadButton"
+        ]
+      },
+      {
+        "element": "#steam-job-cancel",
+        "event": "click",
+        "fires": [
+          "cancelSteamJob"
+        ]
+      },
+      {
+        "element": "#steam-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeSteamModal"
+        ]
+      },
+      {
+        "element": "#steam-needs-setup > button",
+        "event": "click",
+        "fires": [
+          "closeSteamModal",
+          "openSettingsModal",
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#steam-qr-panel > button",
+        "event": "click",
+        "fires": [
+          "hideSteamQr"
+        ]
+      },
+      {
+        "element": "#storage-delete-btn",
+        "event": "click",
+        "fires": [
+          "runStorageCleanup"
+        ]
+      },
+      {
+        "element": "#storage-fetched-only",
+        "event": "change",
+        "fires": [
+          "previewStorage"
+        ]
+      },
+      {
+        "element": "#storage-keep",
+        "event": "input",
+        "fires": [
+          "previewStorage"
+        ]
+      },
+      {
+        "element": "#storage-per-account",
+        "event": "change",
+        "fires": [
+          "previewStorage"
+        ]
+      },
+      {
+        "element": "#sync-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeSyncModal"
+        ]
+      },
+      {
+        "element": "#sync-modal > div > div:nth-of-type(2) > div > button",
+        "event": "click",
+        "fires": [
+          "saveSyncFolder"
+        ]
+      },
+      {
+        "element": "#sync-modal > div > div:nth-of-type(6) > button",
+        "event": "click",
+        "fires": [
+          "closeSyncModal",
+          "openSettingsModal"
+        ]
+      },
+      {
+        "element": "#sync-process-btn",
+        "event": "click",
+        "fires": [
+          "syncProcess"
+        ]
+      },
+      {
+        "element": "#sync-results > div:nth-of-type(1) > div > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "syncSelectAll"
+        ]
+      },
+      {
+        "element": "#sync-results > div:nth-of-type(1) > div > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "syncSelectAll"
+        ]
+      },
+      {
+        "element": "#sync-scan-btn",
+        "event": "click",
+        "fires": [
+          "syncScan"
+        ]
+      },
+      {
+        "element": "#upload-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeUploadModal"
+        ]
+      },
+      {
+        "element": "#upload-mode-bulk",
+        "event": "click",
+        "fires": [
+          "switchUploadMode"
+        ]
+      },
+      {
+        "element": "#upload-mode-single",
+        "event": "click",
+        "fires": [
+          "switchUploadMode"
+        ]
+      }
+    ]
+  },
+  "performance.html": {
+    "errors": [],
+    "globals": [
+      "_applyTheme",
+      "_buildThemeMenu",
+      "_refreshTC",
+      "_themeById",
+      "closeThemeMenu",
+      "currentTheme",
+      "mapAbbrev",
+      "mapIconHtml",
+      "mapIconUrl",
+      "mapKey",
+      "mapLabel",
+      "mapText",
+      "setTheme",
+      "toggleTheme",
+      "toggleThemeMenu",
+      "updateThemeIcon"
+    ],
+    "handlers": [
+      {
+        "element": "#bulk-upload-btn",
+        "event": "click",
+        "fires": [
+          "startBulkUpload"
+        ]
+      },
+      {
+        "element": "#reset-btn",
+        "event": "click",
+        "fires": [
+          "doFactoryReset"
+        ]
+      },
+      {
+        "element": "#reset-confirm-check",
+        "event": "change",
+        "fires": [
+          "syncFactoryResetButton"
+        ]
+      },
+      {
+        "element": "#settings-accounts-panel > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "addAccount"
+        ]
+      },
+      {
+        "element": "#settings-ai-panel > button",
+        "event": "click",
+        "fires": [
+          "saveAISettings"
+        ]
+      },
+      {
+        "element": "#settings-friends-panel > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "addFriend"
+        ]
+      },
+      {
+        "element": "#settings-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeSettingsModal"
+        ]
+      },
+      {
+        "element": "#settings-tab-accounts",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-ai",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-friends",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-reanalyze",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-reset",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#settings-tab-updates",
+        "event": "click",
+        "fires": [
+          "switchSettingsTab"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "openUploadModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > div > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "openSettingsModal"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > div > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "toggleThemeMenu"
+        ]
+      },
+      {
+        "element": "#sidebar-toggle",
+        "event": "click",
+        "fires": [
+          "toggleSidebar"
+        ]
+      },
+      {
+        "element": "#upload-modal > div > div:nth-of-type(1) > button",
+        "event": "click",
+        "fires": [
+          "closeUploadModal"
+        ]
+      },
+      {
+        "element": "#upload-mode-bulk",
+        "event": "click",
+        "fires": [
+          "switchUploadMode"
+        ]
+      },
+      {
+        "element": "#upload-mode-single",
+        "event": "click",
+        "fires": [
+          "switchUploadMode"
+        ]
+      }
+    ]
+  },
+  "replay.html": {
+    "errors": [],
+    "globals": [
+      "_applyTheme",
+      "_buildThemeMenu",
+      "_refreshTC",
+      "_themeById",
+      "closeThemeMenu",
+      "currentTheme",
+      "mapAbbrev",
+      "mapIconHtml",
+      "mapIconUrl",
+      "mapKey",
+      "mapLabel",
+      "mapText",
+      "setTheme",
+      "toggleTheme",
+      "toggleThemeMenu",
+      "updateThemeIcon"
+    ],
+    "handlers": [
+      {
+        "element": "#play-btn",
+        "event": "click",
+        "fires": [
+          "togglePlay"
+        ]
+      },
+      {
+        "element": "#replay-container > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "prevRound"
+        ]
+      },
+      {
+        "element": "#replay-container > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)",
+        "event": "click",
+        "fires": [
+          "nextRound"
+        ]
+      },
+      {
+        "element": "#replay-container > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(1)",
+        "event": "click",
+        "fires": [
+          "setSpeed"
+        ]
+      },
+      {
+        "element": "#replay-container > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(2)",
+        "event": "click",
+        "fires": [
+          "setSpeed"
+        ]
+      },
+      {
+        "element": "#replay-container > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(3)",
+        "event": "click",
+        "fires": [
+          "setSpeed"
+        ]
+      },
+      {
+        "element": "#replay-container > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(4)",
+        "event": "click",
+        "fires": [
+          "setSpeed"
+        ]
+      },
+      {
+        "element": "#replay-container > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(5)",
+        "event": "click",
+        "fires": [
+          "setSpeed"
+        ]
+      },
+      {
+        "element": "#round-select",
+        "event": "change",
+        "fires": [
+          "loadRoundFromSelect"
+        ]
+      },
+      {
+        "element": "#sidebar > div:nth-of-type(2) > button",
+        "event": "click",
+        "fires": [
+          "toggleThemeMenu"
+        ]
+      },
+      {
+        "element": "#sidebar-toggle",
+        "event": "click",
+        "fires": [
+          "toggleSidebar"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,581 @@
+{
+  "indexes": [
+    "idx_ai_chats_match",
+    "idx_context_tags_match",
+    "idx_match_players_match",
+    "idx_matches_player",
+    "idx_round_stats_match"
+  ],
+  "tables": {
+    "ai_chats": [
+      {
+        "default": null,
+        "name": "id",
+        "notnull": 0,
+        "pk": 1,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "match_id",
+        "notnull": 1,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "role",
+        "notnull": 1,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "content",
+        "notnull": 1,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "provider",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "model",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "created_at",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      }
+    ],
+    "context_tags": [
+      {
+        "default": null,
+        "name": "id",
+        "notnull": 0,
+        "pk": 1,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "match_id",
+        "notnull": 1,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "tag",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      }
+    ],
+    "match_players": [
+      {
+        "default": null,
+        "name": "id",
+        "notnull": 0,
+        "pk": 1,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "match_id",
+        "notnull": 1,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "steam_id",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "name",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "team",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "is_user",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "kills",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "deaths",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "assists",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0.0",
+        "name": "kd_ratio",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": "0.0",
+        "name": "adr",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": "0.0",
+        "name": "kast",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": "0.0",
+        "name": "hltv_rating",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": "0",
+        "name": "rank",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "rank_old",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0.0",
+        "name": "rank_change",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": "0",
+        "name": "rank_type_id",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "comp_wins",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "mvps",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "rounds_2k",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "rounds_3k",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "rounds_4k",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "rounds_5k",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      }
+    ],
+    "matches": [
+      {
+        "default": null,
+        "name": "id",
+        "notnull": 0,
+        "pk": 1,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "match_id",
+        "notnull": 1,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "filename",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "date",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "map_name",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "player_steam_id",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "player_name",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "total_rounds",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "kills",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "deaths",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "assists",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "kast",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": null,
+        "name": "adr",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": null,
+        "name": "kpr",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": null,
+        "name": "dpr",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": null,
+        "name": "impact",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": null,
+        "name": "hltv_rating",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": null,
+        "name": "kd_ratio",
+        "notnull": 0,
+        "pk": 0,
+        "type": "REAL"
+      },
+      {
+        "default": "0",
+        "name": "rounds_2k",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "rounds_3k",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "rounds_4k",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "rounds_5k",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "team_score",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "enemy_score",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "'unknown'",
+        "name": "match_result",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "aim_stats",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "role_data",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "utility_data",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "impact_stats",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": "0",
+        "name": "partial_import",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "parse_mode",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "parse_warning",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "source_patch_version",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": "0",
+        "name": "analyzer_version",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "context_notes",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "uploaded_at",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      }
+    ],
+    "round_stats": [
+      {
+        "default": null,
+        "name": "id",
+        "notnull": 0,
+        "pk": 1,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "match_id",
+        "notnull": 1,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "round_number",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "kills",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "deaths",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "assists",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "damage",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "survived",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "traded",
+        "notnull": 0,
+        "pk": 0,
+        "type": "INTEGER"
+      },
+      {
+        "default": null,
+        "name": "enriched_json",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      },
+      {
+        "default": null,
+        "name": "replay_json",
+        "notnull": 0,
+        "pk": 0,
+        "type": "TEXT"
+      }
+    ]
+  }
+}

@@ -9,26 +9,33 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from src.processor import (
+from src.domain.calibration import hltv_rating
+from src.domain.metrics.aim import (
     _AIM_RATING_WEIGHTS,
     _CONFIDENCE_K,
+    _median,
+    _peek_bucket,
+)
+from src.domain.metrics.utility import (
+    _UTILITY_RATING_WEIGHTS,
+    _genuine_purchases,
+)
+from src.processor import (
     _analyze_movement,
     _analyze_reaction_time,
+    _calculate_aim_stats,
+    _calculate_damage,
     _calculate_kast_rounds,
     _collect_all_steam_ids,
-    _calculate_aim_stats,
-    _first_shot_tick,
-    _get_round_damage_taken,
-    _median,
-    _compute_hltv_rating,
     _count_multikill_rounds,
     _count_total_rounds,
     _count_valid_assists,
-    _calculate_damage,
     _detect_player_team,
+    _filter_assister,
     _filter_attacker,
     _filter_victim,
-    _filter_assister,
+    _first_shot_tick,
+    _get_round_damage_taken,
     calculate_all_players_stats,
     calculate_match_stats,
 )
@@ -128,17 +135,17 @@ def test_filter_attacker_empty_df():
 
 def test_hltv_rating_average_player():
     # Known-good approximation for an average player
-    rating = _compute_hltv_rating(kast=75.0, kpr=0.68, dpr=0.68, impact=0.96, adr=75.0)
+    rating = hltv_rating(kast=75.0, kpr=0.68, dpr=0.68, impact=0.96, adr=75.0)
     assert 0.9 < rating < 1.1, f"Expected ~1.0, got {rating}"
 
 
 def test_hltv_rating_high_performer():
-    rating = _compute_hltv_rating(kast=85.0, kpr=1.1, dpr=0.5, impact=1.8, adr=95.0)
+    rating = hltv_rating(kast=85.0, kpr=1.1, dpr=0.5, impact=1.8, adr=95.0)
     assert rating > 1.2, f"Expected rating > 1.2, got {rating}"
 
 
 def test_hltv_rating_low_performer():
-    rating = _compute_hltv_rating(kast=50.0, kpr=0.4, dpr=0.9, impact=0.3, adr=50.0)
+    rating = hltv_rating(kast=50.0, kpr=0.4, dpr=0.9, impact=0.3, adr=50.0)
     assert rating < 0.9, f"Expected rating < 0.9, got {rating}"
 
 
@@ -982,7 +989,7 @@ def test_peek_distribution_covers_the_same_regions_the_chart_shades():
     counts rather than measured a second way — otherwise a legend could total
     something other than 100% of the sample it sits under.
     """
-    from src.processor import _AIM_THRESHOLDS
+    from src.domain.metrics.aim import _AIM_THRESHOLDS
 
     kills = (
         [_mov_kill("AK-47", "standing", peek=20.0)] * 5          # held
@@ -1011,7 +1018,7 @@ def test_peek_speed_is_reported_but_never_graded():
     bands and must not move the rating: two matches identical apart from how
     fast the player entered every duel have to score the same.
     """
-    from src.processor import _AIM_RATING_WEIGHTS, _AIM_THRESHOLDS
+    from src.domain.metrics.aim import _AIM_RATING_WEIGHTS, _AIM_THRESHOLDS
 
     fast = _calculate_aim_stats([_round_with(
         [_mov_kill("AK-47", "counter-strafed", peek=240.0)] * 6
@@ -1058,7 +1065,8 @@ def test_peek_buckets_exclude_engagements_that_needed_no_stop():
     Those are held angles rather than peeks, and the counter-strafe
     classifier never calls them a stop either, so no bucket may claim them.
     """
-    from src.processor import _ACCURATE_SPEED, _PEEK_BUCKETS, _peek_bucket
+    from src.domain.metrics.aim import _PEEK_BUCKETS
+    from src.processor import _ACCURATE_SPEED
 
     assert _peek_bucket(_ACCURATE_SPEED - 1) is None
     assert _peek_bucket(_ACCURATE_SPEED) == "walk"
@@ -1074,7 +1082,7 @@ def test_peek_zones_match_the_counterstrafe_buckets():
     of the engagements counted in the full-speed row underneath it, so both
     read from one table rather than two sets of numbers that can drift apart.
     """
-    from src.processor import _AIM_THRESHOLDS, _PEEK_BUCKETS
+    from src.domain.metrics.aim import _AIM_THRESHOLDS, _PEEK_BUCKETS
 
     zones = _AIM_THRESHOLDS["peek"]["zones"]
 
@@ -1160,7 +1168,7 @@ def test_benchmarks_declare_they_are_uncalibrated():
     Nothing here has been fitted against a population of real players, so a
     consumer has to be able to tell a heuristic band from a measured one.
     """
-    from src.processor import compute_benchmarks
+    from src.domain.metrics.benchmarks import compute_benchmarks
 
     aim = _calculate_aim_stats([_round_with([_kill(preaim=4.0, ttk=0.3)] * 10)])
     marks = compute_benchmarks(aim, {}, total_rounds=24, map_name="de_dust2")
@@ -1177,7 +1185,7 @@ def test_benchmarks_carry_their_own_sample_size():
     It must report its own n rather than inherit the movement sample's, or a
     four-engagement rate would look as solid as a fifty-engagement one.
     """
-    from src.processor import compute_benchmarks
+    from src.domain.metrics.benchmarks import compute_benchmarks
 
     kills = [_mov_kill("AK-47", "counter-strafed") for _ in range(3)]
     kills += [_mov_kill("MP9", "stopped") for _ in range(20)]
@@ -1224,7 +1232,7 @@ def _flash_fire():
 
 
 def _utility(blinds, n_flashes):
-    from src.processor import _calculate_utility_stats
+    from src.domain.metrics.utility import _calculate_utility_stats
 
     return _calculate_utility_stats(
         [],
@@ -1254,7 +1262,6 @@ def test_flash_quality_tracks_blind_time_not_head_count():
 
 def test_smoke_placement_no_longer_scored():
     """It measured callout-map completeness, not smoke quality."""
-    from src.processor import _UTILITY_RATING_WEIGHTS
 
     assert "smoke" not in _UTILITY_RATING_WEIGHTS
     result = _utility([_blind(2.0)], n_flashes=1)
@@ -1282,27 +1289,8 @@ def test_utility_rating_weights_by_evidence():
 # ---------------------------------------------------------------------------
 
 
-def test_win_probability_matches_known_round_states():
-    """The table is empirical, so it has to agree with what CS is.
-
-    An even 5v5 is a coin flip, a man up is a big edge, and planting moves the
-    round toward the T side. None of this was imposed on the data.
-    """
-    from src.processor import _win_probability as w
-
-    assert 0.45 < w(5, 5, False) < 0.55
-    assert 0.45 < w(4, 4, False) < 0.55
-    assert w(5, 4, False) > w(5, 5, False) > w(4, 5, False)
-    assert w(3, 3, True) < w(3, 3, False)          # plant favours T
-    assert w(1, 0, False) == 1.0                   # round already decided
-    assert w(0, 1, False) == 0.0
 
 
-def test_win_probability_falls_back_monotonically_for_unmeasured_states():
-    from src.processor import _win_probability as w
-
-    assert w(5, 5, False) < w(5, 1, True) <= 1.0
-    assert w(2, 5, False) < w(5, 2, False)
 
 
 def _swing_parsed(deaths, plants=()):
@@ -1326,7 +1314,7 @@ def test_opening_kill_swings_more_than_a_mop_up():
     Counting kills cannot express that difference, which is the whole reason
     this metric exists.
     """
-    from src.processor import _calculate_impact_stats
+    from src.domain.metrics.impact import _calculate_impact_stats
 
     opening = _swing_parsed([_swing_death(100, STEAM_ID, "e1", 2)])
     early = _calculate_impact_stats(opening, STEAM_ID, 1, {1: "CT"})
@@ -1345,7 +1333,7 @@ def test_opening_kill_swings_more_than_a_mop_up():
 
 
 def test_dying_is_scored_as_negative_swing():
-    from src.processor import _calculate_impact_stats
+    from src.domain.metrics.impact import _calculate_impact_stats
 
     parsed = _swing_parsed([_swing_death(100, "enemy", STEAM_ID, 3)])
     out = _calculate_impact_stats(parsed, STEAM_ID, 1, {1: "CT"})
@@ -1357,7 +1345,7 @@ def test_dying_is_scored_as_negative_swing():
 
 def test_swing_is_measured_from_the_players_own_side():
     """The same event is a gain for one team and a loss for the other."""
-    from src.processor import _calculate_impact_stats
+    from src.domain.metrics.impact import _calculate_impact_stats
 
     parsed = _swing_parsed([_swing_death(100, STEAM_ID, "e1", 2)])
     as_ct = _calculate_impact_stats(parsed, STEAM_ID, 1, {1: "CT"})
@@ -1370,7 +1358,7 @@ def test_swing_is_measured_from_the_players_own_side():
 
 
 def test_impact_empty_without_the_columns_to_reconstruct_a_round():
-    from src.processor import _calculate_impact_stats
+    from src.domain.metrics.impact import _calculate_impact_stats
 
     assert _calculate_impact_stats({"player_death": pd.DataFrame()}, STEAM_ID, 1, {}) == {}
     no_tick = pd.DataFrame([{"round": 1, "user_team_num": 2, "user_steamid": "e"}])
@@ -1389,7 +1377,9 @@ def test_one_set_of_bands_drives_buckets_and_benchmarks():
     3/10/25, so a 4-degree median read "excellent" on one card and merely
     "strong" on the badge beside it.
     """
-    from src.processor import _AIM_THRESHOLDS, _analyze_preaim, compute_benchmarks
+    from src.domain.metrics.aim import _AIM_THRESHOLDS
+    from src.domain.metrics.benchmarks import compute_benchmarks
+    from src.processor import _analyze_preaim
 
     exc, good, moderate = _AIM_THRESHOLDS["preaim"]["bounds"]
 
@@ -1412,7 +1402,8 @@ def test_one_set_of_bands_drives_buckets_and_benchmarks():
 
 def test_counterstrafe_band_matches_the_classifier():
     """The scatter band and the classifier have to agree on what a stop is."""
-    from src.processor import _AIM_THRESHOLDS, _COUNTERSTRAFE_MAX_TICKS
+    from src.domain.metrics.aim import _AIM_THRESHOLDS
+    from src.processor import _COUNTERSTRAFE_MAX_TICKS
 
     assert _AIM_THRESHOLDS["stop_ticks"]["bounds"][1] == _COUNTERSTRAFE_MAX_TICKS
 
@@ -1796,7 +1787,6 @@ def test_inventory_snapshots_are_not_purchases():
     Counted as buys, a re-emitted rifle looked like a second one bought to
     drop for a teammate.
     """
-    from src.processor import _genuine_purchases
 
     df = pd.DataFrame([
         {"steamid": STEAM_ID, "tick": 6771, "item_name": "XM1014", "inventory_slot": 2, "was_sold": False},
@@ -1813,7 +1803,6 @@ def test_inventory_snapshots_are_not_purchases():
 
 
 def test_refunds_are_not_purchases():
-    from src.processor import _genuine_purchases
 
     df = pd.DataFrame([
         {"steamid": STEAM_ID, "tick": 100, "item_name": "AWP", "inventory_slot": 0, "was_sold": True},

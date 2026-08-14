@@ -10,7 +10,8 @@ import json
 import os
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -133,11 +134,61 @@ CREATE INDEX IF NOT EXISTS idx_matches_player     ON matches(player_steam_id);
 """
 
 
+class _Connection(sqlite3.Connection):
+    """A connection with room to hang a cache off.
+
+    sqlite3.Connection is a C type that allows neither weak references nor
+    attribute assignment, so caching anything per connection needs a subclass.
+    Anything cached here dies when the connection does, which is the point:
+    the column list it holds describes *this* database.
+    """
+
+    _round_columns: str | None = None
+
+
+def writability_problem(db_path: str | Path = _DEFAULT_DB_PATH) -> str | None:
+    """Why the database cannot be written to, in words, or None if it can.
+
+    SQLite says "attempt to write a readonly database" and stops there. It does
+    not say which file, or that the reason is ownership, so the error arrives
+    attached to whatever the user was doing — importing a demo — and points
+    nowhere near the cause. This is checked at startup so the answer is in the
+    log before anything fails.
+    """
+    path = Path(db_path)
+    if str(path) == ":memory:":
+        return None
+
+    if path.exists():
+        if os.access(path, os.W_OK):
+            return None
+        owner = ""
+        if hasattr(os, "getuid"):  # POSIX only; Windows has no uid to report
+            try:
+                owner = (
+                    f" It is owned by uid {path.stat().st_uid}, and this process "
+                    f"is uid {os.getuid()}."
+                )
+            except OSError:
+                pass
+        return (
+            f"The database at {path} is not writable.{owner} In Docker this "
+            f"usually means it was created by an older image that ran as root. "
+            f"Fix it with:\n"
+            f"    docker compose exec -u root api chown -R 1000:1000 /app/data"
+        )
+
+    parent = path.parent
+    if parent.exists() and not os.access(parent, os.W_OK):
+        return f"The directory {parent} is not writable, so the database cannot be created."
+    return None
+
+
 def get_connection(db_path: str | Path = _DEFAULT_DB_PATH) -> sqlite3.Connection:
     """Open (or create) the SQLite database and return a connection."""
     db_path = Path(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path), check_same_thread=False)
+    conn = sqlite3.connect(str(db_path), check_same_thread=False, factory=_Connection)
     conn.row_factory = sqlite3.Row
     _ensure_schema(conn)
     return conn
@@ -145,10 +196,9 @@ def get_connection(db_path: str | Path = _DEFAULT_DB_PATH) -> sqlite3.Connection
 
 def _ensure_schema(conn: sqlite3.Connection) -> None:
     """Create tables if they don't already exist."""
-    global _ROUND_COLUMNS_CACHE
-    # The migrations below can change round_stats, so drop the cached column
-    # list rather than let a later ALTER go unnoticed.
-    _ROUND_COLUMNS_CACHE = None
+    # The migrations below can change round_stats, so drop this connection's
+    # cached column list rather than let a later ALTER go unnoticed.
+    _forget_round_columns(conn)
     conn.executescript(_DDL)
     conn.commit()
     # Migrate: add enriched_json to round_stats if missing
@@ -239,9 +289,9 @@ def save_match(
         The generated ``match_id`` (UUID).
     """
     match_id = str(uuid.uuid4())
-    uploaded_at = datetime.now(tz=timezone.utc).isoformat()
+    uploaded_at = datetime.now(tz=UTC).isoformat()
     if match_date is None:
-        match_date = datetime.now(tz=timezone.utc).date().isoformat()
+        match_date = datetime.now(tz=UTC).date().isoformat()
 
     conn.execute(
         """
@@ -425,15 +475,29 @@ def _round_stats_columns(conn: sqlite3.Connection) -> str:
     Read from the schema rather than hardcoded so a future column is included
     automatically — the point is to exclude one known-huge column, not to pin
     the shape of the table.
+
+    Cached per connection rather than per process. It used to be a module
+    global with no lock, which meant the column list belonged to whichever
+    database connected most recently: with an in-memory test database and a
+    real one alive at the same time, one could be queried using the other's
+    columns.
     """
-    global _ROUND_COLUMNS_CACHE
-    if _ROUND_COLUMNS_CACHE is None:
+    cached: str | None = getattr(conn, "_round_columns", None)
+    if cached is None:
         names = [row["name"] for row in conn.execute("PRAGMA table_info(round_stats)")]
-        _ROUND_COLUMNS_CACHE = ", ".join(n for n in names if n != "replay_json") or "*"
-    return _ROUND_COLUMNS_CACHE
+        cached = ", ".join(n for n in names if n != "replay_json") or "*"
+        try:
+            conn._round_columns = cached  # type: ignore[attr-defined]
+        except AttributeError:
+            pass  # a plain sqlite3.Connection: correct, just uncached
+    return cached
 
 
-_ROUND_COLUMNS_CACHE: str | None = None
+def _forget_round_columns(conn: sqlite3.Connection) -> None:
+    try:
+        conn._round_columns = None  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
 
 
 def get_round_stats(
@@ -453,6 +517,75 @@ def get_round_stats(
         (match_id,),
     )
     return [dict(row) for row in cursor.fetchall()]
+
+
+# SQLite's default limit on host parameters is 999. Batching well under it
+# keeps one query per chunk rather than one per match.
+_MAX_PARAMS = 500
+
+
+def get_rounds_for_matches(
+    conn: sqlite3.Connection, match_ids: Sequence[str]
+) -> list[dict[str, Any]]:
+    """Rounds for several matches at once, with ``enriched_json`` decoded.
+
+    The analytics endpoints used to loop over match IDs issuing one query each,
+    then re-implement the same ``json.loads`` with a bare except in four
+    separate places. Five hundred matches meant five hundred round trips.
+
+    Rows come back grouped by the order of *match_ids* and ordered by round
+    number within each match, which is the order the per-match loop produced.
+    ``replay_json`` is excluded, as in :func:`get_round_stats`.
+    """
+    ordered_ids = list(match_ids)
+    if not ordered_ids:
+        return []
+
+    columns = _round_stats_columns(conn)
+    by_match: dict[str, list[dict[str, Any]]] = {}
+
+    for start in range(0, len(ordered_ids), _MAX_PARAMS):
+        chunk = ordered_ids[start:start + _MAX_PARAMS]
+        placeholders = ", ".join("?" * len(chunk))
+        cursor = conn.execute(
+            f"SELECT {columns} FROM round_stats "
+            f"WHERE match_id IN ({placeholders}) ORDER BY match_id, round_number",
+            chunk,
+        )
+        for row in cursor.fetchall():
+            record = dict(row)
+            raw = record.get("enriched_json")
+            try:
+                record["enriched"] = json.loads(raw) if raw else {}
+            except ValueError:
+                record["enriched"] = {}
+            by_match.setdefault(record["match_id"], []).append(record)
+
+    return [row for match_id in ordered_ids for row in by_match.get(match_id, [])]
+
+
+def get_imported_demo_files(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
+    """Every demo filename already imported, keyed by name.
+
+    Carries the match date, whose account it belongs to, and how many rounds
+    have replay frames stored. That last count is what makes a demo safe to
+    delete: without it the 2D viewer could never be populated for the match,
+    and the file is not recoverable.
+
+    The query used to sit inline in api.py, which put schema knowledge in the
+    route layer.
+    """
+    cursor = conn.execute(
+        """
+        SELECT m.filename, m.date, m.player_steam_id,
+               COUNT(rs.replay_json) AS replay_rounds
+        FROM matches m
+        LEFT JOIN round_stats rs ON rs.match_id = m.match_id
+        WHERE m.filename IS NOT NULL
+        GROUP BY m.filename, m.date, m.player_steam_id
+        """
+    )
+    return {row["filename"]: dict(row) for row in cursor.fetchall()}
 
 
 def get_tags(conn: sqlite3.Connection, match_id: str) -> list[str]:
@@ -491,7 +624,7 @@ def save_chat_message(
         "INSERT INTO ai_chats (match_id, role, content, provider, model, created_at) "
         "VALUES (?, ?, ?, ?, ?, ?)",
         (match_id, role, content, provider, model,
-         datetime.now(tz=timezone.utc).isoformat()),
+         datetime.now(tz=UTC).isoformat()),
     )
     conn.commit()
 
@@ -512,6 +645,91 @@ def clear_chat_history(conn: sqlite3.Connection, match_id: str) -> None:
     """Delete all chat messages for a match."""
     conn.execute("DELETE FROM ai_chats WHERE match_id = ?", (match_id,))
     conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Batch reads
+#
+# The analytics pages walk every match the user owns. Asking per match means a
+# round trip per match; these ask once. Each returns rows grouped in the order
+# the caller passed its ids, which is the order the per-match loops produced.
+# ---------------------------------------------------------------------------
+
+
+def get_players_for_matches(
+    conn: sqlite3.Connection, match_ids: Sequence[str], *, user_only: bool = False
+) -> list[dict[str, Any]]:
+    """Scoreboard rows for several matches at once.
+
+    *user_only* keeps just the tracked player, which is what the career
+    aggregates want — otherwise nine rows per match are fetched and discarded.
+    """
+    ordered_ids = list(match_ids)
+    if not ordered_ids:
+        return []
+
+    by_match: dict[str, list[dict[str, Any]]] = {}
+    condition = " AND is_user = 1" if user_only else ""
+    for start in range(0, len(ordered_ids), _MAX_PARAMS):
+        chunk = ordered_ids[start:start + _MAX_PARAMS]
+        placeholders = ", ".join("?" * len(chunk))
+        cursor = conn.execute(
+            f"SELECT * FROM match_players WHERE match_id IN ({placeholders})"
+            f"{condition} ORDER BY match_id, team, kills DESC",
+            chunk,
+        )
+        for row in cursor.fetchall():
+            record = dict(row)
+            by_match.setdefault(record["match_id"], []).append(record)
+
+    return [row for match_id in ordered_ids for row in by_match.get(match_id, [])]
+
+
+def get_tags_for_all_matches(conn: sqlite3.Connection) -> dict[str, list[str]]:
+    """Every tag, grouped by match. One query rather than one per row."""
+    tags: dict[str, list[str]] = {}
+    for row in conn.execute("SELECT match_id, tag FROM context_tags"):
+        tags.setdefault(row["match_id"], []).append(row["tag"])
+    return tags
+
+
+def get_analyzer_versions(conn: sqlite3.Connection) -> list[int]:
+    """The analyzer version of every stored match, for the staleness count."""
+    cursor = conn.execute("SELECT COALESCE(analyzer_version, 0) AS v FROM matches")
+    return [int(row["v"] or 0) for row in cursor.fetchall()]
+
+
+def get_imported_filenames(
+    conn: sqlite3.Connection, player_steam_id: str = ""
+) -> set[str]:
+    """Demo filenames already in the database, optionally for one account.
+
+    Used by the sync scan to work out which files on disk are new.
+    """
+    if player_steam_id.strip():
+        cursor = conn.execute(
+            "SELECT filename FROM matches WHERE player_steam_id = ?",
+            (player_steam_id.strip(),),
+        )
+    else:
+        cursor = conn.execute("SELECT filename FROM matches")
+    return {row["filename"] for row in cursor.fetchall() if row["filename"]}
+
+
+def get_enriched_json_for_map(
+    conn: sqlite3.Connection, map_name: str
+) -> list[str]:
+    """Raw enriched_json for every round played on *map_name*.
+
+    Feeds the minimap heat data, which pools positions across matches.
+    """
+    cursor = conn.execute(
+        "SELECT rs.enriched_json FROM round_stats rs "
+        "JOIN matches m ON rs.match_id = m.match_id "
+        "WHERE m.map_name = ? AND rs.enriched_json IS NOT NULL",
+        (map_name,),
+    )
+    return [row["enriched_json"] for row in cursor.fetchall()]
 
 
 def move_chat_history(

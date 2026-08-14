@@ -1,0 +1,16 @@
+{
+  "name": "pr1maly-domtest",
+  "private": true,
+  "type": "module",
+  "description": "Loads the frontend pages in a DOM so their wiring can be tested without a browser. Development only — not part of the app or the release.",
+  "scripts": {
+    "wiring": "node wiring.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0"
+  },
+  "dependencies": {
+    "acorn": "^8.18.0",
+    "acorn-walk": "^8.3.5"
+  }
+}

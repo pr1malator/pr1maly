@@ -1,0 +1,48 @@
+{
+  "map": "de_nuke",
+  "_what_this_is": "Which map callouts indicate which positional role, per side. The callout names must match the labels in src/domain/callouts/zones/<map>.json; a name that matches nothing silently contributes no score, which is how a role can quietly stop being detected.",
+  "sides": {
+    "CT": {
+      "A Anchor (Hut/Mini)": [
+        "A Site",
+        "Hut",
+        "Squeaky",
+        "Main"
+      ],
+      "Heaven (Rotator)": [
+        "Heaven",
+        "Hell"
+      ],
+      "Outside": [
+        "Outside"
+      ],
+      "Secret / Lower": [
+        "Secret",
+        "B Site"
+      ],
+      "Ramp Anchor": [
+        "Ramp",
+        "Lobby"
+      ]
+    },
+    "T": {
+      "Outside Pack": [
+        "Outside",
+        "Secret"
+      ],
+      "Lobby / Hut Control": [
+        "Lobby",
+        "Main",
+        "Hut",
+        "Squeaky",
+        "A Site",
+        "Heaven",
+        "Hell"
+      ],
+      "Ramp Entry / Lurk": [
+        "Ramp",
+        "B Site"
+      ]
+    }
+  }
+}

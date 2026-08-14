@@ -1,0 +1,53 @@
+{
+  "map": "de_cache",
+  "_what_this_is": "Which map callouts indicate which positional role, per side. The callout names must match the labels in src/domain/callouts/zones/<map>.json; a name that matches nothing silently contributes no score, which is how a role can quietly stop being detected.",
+  "sides": {
+    "CT": {
+      "A Anchor": [
+        "A Site",
+        "CT Short"
+      ],
+      "Catwalk (AWP)": [
+        "Catwalk",
+        "Mid",
+        "Squeaky",
+        "Mid Area"
+      ],
+      "B Anchor": [
+        "B Site",
+        "Boiler",
+        "B Ramp"
+      ],
+      "CT Spawn Rotator": [
+        "CT Spawn",
+        "Garage"
+      ]
+    },
+    "T": {
+      "Highway / A Pack": [
+        "Highway",
+        "A Main",
+        "A Site",
+        "A Side"
+      ],
+      "Mid / Catwalk": [
+        "Mid",
+        "Catwalk",
+        "Squeaky",
+        "Boiler",
+        "Mid Area"
+      ],
+      "B Halls / Ramp Pack": [
+        "B Halls",
+        "B Ramp",
+        "B Site",
+        "B Side"
+      ],
+      "Garage Lurk": [
+        "Garage",
+        "T Spawn",
+        "T Area"
+      ]
+    }
+  }
+}

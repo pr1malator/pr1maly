@@ -1,0 +1,46 @@
+{
+  "map": "de_ancient",
+  "_what_this_is": "Which map callouts indicate which positional role, per side. The callout names must match the labels in src/domain/callouts/zones/<map>.json; a name that matches nothing silently contributes no score, which is how a role can quietly stop being detected.",
+  "sides": {
+    "CT": {
+      "B Anchor": [
+        "B Site",
+        "B Pillar"
+      ],
+      "Cave / Short B": [
+        "B Connector",
+        "B Main"
+      ],
+      "Mid": [
+        "Mid",
+        "Top Mid"
+      ],
+      "Donut (Rotator)": [
+        "A Connector"
+      ],
+      "A Anchor": [
+        "A Site",
+        "A Main",
+        "A Bridge"
+      ]
+    },
+    "T": {
+      "Mid Control": [
+        "Mid",
+        "Top Mid",
+        "A Connector",
+        "B Connector"
+      ],
+      "A Main Lurk": [
+        "A Main",
+        "A Bridge",
+        "A Site"
+      ],
+      "B Ramp / Cave Pack": [
+        "B Main",
+        "B Site",
+        "B Pillar"
+      ]
+    }
+  }
+}

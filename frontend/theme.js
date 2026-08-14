@@ -204,7 +204,9 @@ function closeThemeMenu() {
   if (_themeMenu) _themeMenu.style.display = 'none';
 }
 
-function toggleThemeMenu(btn) {
+/* Called from markup as an action, so the event comes first and the button
+   the user clicked comes after it. */
+function toggleThemeMenu(event, btn) {
   if (!_themeMenu) _themeMenu = _buildThemeMenu();
   if (_themeMenu.style.display === 'block') { closeThemeMenu(); return; }
 

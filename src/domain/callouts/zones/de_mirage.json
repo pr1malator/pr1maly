@@ -1,0 +1,303 @@
+{
+  "map": "de_mirage",
+  "_order_matters": "Zones are tested in order and the first match wins, so a specific zone must come before the larger one that encloses it.",
+  "zones": [
+    {
+      "label": "B Site",
+      "min_x": -2300,
+      "max_x": -1850,
+      "min_y": 0,
+      "max_y": 550,
+      "area": "B site area"
+    },
+    {
+      "label": "Bench",
+      "min_x": -2750,
+      "max_x": -2300,
+      "min_y": 50,
+      "max_y": 650,
+      "area": "B site area"
+    },
+    {
+      "label": "B Van",
+      "min_x": -2550,
+      "max_x": -2050,
+      "min_y": 550,
+      "max_y": 1100,
+      "area": "B site area"
+    },
+    {
+      "label": "Market",
+      "min_x": -2350,
+      "max_x": -1700,
+      "min_y": -850,
+      "max_y": -250,
+      "area": "B site area"
+    },
+    {
+      "label": "Market Door",
+      "min_x": -2600,
+      "max_x": -1700,
+      "min_y": -600,
+      "max_y": -250,
+      "area": "B site area"
+    },
+    {
+      "label": "Kitchen",
+      "min_x": -1400,
+      "max_x": -850,
+      "min_y": 200,
+      "max_y": 530,
+      "area": "B site area"
+    },
+    {
+      "label": "B Apartments Entrance",
+      "min_x": -1200,
+      "max_x": -650,
+      "min_y": 300,
+      "max_y": 900,
+      "area": "B site area"
+    },
+    {
+      "label": "B Apartments",
+      "min_x": -1500,
+      "max_x": -950,
+      "min_y": 500,
+      "max_y": 1050,
+      "area": "B site area"
+    },
+    {
+      "label": "B Short",
+      "min_x": -1100,
+      "max_x": -550,
+      "min_y": 50,
+      "max_y": 500,
+      "area": "B site area"
+    },
+    {
+      "label": "Firebox",
+      "min_x": -850,
+      "max_x": -475,
+      "min_y": -2400,
+      "max_y": -2050,
+      "area": "A site area"
+    },
+    {
+      "label": "A Default",
+      "min_x": -550,
+      "max_x": -100,
+      "min_y": -2450,
+      "max_y": -2100,
+      "area": "A site area"
+    },
+    {
+      "label": "A Palace",
+      "min_x": -100,
+      "max_x": 900,
+      "min_y": -2550,
+      "max_y": -2100,
+      "area": "A site area"
+    },
+    {
+      "label": "A Site",
+      "min_x": -750,
+      "max_x": 100,
+      "min_y": -2550,
+      "max_y": -1950,
+      "area": "A site area"
+    },
+    {
+      "label": "Ticket",
+      "min_x": -1200,
+      "max_x": -600,
+      "min_y": -2750,
+      "max_y": -2200,
+      "area": "A site area"
+    },
+    {
+      "label": "Jungle",
+      "min_x": -1100,
+      "max_x": -600,
+      "min_y": -1750,
+      "max_y": -1250,
+      "area": "Between A and mid"
+    },
+    {
+      "label": "Stairs",
+      "min_x": -700,
+      "max_x": -300,
+      "min_y": -1700,
+      "max_y": -1200,
+      "area": "Between A and mid"
+    },
+    {
+      "label": "Tetris",
+      "min_x": -350,
+      "max_x": 200,
+      "min_y": -1700,
+      "max_y": -1200,
+      "area": "Between A and mid"
+    },
+    {
+      "label": "A Ramp",
+      "min_x": 100,
+      "max_x": 700,
+      "min_y": -1850,
+      "max_y": -1300,
+      "area": "Between A and mid"
+    },
+    {
+      "label": "CT Spawn",
+      "min_x": -2050,
+      "max_x": -1300,
+      "min_y": -2200,
+      "max_y": -1500,
+      "area": "CT area"
+    },
+    {
+      "label": "Mid Window",
+      "min_x": -1400,
+      "max_x": -900,
+      "min_y": -850,
+      "max_y": -630,
+      "area": "Window / snipers cluster"
+    },
+    {
+      "label": "Snipers Nest",
+      "min_x": -1400,
+      "max_x": -900,
+      "min_y": -630,
+      "max_y": -560,
+      "area": "Window / snipers cluster"
+    },
+    {
+      "label": "Window",
+      "min_x": -1400,
+      "max_x": -900,
+      "min_y": -560,
+      "max_y": -150,
+      "area": "Window / snipers cluster"
+    },
+    {
+      "label": "A Main",
+      "min_x": -1500,
+      "max_x": -950,
+      "min_y": -1350,
+      "max_y": -850,
+      "area": "Connector / transition"
+    },
+    {
+      "label": "Connector",
+      "min_x": -950,
+      "max_x": -400,
+      "min_y": -1300,
+      "max_y": -750,
+      "area": "Connector / transition"
+    },
+    {
+      "label": "Chair",
+      "min_x": -50,
+      "max_x": 450,
+      "min_y": -1150,
+      "max_y": -700,
+      "area": "Connector / transition"
+    },
+    {
+      "label": "Top Mid",
+      "min_x": 150,
+      "max_x": 700,
+      "min_y": -900,
+      "max_y": -350,
+      "area": "Mid area"
+    },
+    {
+      "label": "Catwalk",
+      "min_x": -800,
+      "max_x": -250,
+      "min_y": -600,
+      "max_y": -200,
+      "area": "Mid area"
+    },
+    {
+      "label": "Ladder Room",
+      "min_x": -1400,
+      "max_x": -1050,
+      "min_y": -400,
+      "max_y": 100,
+      "area": "Mid area"
+    },
+    {
+      "label": "Underpass",
+      "min_x": -1300,
+      "max_x": -920,
+      "min_y": -250,
+      "max_y": 300,
+      "area": "Mid area"
+    },
+    {
+      "label": "Short",
+      "min_x": -920,
+      "max_x": -550,
+      "min_y": -300,
+      "max_y": 200,
+      "area": "Mid area"
+    },
+    {
+      "label": "Mid",
+      "min_x": -650,
+      "max_x": -50,
+      "min_y": -900,
+      "max_y": -400,
+      "area": "Mid area"
+    },
+    {
+      "label": "T Spawn",
+      "min_x": 850,
+      "max_x": 1700,
+      "min_y": -500,
+      "max_y": 200,
+      "area": "T side"
+    },
+    {
+      "label": "T Ramp",
+      "min_x": 1000,
+      "max_x": 1700,
+      "min_y": 100,
+      "max_y": 600,
+      "area": "T side"
+    },
+    {
+      "label": "A Side",
+      "min_x": -1300,
+      "max_x": 800,
+      "min_y": -2800,
+      "max_y": -1200,
+      "area": "Fallback / broad"
+    },
+    {
+      "label": "B Side",
+      "min_x": -2800,
+      "max_x": -550,
+      "min_y": -300,
+      "max_y": 1300,
+      "area": "Fallback / broad"
+    },
+    {
+      "label": "Mid Area",
+      "min_x": -900,
+      "max_x": 800,
+      "min_y": -1000,
+      "max_y": 300,
+      "area": "Fallback / broad"
+    },
+    {
+      "label": "T Area",
+      "min_x": 50,
+      "max_x": 1800,
+      "min_y": -400,
+      "max_y": 1000,
+      "area": "Fallback / broad"
+    }
+  ],
+  "provenance": "Recalibrated 2026-03-28 from hand-placed pixel positions on official radar. Game coords derived via: gx = px*5 - 3230, gy = 1713 - py*5 Format: (label, min_x, max_x, min_y, max_y). Zones ordered specific-first; first match wins."
+}

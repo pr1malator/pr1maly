@@ -11,325 +11,34 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.domain.callouts import supported_maps, zones_for
+
 # ---------------------------------------------------------------------------
 # Zone definitions: (label, min_x, max_x, min_y, max_y)
 # Derived from official radar images and community callout maps.
 # Coordinates use the Source engine world units from demoparser2.
 # ---------------------------------------------------------------------------
 
-_MIRAGE_ZONES: list[tuple[str, float, float, float, float]] = [
-    # Recalibrated 2026-03-28 from hand-placed pixel positions on official radar.
-    # Game coords derived via: gx = px*5 - 3230, gy = 1713 - py*5
-    # Format: (label, min_x, max_x, min_y, max_y).
-    # Zones ordered specific-first; first match wins.
+# ---------------------------------------------------------------------------
+# Zone definitions live in src/domain/callouts/zones/*.json — one file per map,
+# listing named rectangles in Source engine world units.
+#
+# They are data because that is what they are: 175 hand-placed rectangles
+# derived from official radar images. A wrong or missing callout is a data fix,
+# and tests/test_callout_zones.py checks them without anyone reading code.
+#
+# Order is load-bearing and the loader preserves it: zones are tested in
+# sequence and the first match wins, so a specific zone must come before the
+# larger one enclosing it.
+# ---------------------------------------------------------------------------
 
-    # ---- B site area ----
-    ("B Site",         -2300, -1850,      0,   550),
-    ("Bench",          -2750, -2300,     50,   650),
-    ("B Van",          -2550, -2050,    550,  1100),
-    ("Market",         -2350, -1700,   -850,  -250),
-    ("Market Door",    -2600, -1700,   -600,  -250),
-    ("Kitchen",        -1400,  -850,    200,   530),
-    ("B Apartments Entrance", -1200, -650, 300, 900),
-    ("B Apartments",   -1500,  -950,    500,  1050),
-    ("B Short",        -1100,  -550,     50,   500),
 
-    # ---- A site area ----
-    ("Firebox",         -850,  -475,  -2400, -2050),
-    ("A Default",       -550,  -100,  -2450, -2100),
-    ("A Palace",        -100,   900,  -2550, -2100),
-    ("A Site",          -750,   100,  -2550, -1950),
-    ("Ticket",         -1200,  -600,  -2750, -2200),
 
-    # ---- Between A and mid ----
-    ("Jungle",         -1100,  -600,  -1750, -1250),
-    ("Stairs",          -700,  -300,  -1700, -1200),
-    ("Tetris",          -350,   200,  -1700, -1200),
-    ("A Ramp",           100,   700,  -1850, -1300),
 
-    # ---- CT area ----
-    ("CT Spawn",       -2050, -1300,  -2200, -1500),
 
-    # ---- Window / snipers cluster ----
-    ("Mid Window",     -1400,  -900,   -850,  -630),
-    ("Snipers Nest",   -1400,  -900,   -630,  -560),
-    ("Window",         -1400,  -900,   -560,  -150),
 
-    # ---- Connector / transition ----
-    ("A Main",         -1500,  -950,  -1350,  -850),
-    ("Connector",       -950,  -400,  -1300,  -750),
-    ("Chair",            -50,   450,  -1150,  -700),
 
-    # ---- Mid area ----
-    ("Top Mid",          150,   700,   -900,  -350),
-    ("Catwalk",         -800,  -250,   -600,  -200),
-    ("Ladder Room",    -1400, -1050,   -400,   100),
-    ("Underpass",      -1300,  -920,   -250,   300),
-    ("Short",           -920,  -550,   -300,   200),
-    ("Mid",             -650,   -50,   -900,  -400),
 
-    # ---- T side ----
-    ("T Spawn",          850,  1700,   -500,   200),
-    ("T Ramp",          1000,  1700,    100,   600),
-
-    # ---- Fallback / broad ----
-    ("A Side",         -1300,   800,  -2800, -1200),
-    ("B Side",         -2800,  -550,   -300,  1300),
-    ("Mid Area",        -900,   800,  -1000,   300),
-    ("T Area",            50,  1800,   -400,  1000),
-]
-
-_DUST2_ZONES: list[tuple[str, float, float, float, float]] = [
-    # ---- A site ----
-    ("A Site",          900,  1500,   2100,  2800),
-    ("A Short (Cat)",   500,  1000,   1400,  2100),
-    ("A Long",         1200,  2200,    200,  1400),
-    ("A Long Doors",   1200,  2200,   -500,   200),
-    ("A Pit",          1500,  2000,   2200,  2800),
-    ("A Car",          1300,  1800,   1800,  2200),
-    ("Goose",           700,  1000,   2400,  2800),
-    ("A Ramp",          500,   900,   2100,  2600),
-    ("CT Spawn",        200,   900,   2800,  3400),
-
-    # ---- Mid ----
-    ("Mid Doors",       -50,   500,    -50,   500),
-    ("Mid",             -50,   500,    500,  1400),
-    ("Catwalk",         200,   700,   1400,  2100),
-    ("Lower Tunnels",  -800,  -200,   -800,    50),
-    ("Upper Tunnels",  -800,     0,   -800, -1200),
-    ("Xbox",            100,   500,    500,   900),
-
-    # ---- B site ----
-    ("B Site",         -800,    50,   1400,  2200),
-    ("B Tunnels",     -1400,  -600,    400,  1200),
-    ("B Doors",        -600,   100,   1200,  1600),
-    ("B Window",       -500,    50,   2200,  2700),
-    ("B Back Site",    -800,  -200,   2200,  2800),
-    ("B Car",          -200,   200,   1800,  2200),
-
-    # ---- T side ----
-    ("T Spawn",        -400,   400,  -2400, -1600),
-    ("T Mid",          -200,   400,  -1200,  -500),
-    ("Outside Long",    800,  1700,  -1200,  -200),
-
-    # ---- Fallback ----
-    ("A Side",          500,  2400,   1200,  3500),
-    ("B Side",        -1500,   200,   1200,  3000),
-    ("Mid Area",       -200,   700,   -200,  1400),
-]
-
-_INFERNO_ZONES: list[tuple[str, float, float, float, float]] = [
-    # Calibrated from actual demo position data (2026-03).
-    # Format: (label, min_x, max_x, min_y, max_y) in Source engine units.
-    # Zones are ordered specific-first; first match wins.
-
-    # ---- A site ----
-    ("A Site",         1800,  2400,    200,   800),
-    ("Pit",            2100,  2700,   -600,   300),
-    ("Balcony",        1600,  2000,    800,  1200),
-    ("Library",        1200,  1700,    800,  1400),
-    ("Arch",           1000,  1500,    200,   800),
-    ("Graveyard",      2200,  2700,    600,  1100),
-    ("Truck",          1600,  2250,   -100,   400),
-
-    # ---- Mid ----
-    ("Mid",             600,  1300,   -100,   800),
-    ("Alt Mid",        -300,   700,    400,  1000),
-    ("Underpass",       400,   900,   -600,    50),
-    ("Top Mid",         400,   900,    800,  1400),
-
-    # ---- B site ----
-    ("B Site",          100,   700,  -1200,  -600),
-    ("Banana",          100,   800,  -2200, -1200),
-    ("Oranges",          50,   400,  -1600, -1200),
-    ("Car",              50,   500,  -1200,  -800),
-    ("Dark",            -200,   200,  -1100,  -700),
-    ("CT",               50,   600,   -700,  -200),
-    ("Construction",    -400,   200,  -1400,  -900),
-    ("New Box",          50,   500,   -900,  -500),
-    ("Coffins",         500,   900,  -1000,  -500),
-
-    # ---- T side ----
-    ("T Spawn",        -200,   400,  -3000, -2200),
-    ("T Apartments",    800,  1800,   1200,  2100),
-    ("Apartments",      100,  1800,   1400,  2800),
-    ("Second Mid",      100,  1200,   1000,  2000),
-    ("Boiler",         1000,  1400,    400,   800),
-
-    # ---- Fallback ----
-    ("A Side",         1000,  2800,   -600,  1600),
-    ("B Side",         -600,  1000,  -2400,  -200),
-    ("T Area",         -400,   800,  -3400,  -1800),
-    ("T Approach",      200,   800,   2000,  3500),
-]
-
-_ANUBIS_ZONES: list[tuple[str, float, float, float, float]] = [
-    ("A Site",         -800,  -200,   1400,  2000),
-    ("A Main",         -400,   200,    600,  1400),
-    ("A Bridge",       -800,  -200,    800,  1400),
-    ("A Connector",    -600,     0,   2000,  2600),
-
-    ("Mid",            -200,   600,     50,   600),
-    ("Top Mid",         200,   800,   -600,    50),
-
-    ("B Site",          600,  1400,   1400,  2000),
-    ("B Main",          400,  1000,    600,  1400),
-    ("B Pillar",        800,  1200,   1600,  2000),
-    ("B Connector",     200,   800,   2000,  2600),
-
-    ("CT Spawn",       -200,   600,   2400,  3000),
-    ("T Spawn",        -200,   600,  -1200,  -400),
-
-    ("A Side",        -1200,   200,    600,  2800),
-    ("B Side",          200,  1600,    600,  2800),
-]
-
-_NUKE_ZONES: list[tuple[str, float, float, float, float]] = [
-    ("A Site",         -300,   400,  -1200,  -500),
-    ("Hut",             400,   800,  -1200,  -700),
-    ("Heaven",         -800,  -200,  -1400,  -800),
-    ("Hell",           -600,     0,   -800,  -400),
-    ("Squeaky",         400,   800,   -700,  -300),
-    ("Main",           -200,   400,   -500,   200),
-    ("Lobby",          -600,   200,    200,   800),
-    ("Ramp",            -50,   500,    800,  1600),
-    ("Outside",         600,  1800,   -600,   600),
-    ("Secret",          400,  1000,   1400,  2200),
-    ("B Site",         -300,   400,  -1200,  -500),  # Below A
-    ("T Spawn",        -400,   400,   1800,  2800),
-    ("CT Spawn",       -400,   400,  -2400, -1600),
-]
-
-_ANCIENT_ZONES: list[tuple[str, float, float, float, float]] = [
-    # Calibrated from de_ancient radar: pos_x=-2953, pos_y=2164, scale=5.
-    # Game coords: gx = px*5 - 2953, gy = 2164 - py*5
-    # Specific zones first; first match wins.
-
-    # ---- A site area ----
-    ("A Site",         -1200,  -550,  -1900, -1200),
-    ("A Main",          -550,   200,  -1600,  -900),
-    ("A Bridge",       -1300,  -550,  -1200,  -600),
-
-    # ---- B site area ----
-    ("B Site",          -600,   200,    600,  1300),
-    ("B Pillar",        -200,   400,    400,   800),
-
-    # ---- B approaches ----
-    ("B Main",           200,   900,    400,  1100),
-    ("B Connector",     -800,  -100,     50,   600),
-
-    # ---- Mid ----
-    ("Mid",             -600,   200,   -600,   100),
-    ("Top Mid",          200,   900,   -600,   200),
-
-    # ---- A connector / donut ----
-    ("A Connector",    -1400,  -700,   -600,    50),
-
-    # ---- Spawns ----
-    ("CT Spawn",       -1800, -1100,   -400,   400),
-    ("T Spawn",          800,  1600,   -600,   200),
-
-    # ---- Fallback ----
-    ("A Side",         -1800,   200,  -2000,  -600),
-    ("B Side",          -900,   900,     50,  1400),
-    ("Mid Area",        -800,   900,   -700,   200),
-]
-
-_OVERPASS_ZONES: list[tuple[str, float, float, float, float]] = [
-    # Calibrated from de_overpass radar: pos_x=-4831, pos_y=1781, scale=5.2.
-    # Game coords: gx = px*5.2 - 4831, gy = 1781 - py*5.2
-    # Specific zones first; first match wins.
-
-    # ---- A site area ----
-    ("A Site",         -2200, -1400,   -750,    50),
-    ("A Long",         -1400,  -400,   -750,   200),
-
-    # ---- Upper / Mid / Toilets ----
-    ("Toilets",        -2500, -1800,    100,   800),
-    ("Party",          -3100, -2500,   -200,   500),
-    ("Balloons",       -3500, -2800,    200,   800),
-
-    # ---- Connector ----
-    ("Connector",      -2700, -2000,   -400,   200),
-
-    # ---- Heaven / Sniper (overlook B) ----
-    ("Heaven",         -3200, -2500,  -1600,  -900),
-    ("Sniper",         -2500, -1800,  -1400,  -800),
-
-    # ---- B site area ----
-    ("B Site",         -3500, -2600,  -2200, -1500),
-    ("Pillar",         -3200, -2700,  -1700, -1300),
-    ("Barrels",        -2600, -2100,  -2100, -1600),
-    ("Pit",            -3600, -3000,  -1600, -1000),
-
-    # ---- B approaches ----
-    ("B Short",        -2600, -1800,  -1100,  -400),
-    ("Water",          -3300, -2600,   -900,  -200),
-    ("Sandbags",       -2200, -1700,  -1600, -1000),
-    ("Monster",        -3800, -3200,  -2400, -1700),
-
-    # ---- Mid ----
-    ("Mid",            -2200, -1400,    200,   900),
-
-    # ---- Spawns ----
-    ("CT Spawn",       -2000, -1200,  -1800, -1000),
-    ("T Spawn",        -1300,  -400,    800,  1600),
-
-    # ---- Fallback ----
-    ("A Side",         -2500,  -400,   -800,   300),
-    ("B Side",         -3800, -2000,  -2500,  -800),
-    ("Mid Area",       -2800, -1200,    100,  1000),
-]
-
-_CACHE_ZONES: list[tuple[str, float, float, float, float]] = [
-    # Calibrated from de_cache radar: pos_x=-2000, pos_y=3250, scale=5.5.
-    # Key anchors from de_cache.txt:
-    #   CT Spawn ~(-1450, 586), T Spawn ~(2996, -45),
-    #   Bomb A ~(-170, 1786),   Bomb B ~(-57, -1199).
-    # Zones ordered specific-first; first match wins.
-
-    # ---- A site area ----
-    ("A Site",       -600,   300, 1350, 2200),   # bomb at (-170, 1786)
-    ("CT Short",     -950,  -200,  700, 1450),   # CT path up to A
-    ("A Main",        200,  1100, 1400, 2200),   # T ramp/main to A
-    ("Highway",       900,  2100, 1600, 2700),   # T long approach to A
-
-    # ---- Mid ----
-    ("Squeaky",       650,  1100,   50,  550),   # squeaky door
-    ("Catwalk",      -100,   800,  250,  950),   # elevated walkway
-    ("Mid",           300,  1150, -100,  600),   # central corridor
-    ("Boiler",        100,   750, -700,  -50),   # boiler room, B connector
-
-    # ---- B approaches ----
-    ("B Halls",      1200,  2100, -1000, -200),  # T-side halls to B
-    ("B Ramp",        500,  1350, -1500, -700),  # T ramp into B
-
-    # ---- B site ----
-    ("B Site",       -500,   600, -1700, -800),  # bomb at (-57, -1199)
-
-    # ---- Spawns & connector ----
-    ("CT Spawn",    -1900,  -800,    0, 1100),   # CT spawn at (-1450, 586)
-    ("Garage",       1500,  2600,  400, 1700),   # garage, T mid connector
-    ("T Spawn",      2100,  3300, -700,  550),   # T spawn at (2996, -45)
-
-    # ---- Fallback ----
-    ("A Side",       -1200,   700, 1100, 2900),
-    ("B Side",       -1200,   700, -2000, -400),
-    ("Mid Area",      -300,  1400, -200,  900),
-    ("T Area",        1500,  3400, -2000, 1100),
-]
-
-# Map name → zone list
-_MAP_ZONES: dict[str, list[tuple[str, float, float, float, float]]] = {
-    "de_mirage":   _MIRAGE_ZONES,
-    "de_dust2":    _DUST2_ZONES,
-    "de_inferno":  _INFERNO_ZONES,
-    "de_anubis":   _ANUBIS_ZONES,
-    "de_nuke":     _NUKE_ZONES,
-    "de_ancient":  _ANCIENT_ZONES,
-    "de_overpass": _OVERPASS_ZONES,
-    "de_cache":    _CACHE_ZONES,
-}
 
 # ---------------------------------------------------------------------------
 # Pixel-space label overrides (1024×1024 radar image).
@@ -384,7 +93,7 @@ def get_callout(map_name: str, x: float, y: float) -> str:
 
     Returns ``"unknown"`` if no zone matches or the map is not supported.
     """
-    zones = _MAP_ZONES.get(map_name)
+    zones = zones_for(map_name)
     if not zones:
         return "unknown"
     for label, min_x, max_x, min_y, max_y in zones:
@@ -395,7 +104,7 @@ def get_callout(map_name: str, x: float, y: float) -> str:
 
 def is_map_supported(map_name: str) -> bool:
     """Check if we have callout data for this map."""
-    return map_name in _MAP_ZONES
+    return map_name in supported_maps()
 
 
 # ---------------------------------------------------------------------------
@@ -445,7 +154,7 @@ def get_zone_center(map_name: str, callout: str) -> tuple[float, float] | None:
         if key.lower() == callout.lower():
             return pos
 
-    zones = _MAP_ZONES.get(map_name)
+    zones = zones_for(map_name)
     cfg = _MAP_RADAR.get(map_name)
     if not zones or not cfg:
         return None
@@ -467,7 +176,7 @@ def get_all_zones_pixel(map_name: str) -> list[dict[str, Any]] | None:
     (bottom-right), ``cx``, ``cy`` (center).  Used by the schematic radar
     renderer on the frontend.
     """
-    zones = _MAP_ZONES.get(map_name)
+    zones = zones_for(map_name)
     cfg = _MAP_RADAR.get(map_name)
     if not zones or not cfg:
         return None

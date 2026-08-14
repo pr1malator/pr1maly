@@ -1,0 +1,127 @@
+{
+  "map": "de_ancient",
+  "_order_matters": "Zones are tested in order and the first match wins, so a specific zone must come before the larger one that encloses it.",
+  "zones": [
+    {
+      "label": "A Site",
+      "min_x": -1200,
+      "max_x": -550,
+      "min_y": -1900,
+      "max_y": -1200,
+      "area": "A site area"
+    },
+    {
+      "label": "A Main",
+      "min_x": -550,
+      "max_x": 200,
+      "min_y": -1600,
+      "max_y": -900,
+      "area": "A site area"
+    },
+    {
+      "label": "A Bridge",
+      "min_x": -1300,
+      "max_x": -550,
+      "min_y": -1200,
+      "max_y": -600,
+      "area": "A site area"
+    },
+    {
+      "label": "B Site",
+      "min_x": -600,
+      "max_x": 200,
+      "min_y": 600,
+      "max_y": 1300,
+      "area": "B site area"
+    },
+    {
+      "label": "B Pillar",
+      "min_x": -200,
+      "max_x": 400,
+      "min_y": 400,
+      "max_y": 800,
+      "area": "B site area"
+    },
+    {
+      "label": "B Main",
+      "min_x": 200,
+      "max_x": 900,
+      "min_y": 400,
+      "max_y": 1100,
+      "area": "B approaches"
+    },
+    {
+      "label": "B Connector",
+      "min_x": -800,
+      "max_x": -100,
+      "min_y": 50,
+      "max_y": 600,
+      "area": "B approaches"
+    },
+    {
+      "label": "Mid",
+      "min_x": -600,
+      "max_x": 200,
+      "min_y": -600,
+      "max_y": 100,
+      "area": "Mid"
+    },
+    {
+      "label": "Top Mid",
+      "min_x": 200,
+      "max_x": 900,
+      "min_y": -600,
+      "max_y": 200,
+      "area": "Mid"
+    },
+    {
+      "label": "A Connector",
+      "min_x": -1400,
+      "max_x": -700,
+      "min_y": -600,
+      "max_y": 50,
+      "area": "A connector / donut"
+    },
+    {
+      "label": "CT Spawn",
+      "min_x": -1800,
+      "max_x": -1100,
+      "min_y": -400,
+      "max_y": 400,
+      "area": "Spawns"
+    },
+    {
+      "label": "T Spawn",
+      "min_x": 800,
+      "max_x": 1600,
+      "min_y": -600,
+      "max_y": 200,
+      "area": "Spawns"
+    },
+    {
+      "label": "A Side",
+      "min_x": -1800,
+      "max_x": 200,
+      "min_y": -2000,
+      "max_y": -600,
+      "area": "Fallback"
+    },
+    {
+      "label": "B Side",
+      "min_x": -900,
+      "max_x": 900,
+      "min_y": 50,
+      "max_y": 1400,
+      "area": "Fallback"
+    },
+    {
+      "label": "Mid Area",
+      "min_x": -800,
+      "max_x": 900,
+      "min_y": -700,
+      "max_y": 200,
+      "area": "Fallback"
+    }
+  ],
+  "provenance": "Calibrated from de_ancient radar: pos_x=-2953, pos_y=2164, scale=5. Game coords: gx = px*5 - 2953, gy = 2164 - py*5 Specific zones first; first match wins."
+}

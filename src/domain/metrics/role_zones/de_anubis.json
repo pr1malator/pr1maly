@@ -1,0 +1,48 @@
+{
+  "map": "de_anubis",
+  "_what_this_is": "Which map callouts indicate which positional role, per side. The callout names must match the labels in src/domain/callouts/zones/<map>.json; a name that matches nothing silently contributes no score, which is how a role can quietly stop being detected.",
+  "sides": {
+    "CT": {
+      "B Anchor": [
+        "B Site",
+        "B Pillar"
+      ],
+      "Palace / B Connector": [
+        "B Connector",
+        "B Main"
+      ],
+      "Mid (AWP)": [
+        "Mid",
+        "Top Mid"
+      ],
+      "A Connector / Water": [
+        "A Connector"
+      ],
+      "A Anchor": [
+        "A Site",
+        "A Main",
+        "A Bridge"
+      ]
+    },
+    "T": {
+      "Water / Canals Pack": [
+        "A Connector",
+        "B Connector"
+      ],
+      "Bridge / Mid": [
+        "Mid",
+        "Top Mid"
+      ],
+      "A Main Lurk": [
+        "A Main",
+        "A Bridge",
+        "A Site"
+      ],
+      "B Main": [
+        "B Main",
+        "B Site",
+        "B Pillar"
+      ]
+    }
+  }
+}

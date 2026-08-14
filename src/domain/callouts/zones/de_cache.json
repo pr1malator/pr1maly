@@ -1,0 +1,151 @@
+{
+  "map": "de_cache",
+  "_order_matters": "Zones are tested in order and the first match wins, so a specific zone must come before the larger one that encloses it.",
+  "zones": [
+    {
+      "label": "A Site",
+      "min_x": -600,
+      "max_x": 300,
+      "min_y": 1350,
+      "max_y": 2200,
+      "area": "A site area"
+    },
+    {
+      "label": "CT Short",
+      "min_x": -950,
+      "max_x": -200,
+      "min_y": 700,
+      "max_y": 1450,
+      "area": "A site area"
+    },
+    {
+      "label": "A Main",
+      "min_x": 200,
+      "max_x": 1100,
+      "min_y": 1400,
+      "max_y": 2200,
+      "area": "A site area"
+    },
+    {
+      "label": "Highway",
+      "min_x": 900,
+      "max_x": 2100,
+      "min_y": 1600,
+      "max_y": 2700,
+      "area": "A site area"
+    },
+    {
+      "label": "Squeaky",
+      "min_x": 650,
+      "max_x": 1100,
+      "min_y": 50,
+      "max_y": 550,
+      "area": "Mid"
+    },
+    {
+      "label": "Catwalk",
+      "min_x": -100,
+      "max_x": 800,
+      "min_y": 250,
+      "max_y": 950,
+      "area": "Mid"
+    },
+    {
+      "label": "Mid",
+      "min_x": 300,
+      "max_x": 1150,
+      "min_y": -100,
+      "max_y": 600,
+      "area": "Mid"
+    },
+    {
+      "label": "Boiler",
+      "min_x": 100,
+      "max_x": 750,
+      "min_y": -700,
+      "max_y": -50,
+      "area": "Mid"
+    },
+    {
+      "label": "B Halls",
+      "min_x": 1200,
+      "max_x": 2100,
+      "min_y": -1000,
+      "max_y": -200,
+      "area": "B approaches"
+    },
+    {
+      "label": "B Ramp",
+      "min_x": 500,
+      "max_x": 1350,
+      "min_y": -1500,
+      "max_y": -700,
+      "area": "B approaches"
+    },
+    {
+      "label": "B Site",
+      "min_x": -500,
+      "max_x": 600,
+      "min_y": -1700,
+      "max_y": -800,
+      "area": "B site"
+    },
+    {
+      "label": "CT Spawn",
+      "min_x": -1900,
+      "max_x": -800,
+      "min_y": 0,
+      "max_y": 1100,
+      "area": "Spawns & connector"
+    },
+    {
+      "label": "Garage",
+      "min_x": 1500,
+      "max_x": 2600,
+      "min_y": 400,
+      "max_y": 1700,
+      "area": "Spawns & connector"
+    },
+    {
+      "label": "T Spawn",
+      "min_x": 2100,
+      "max_x": 3300,
+      "min_y": -700,
+      "max_y": 550,
+      "area": "Spawns & connector"
+    },
+    {
+      "label": "A Side",
+      "min_x": -1200,
+      "max_x": 700,
+      "min_y": 1100,
+      "max_y": 2900,
+      "area": "Fallback"
+    },
+    {
+      "label": "B Side",
+      "min_x": -1200,
+      "max_x": 700,
+      "min_y": -2000,
+      "max_y": -400,
+      "area": "Fallback"
+    },
+    {
+      "label": "Mid Area",
+      "min_x": -300,
+      "max_x": 1400,
+      "min_y": -200,
+      "max_y": 900,
+      "area": "Fallback"
+    },
+    {
+      "label": "T Area",
+      "min_x": 1500,
+      "max_x": 3400,
+      "min_y": -2000,
+      "max_y": 1100,
+      "area": "Fallback"
+    }
+  ],
+  "provenance": "Calibrated from de_cache radar: pos_x=-2000, pos_y=3250, scale=5.5. Key anchors from de_cache.txt: CT Spawn ~(-1450, 586), T Spawn ~(2996, -45), Bomb A ~(-170, 1786),   Bomb B ~(-57, -1199). Zones ordered specific-first; first match wins."
+}

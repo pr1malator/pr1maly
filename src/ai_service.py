@@ -15,7 +15,7 @@ import httpx
 
 _CONFIG_PATH = Path(__file__).parent.parent / "data" / "ai_config.json"
 
-_DEFAULT_CONFIG: dict[str, Any] = {
+DEFAULT_CONFIG: dict[str, Any] = {
     "providers": {},
     "active_provider": "",
     "active_model": "",
@@ -91,8 +91,13 @@ PROVIDERS: dict[str, dict[str, Any]] = {
 
 def load_config() -> dict[str, Any]:
     if _CONFIG_PATH.exists():
-        return json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
-    return json.loads(json.dumps(_DEFAULT_CONFIG))
+        # utf-8-sig, not utf-8: a byte-order mark makes json.loads raise, and
+        # this file is one a user opens in an editor. Notepad and "UTF-8 with
+        # BOM" in VS Code both add one, as did the PowerShell release script
+        # that used to generate this file — which meant a freshly downloaded
+        # release raised JSONDecodeError here on the first AI request.
+        return json.loads(_CONFIG_PATH.read_text(encoding="utf-8-sig"))
+    return json.loads(json.dumps(DEFAULT_CONFIG))
 
 
 def save_config(config: dict[str, Any]) -> None:
@@ -168,7 +173,7 @@ def build_match_context(
     if rounds:
         lines.extend(["", "=== ROUND-BY-ROUND DETAIL ==="])
         for r in rounds:
-            lines.append(_format_round_narrative(r))
+            lines.append(format_round_narrative(r))
 
     # --- Team scoreboard ---
     if players:
@@ -205,7 +210,7 @@ def build_match_context(
     return "\n".join(lines)
 
 
-def _format_round_narrative(r: dict[str, Any]) -> str:
+def format_round_narrative(r: dict[str, Any]) -> str:
     """Format a single round into a rich text narrative for the AI."""
     rnum = r.get("round_number", "?")
     kills = r.get("kills", 0)

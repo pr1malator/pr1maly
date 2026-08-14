@@ -1,0 +1,86 @@
+{
+  "map": "de_mirage",
+  "_what_this_is": "Which map callouts indicate which positional role, per side. The callout names must match the labels in src/domain/callouts/zones/<map>.json; a name that matches nothing silently contributes no score, which is how a role can quietly stop being detected.",
+  "sides": {
+    "CT": {
+      "A Anchor": [
+        "A Site",
+        "A Default",
+        "Ticket",
+        "Firebox",
+        "A Ramp"
+      ],
+      "Connector / Jungle": [
+        "Jungle",
+        "Stairs",
+        "Connector",
+        "A Main"
+      ],
+      "Window (AWP)": [
+        "Window",
+        "Mid Window",
+        "Snipers Nest",
+        "Ladder Room"
+      ],
+      "Short / Catwalk": [
+        "Short",
+        "Catwalk",
+        "Underpass",
+        "Mid",
+        "Mid Area",
+        "Top Mid"
+      ],
+      "B Anchor": [
+        "B Site",
+        "Bench",
+        "B Van",
+        "Market",
+        "Market Door",
+        "Kitchen",
+        "B Apartments",
+        "B Apartments Entrance",
+        "B Short"
+      ]
+    },
+    "T": {
+      "Mid Pack": [
+        "Top Mid",
+        "Mid",
+        "Mid Area",
+        "Short",
+        "Catwalk",
+        "Underpass",
+        "Connector",
+        "Window",
+        "Mid Window",
+        "Snipers Nest"
+      ],
+      "A Lurk / Palace": [
+        "A Ramp",
+        "A Palace",
+        "A Site",
+        "A Default",
+        "Ticket",
+        "Firebox",
+        "Jungle",
+        "Stairs",
+        "Tetris",
+        "A Main",
+        "A Side",
+        "Chair"
+      ],
+      "B Apps": [
+        "B Apartments",
+        "B Apartments Entrance",
+        "B Short",
+        "B Site",
+        "Bench",
+        "B Van",
+        "Market",
+        "Market Door",
+        "Kitchen",
+        "B Side"
+      ]
+    }
+  }
+}
