@@ -21,6 +21,11 @@ env/
 *.db
 data/
 
+# The default host side of the /demos mount. The folder ships so the container
+# has somewhere to mount; what anyone puts in it is theirs.
+demos/*
+!demos/.gitkeep
+
 # Node dependencies for the demo fetcher
 node_modules/
 

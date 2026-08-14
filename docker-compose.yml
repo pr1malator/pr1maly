@@ -6,13 +6,19 @@ services:
     restart: unless-stopped
     volumes:
       - ./data:/app/data
-      # Your CS2 demo folder. The container path (/demos) is what you enter in
-      # the Sync Folder UI; the host side comes from DEMO_HOST_DIR in .env, so
-      # the default no longer assumes a Windows Steam install — see .env.example.
+      # Your CS2 demo folder, at /demos inside the container — the path you
+      # enter in the Sync Folder UI.
+      #
+      # The default is a folder in this directory, because a default has to
+      # work on the machine it lands on. It used to be the Windows Steam path,
+      # which on macOS and Linux is not a path at all: the daemon rejects it
+      # with "invalid volume specification" and the app never starts. Point
+      # DEMO_HOST_DIR at your real Steam folder in .env — see .env.example for
+      # where that is on each platform.
       #
       # Mounted rw, not ro: Sync Folder only reads, but Fetch from Steam writes
       # downloaded demos here. Change to :ro if you never use the fetcher.
-      - "${DEMO_HOST_DIR:-C:/Program Files (x86)/Steam/steamapps/common/Counter-Strike Global Offensive/game/csgo/replays}:/demos:rw"
+      - "${DEMO_HOST_DIR:-./demos}:/demos:rw"
     environment:
       - DB_PATH=/app/data/pr1mealazyer.db
       # Where the fetcher writes demos inside the container. Matches the mount
